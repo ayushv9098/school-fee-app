@@ -25,7 +25,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      setError('Email ya password galat hai')
+      setError('Invalid email or password')
       setLoading(false)
       return
     }
@@ -50,8 +50,8 @@ export default function LoginPage() {
         {/* Login Card */}
         <Card className="border-zinc-200 shadow-sm rounded-2xl">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Login karein</CardTitle>
-            <CardDescription>Apna email aur password daalo</CardDescription>
+            <CardTitle className="text-lg">Login</CardTitle>
+            <CardDescription>Enter your email and password</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -90,7 +90,7 @@ export default function LoginPage() {
                 disabled={loading}
               >
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Login ho raha hai...</>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Logging in...</>
                 ) : 'Login'}
               </Button>
             </form>
@@ -98,7 +98,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="text-center text-xs text-zinc-400 mt-6">
-          Shahdol, Madhya Pradesh
+        © 2026 Designed & Developed by AV Infra.
         </p>
       </div>
     </div>

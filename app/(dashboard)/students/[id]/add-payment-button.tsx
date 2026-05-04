@@ -29,8 +29,8 @@ export default function AddPaymentButton({ studentId, remainingFee, isPaid }: Pr
     setError('')
 
     const amt = Number(amount)
-    if (!amt || amt <= 0) return setError('Valid amount daalo')
-    if (amt > remainingFee) return setError(`Maximum ${formatCurrency(remainingFee)} de sakte ho`)
+    if (!amt || amt <= 0) return setError('Please enter a valid amount')
+    if (amt > remainingFee) return setError(`Maximum ${formatCurrency(remainingFee)} can be paid`)
 
     setLoading(true)
     const supabase = createClient()
@@ -42,7 +42,7 @@ export default function AddPaymentButton({ studentId, remainingFee, isPaid }: Pr
     })
 
     if (error) {
-      setError('Kuch galat hua — dobara try karo')
+      setError('Something went wrong — please try again')
       setLoading(false)
       return
     }
@@ -57,7 +57,7 @@ export default function AddPaymentButton({ studentId, remainingFee, isPaid }: Pr
   if (isPaid) {
     return (
       <span className="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-medium rounded-xl">
-        Fully Paid
+        Fully Paid!
       </span>
     )
   }
@@ -80,7 +80,7 @@ export default function AddPaymentButton({ studentId, remainingFee, isPaid }: Pr
             {/* Modal Header */}
             <div className="flex items-center justify-between p-5 border-b border-zinc-100">
               <div>
-                <h2 className="text-base font-semibold text-zinc-900">Payment Add Karo</h2>
+                <h2 className="text-base font-semibold text-zinc-900">Add Payment</h2>
                 <p className="text-sm text-zinc-500">
                   Remaining: {formatCurrency(remainingFee)}
                 </p>
@@ -123,7 +123,7 @@ export default function AddPaymentButton({ studentId, remainingFee, isPaid }: Pr
               <div className="space-y-1.5">
                 <Label>Note (optional)</Label>
                 <Input
-                  placeholder="Koi note..."
+                  placeholder="Any note..."
                   value={note}
                   onChange={e => setNote(e.target.value)}
                   className="h-11"
@@ -149,7 +149,7 @@ export default function AddPaymentButton({ studentId, remainingFee, isPaid }: Pr
                 >
                   {loading
                     ? <><Loader2 className="w-4 h-4 mr-2 animate-spin inline" />Saving...</>
-                    : 'Payment Save Karo'
+                    : 'Save Payment'
                   }
                 </button>
               </div>

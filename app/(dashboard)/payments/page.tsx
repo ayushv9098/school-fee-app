@@ -36,7 +36,7 @@ export default async function PaymentsPage({
         <input
           name="search"
           defaultValue={params.search}
-          placeholder="Student name search karo..."
+          placeholder="Search by student name..."
           className="w-full h-10 pl-9 pr-4 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
         />
       </form>
@@ -60,7 +60,7 @@ export default async function PaymentsPage({
                 {filtered?.length === 0 && (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-zinc-400">
-                      Koi payment nahi mili
+                      No payments yet
                     </td>
                   </tr>
                 )}
@@ -90,7 +90,7 @@ export default async function PaymentsPage({
       <div className="md:hidden space-y-3">
         {filtered?.length === 0 && (
           <Card>
-            <div className="p-8 text-center text-zinc-400 text-sm">Koi payment nahi mili</div>
+            <div className="p-8 text-center text-zinc-400 text-sm">No payments yet</div>
           </Card>
         )}
         {filtered?.map(p => (

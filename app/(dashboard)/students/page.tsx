@@ -3,7 +3,6 @@ import { formatCurrency } from '@/lib/calculations'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Select } from '@/components/ui/select'
 import { CLASSES } from '@/lib/constants'
 import Link from 'next/link'
 import { Plus, Search } from 'lucide-react'
@@ -26,38 +25,41 @@ export default async function StudentsPage({
 
   return (
     <div className="p-4 md:p-6 space-y-5">
+
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-zinc-900">Students</h1>
-          <p className="text-sm text-zinc-500">{students?.length || 0} students</p>
+          <p className="text-sm text-zinc-500">{students?.length || 0} total students</p>
         </div>
         <Link
           href="/students/add"
           className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Student</span>
+          <span className="hidden sm:block">Add Student</span>
+          <span className="sm:hidden">Add student</span>
         </Link>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <form className="flex flex-col sm:flex-row gap-3 w-full">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <input
-              name="search"
-              defaultValue={params.search}
-              placeholder="Student name search karo..."
-              className="w-full h-10 pl-9 pr-4 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-            />
-          </div>
+      <form className="flex flex-col gap-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <input
+            name="search"
+            defaultValue={params.search}
+            placeholder="Search by student name..."
+            className="w-full h-11 pl-9 pr-4 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          />
+        </div>
+        <div className="flex gap-3">
           <select
             name="class"
             defaultValue={params.class}
-            className="h-10 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="flex-1 h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
-            <option value="">Sabhi Classes</option>
+            <option value="">All Classes</option>
             {CLASSES.map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
@@ -65,23 +67,23 @@ export default async function StudentsPage({
           <select
             name="status"
             defaultValue={params.status}
-            className="h-10 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="flex-1 h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
-            <option value="">Sabhi Status</option>
+            <option value="">All Status</option>
             <option value="paid">Paid</option>
             <option value="partial">Partial</option>
             <option value="unpaid">Unpaid</option>
           </select>
           <button
             type="submit"
-            className="h-10 px-4 bg-zinc-900 text-white text-sm rounded-xl hover:bg-zinc-700 transition"
+            className="h-11 px-5 bg-violet-600 text-white text-sm font-medium rounded-xl hover:bg-violet-700 transition"
           >
             Filter
           </button>
-        </form>
-      </div>
+        </div>
+      </form>
 
-      {/* Table - Desktop */}
+      {/* Desktop Table */}
       <div className="hidden md:block">
         <Card>
           <div className="overflow-x-auto">
@@ -102,7 +104,7 @@ export default async function StudentsPage({
                 {students?.length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-8 text-center text-zinc-400">
-                      Koi student nahi mila
+                      No students found
                     </td>
                   </tr>
                 )}
@@ -136,12 +138,12 @@ export default async function StudentsPage({
         </Card>
       </div>
 
-      {/* Cards - Mobile */}
+      {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
         {students?.length === 0 && (
           <Card>
             <CardContent className="p-8 text-center text-zinc-400 text-sm">
-              Koi student nahi mila
+              No students found
             </CardContent>
           </Card>
         )}
@@ -158,15 +160,16 @@ export default async function StudentsPage({
                   <span>{s.mobile || '-'}</span>
                 </div>
                 <Progress value={Math.round((s.total_paid / s.total_fee) * 100)} />
-                <div className="flex justify-between text-xs">
-                  <span className="text-green-600 font-medium">Paid: {formatCurrency(s.total_paid)}</span>
-                  <span className="text-red-500 font-medium">Due: {formatCurrency(s.remaining_fee)}</span>
+                <div className="flex justify-between text-xs font-medium">
+                  <span className="text-green-600">Paid: {formatCurrency(s.total_paid)}</span>
+                  <span className="text-red-500">Due: {formatCurrency(s.remaining_fee)}</span>
                 </div>
               </CardContent>
             </Card>
           </Link>
         ))}
       </div>
+
     </div>
   )
 }

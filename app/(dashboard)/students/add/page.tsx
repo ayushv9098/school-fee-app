@@ -31,9 +31,9 @@ export default function AddStudentPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!form.name.trim()) return setError('Name required hai')
-    if (!form.class) return setError('Class select karo')
-    if (!form.total_fee || Number(form.total_fee) <= 0) return setError('Valid fee daalo')
+    if (!form.name.trim()) return setError('Name is required')
+    if (!form.class) return setError('Please select a class')
+    if (!form.total_fee || Number(form.total_fee) <= 0) return setError('Please enter a valid fee')
     setLoading(true)
     const supabase = createClient()
     const { error } = await supabase.from('students').insert({
@@ -46,7 +46,7 @@ export default function AddStudentPage() {
       academic_year: form.academic_year,
     })
     if (error) {
-      setError('Kuch galat hua — dobara try karo')
+      setError('Something went wrong — please try again')
       setLoading(false)
       return
     }
@@ -65,7 +65,7 @@ export default function AddStudentPage() {
           </Link>
           <div>
             <h1 className="text-lg font-semibold text-zinc-900">Add Student</h1>
-            <p className="text-sm text-zinc-500">Naya student add karo</p>
+            <p className="text-sm text-zinc-500">Add a new student</p>
           </div>
         </div>
 
@@ -84,7 +84,7 @@ export default function AddStudentPage() {
                   <Input
                     id="name"
                     name="name"
-                    placeholder="Student ka naam"
+                    placeholder="Student name"
                     value={form.name}
                     onChange={handleChange}
                     className="h-11"
@@ -99,7 +99,7 @@ export default function AddStudentPage() {
                     onChange={handleChange}
                     className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                   >
-                    <option value="">Class select karo</option>
+                    <option value="">Select Class</option>
                     {CLASSES.map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
@@ -125,7 +125,7 @@ export default function AddStudentPage() {
                   <Input
                     id="guardian_name"
                     name="guardian_name"
-                    placeholder="Guardian ka naam"
+                    placeholder="Guardian name"
                     value={form.guardian_name}
                     onChange={handleChange}
                     className="h-11"
@@ -166,7 +166,7 @@ export default function AddStudentPage() {
                 <textarea
                   id="address"
                   name="address"
-                  placeholder="Student ka address"
+                  placeholder="Student address"
                   value={form.address}
                   onChange={handleChange}
                   rows={3}
@@ -194,7 +194,7 @@ export default function AddStudentPage() {
                 >
                   {loading
                     ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
-                    : 'Student Add Karo'
+                    : 'Add Student'
                   }
                 </button>
               </div>

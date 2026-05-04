@@ -30,7 +30,7 @@ export default async function StudentDetailPage({
 
   if (!student) {
     return (
-      <div className="p-6 text-center text-zinc-400">Student nahi mila</div>
+      <div className="p-6 text-center text-zinc-400">Student not found</div>
     )
   }
 
@@ -123,7 +123,7 @@ export default async function StudentDetailPage({
         </CardHeader>
         <CardContent className="p-5 pt-0">
           {payments?.length === 0 ? (
-            <p className="text-sm text-zinc-400 text-center py-4">Abhi koi payment nahi hai</p>
+            <p className="text-sm text-zinc-400 text-center py-4">No payments yet</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
