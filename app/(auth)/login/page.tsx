@@ -3,35 +3,60 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { GraduationCap, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) {
-      setError('Invalid email or password')
+    if (isLogin) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        setError('Invalid email or password')
+        setLoading(false)
+        return
+      }
+      router.push('/dashboard')
+      router.refresh()
+    } else {
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters')
+        setLoading(false)
+        return
+      }
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: name }
+        }
+      })
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+      if (data.user) {
+        router.push('/dashboard')
+        router.refresh()
+      }
       setLoading(false)
-      return
     }
-
-    router.push('/dashboard')
-    router.refresh()
   }
 
   return (
@@ -47,14 +72,35 @@ export default function LoginPage() {
           <p className="text-sm text-zinc-500 mt-1">Fee Management System</p>
         </div>
 
-        {/* Login Card */}
+        {/* Card */}
         <Card className="border-zinc-200 shadow-sm rounded-2xl">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Login</CardTitle>
-            <CardDescription>Enter your email and password</CardDescription>
+            <CardTitle className="text-lg">
+              {isLogin ? 'Welcome Back' : 'Create Account'}
+            </CardTitle>
+            <CardDescription>
+              {isLogin ? 'Sign in to your account' : 'Register a new account'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+
+              {/* Name - only signup */}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Your full name"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    required
+                    className="h-11"
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -67,6 +113,7 @@ export default function LoginPage() {
                   className="h-11"
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -78,27 +125,50 @@ export default function LoginPage() {
                   required
                   className="h-11"
                 />
+                {!isLogin && (
+                  <p className="text-xs text-zinc-400">Minimum 6 characters</p>
+                )}
               </div>
 
               {error && (
                 <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
               )}
 
-              <Button
+              <button
                 type="submit"
-                className="w-full h-11 bg-violet-600 hover:bg-violet-700"
                 disabled={loading}
+                className="w-full h-11 flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50"
               >
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Logging in...</>
-                ) : 'Login'}
-              </Button>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Please wait...</>
+                ) : isLogin ? 'Login In' : 'Create Account'}
+              </button>
+
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin)
+                    setError('')
+                    setName('')
+                    setEmail('')
+                    setPassword('')
+                  }}
+                  className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+                >
+                  {isLogin
+                    ? "Don't have an account? Sign Up"
+                    : "Already have an account? Login In"
+                  }
+                </button>
+              </div>
+
             </form>
           </CardContent>
         </Card>
 
         <p className="text-center text-xs text-zinc-400 mt-6">
-        © 2026 Designed & Developed by AV Infra.
+          Shahdol, Madhya Pradesh
         </p>
       </div>
     </div>
