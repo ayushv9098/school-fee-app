@@ -168,7 +168,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="text-center text-xs text-zinc-400 mt-6">
-          Shahdol, Madhya Pradesh
+        © 2026 Designed & Developed by AV Infra
         </p>
       </div>
     </div>
