@@ -31,11 +31,16 @@ export default function AddStudentPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+
     if (!form.name.trim()) return setError('Name is required')
     if (!form.class) return setError('Please select a class')
     if (!form.total_fee || Number(form.total_fee) <= 0) return setError('Please enter a valid fee')
+
     setLoading(true)
+
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
     const { error } = await supabase.from('students').insert({
       name: form.name.trim(),
       class: form.class,
@@ -44,12 +49,15 @@ export default function AddStudentPage() {
       address: form.address.trim(),
       total_fee: Number(form.total_fee),
       academic_year: form.academic_year,
+      user_id: user?.id,
     })
+
     if (error) {
       setError('Something went wrong — please try again')
       setLoading(false)
       return
     }
+
     router.push('/students')
     router.refresh()
   }
@@ -58,7 +66,6 @@ export default function AddStudentPage() {
     <div className="min-h-screen bg-zinc-50 p-4 md:p-8">
       <div className="max-w-2xl mx-auto space-y-5">
 
-        {/* Header */}
         <div className="flex items-center gap-3">
           <Link href="/students" className="p-2 rounded-xl hover:bg-zinc-100 transition">
             <ArrowLeft className="w-5 h-5 text-zinc-600" />
@@ -69,7 +76,6 @@ export default function AddStudentPage() {
           </div>
         </div>
 
-        {/* Form Card */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Student Information</CardTitle>
@@ -77,7 +83,6 @@ export default function AddStudentPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
 
-              {/* Row 1 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="name">Name *</Label>
@@ -107,7 +112,6 @@ export default function AddStudentPage() {
                 </div>
               </div>
 
-              {/* Row 2 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="mobile">Mobile</Label>
@@ -133,7 +137,6 @@ export default function AddStudentPage() {
                 </div>
               </div>
 
-              {/* Row 3 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="total_fee">Total Fee *</Label>
@@ -160,7 +163,6 @@ export default function AddStudentPage() {
                 </div>
               </div>
 
-              {/* Address */}
               <div className="space-y-1.5">
                 <Label htmlFor="address">Address</Label>
                 <textarea
@@ -174,12 +176,10 @@ export default function AddStudentPage() {
                 />
               </div>
 
-              {/* Error */}
               {error && (
                 <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
               )}
 
-              {/* Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Link
                   href="/students"

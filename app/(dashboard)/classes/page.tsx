@@ -34,7 +34,9 @@ export default async function ClassesPage() {
       {classStats.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center text-zinc-400 text-sm">
-            Koi student nahi hai abhi
+          No students right now
+
+
           </CardContent>
         </Card>
       ) : (

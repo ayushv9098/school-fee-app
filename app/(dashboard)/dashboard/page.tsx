@@ -95,7 +95,9 @@ export default async function DashboardPage() {
         {classStats.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-zinc-400 text-sm">Abhi koi student nahi — pehle student add karo</p>
+              <p className="text-zinc-400 text-sm">"No students right now — please add a student first."
+
+</p>
             </CardContent>
           </Card>
         ) : (
