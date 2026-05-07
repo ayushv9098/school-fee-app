@@ -6,7 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { User, Mail, LogOut, School } from 'lucide-react'
+import { User, Mail, LogOut, School, Download } from 'lucide-react'
+import ImportStudents from './import-students'
+
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -134,6 +136,18 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+       {/* Import Card */}
+<Card>
+  <CardHeader>
+    <CardTitle className="text-base flex items-center gap-2">
+      <Download className="w-4 h-4 text-blue-600" />
+      Import Students
+    </CardTitle>
+  </CardHeader>
+  <CardContent className="p-5 pt-0">
+    <ImportStudents />
+  </CardContent>
+</Card>
 
     </div>
   )
