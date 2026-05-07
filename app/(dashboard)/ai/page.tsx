@@ -11,6 +11,17 @@ export default async function AIPage() {
   const { data: students } = await supabase.from('student_fee_summary').select('*')
   const { data: payments } = await supabase.from('payments').select('*').order('paid_at', { ascending: false })
 
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', user?.id)
+    .eq('status', 'active')
+    .gte('expires_at', new Date().toISOString())
+    .maybeSingle()
+
+  const isSubscribed = !!subscription
+
   const totalStudents = students?.length || 0
   const totalFees = students?.reduce((a, s) => a + s.total_fee, 0) || 0
   const totalCollected = students?.reduce((a, s) => a + s.total_paid, 0) || 0
@@ -20,13 +31,11 @@ export default async function AIPage() {
   const unpaidStudents = students?.filter(s => s.status === 'unpaid').length || 0
   const partialStudents = students?.filter(s => s.status === 'partial').length || 0
 
-  // Top defaulters
   const defaulters = students
     ?.filter(s => s.remaining_fee > 0)
     ?.sort((a, b) => b.remaining_fee - a.remaining_fee)
     ?.slice(0, 5) || []
 
-  // Class wise stats
   const classes = [...new Set(students?.map(s => s.class) || [])]
   const classStats = classes.map(cls => {
     const cl = students?.filter(s => s.class === cls) || []
@@ -41,7 +50,6 @@ export default async function AIPage() {
     }
   }).sort((a, b) => b.percent - a.percent)
 
-  // Monthly payments
   const monthlyData: Record<string, number> = {}
   payments?.forEach(p => {
     const month = new Date(p.paid_at).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
@@ -173,14 +181,12 @@ export default async function AIPage() {
             <p className="text-sm text-zinc-400 text-center py-4">No pending fees!</p>
           )}
           <div className="space-y-3">
-          {defaulters.map((s, i) => (
-  <DefaulterRow key={s.id} student={s} index={i} />
-))}
+            {defaulters.map((s, i) => (
+              <DefaulterRow key={s.id} student={s} index={i} />
+            ))}
           </div>
         </CardContent>
       </Card>
-
-    
 
       {/* AI Chat */}
       <AIChat
@@ -194,6 +200,7 @@ export default async function AIPage() {
         partialStudents={partialStudents}
         classStats={classStats}
         defaulters={defaulters}
+        isSubscribed={isSubscribed}
       />
     </div>
   )

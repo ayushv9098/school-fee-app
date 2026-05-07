@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Bot, Send, Loader2, User } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
+import SubscribeButton from './subscribe-button'
 
 interface Props {
   totalStudents: number
@@ -15,6 +16,7 @@ interface Props {
   partialStudents: number
   classStats: any[]
   defaulters: any[]
+  isSubscribed: boolean
 }
 
 interface Message {
@@ -85,6 +87,22 @@ export default function AIChat(props: Props) {
     setLoading(false)
   }
 
+  if (!props.isSubscribed) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Bot className="w-4 h-4 text-violet-600" />
+            AI Assistant
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-5 pt-0">
+          <SubscribeButton />
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -127,14 +145,13 @@ export default function AIChat(props: Props) {
             </div>
           )}
         </div>
-        
 
         {/* Quick Questions */}
         <div className="flex flex-wrap gap-2">
           {[
-            'Collection rate kya hai?',
-            'Top defaulters kaun hain?',
-            'Kitne students unpaid hain?',
+            'What is the collection rate?',
+            'Who are the top defaulters?',
+            'How many students are unpaid?',
           ].map(q => (
             <button
               key={q}
