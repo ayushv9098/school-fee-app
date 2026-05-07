@@ -1,9 +1,8 @@
 'use client'
-
-import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Bot, Send, Loader2, User } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
 
 interface Props {
   totalStudents: number
@@ -32,6 +31,12 @@ export default function AIChat(props: Props) {
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = document.getElementById('chat-messages')
+    if (el) el.scrollTop = el.scrollHeight
+  }, [messages])
 
   const context = `
     School: Ayushman Educational Academy
@@ -91,7 +96,7 @@ export default function AIChat(props: Props) {
       <CardContent className="p-5 pt-0 space-y-4">
 
         {/* Messages */}
-        <div className="space-y-3 max-h-80 overflow-y-auto">
+        <div className="space-y-3 max-h-80 overflow-y-auto" id="chat-messages">
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
               <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -122,6 +127,7 @@ export default function AIChat(props: Props) {
             </div>
           )}
         </div>
+        
 
         {/* Quick Questions */}
         <div className="flex flex-wrap gap-2">
