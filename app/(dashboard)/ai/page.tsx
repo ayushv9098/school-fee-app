@@ -12,15 +12,21 @@ export default async function AIPage() {
   const { data: payments } = await supabase.from('payments').select('*').order('paid_at', { ascending: false })
 
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user?.id)
-    .eq('status', 'active')
-    .gte('expires_at', new Date().toISOString())
-    .maybeSingle()
+const { data: subscription } = await supabase
+  .from('subscriptions')
+  .select('*')
+  .eq('user_id', user?.id)
+  .eq('status', 'active')
+  .gte('expires_at', new Date().toISOString())
+  .maybeSingle()
 
-  const isSubscribed = !!subscription
+const isSubscribed = !!subscription
+
+const { data: schoolSettings } = await supabase
+  .from('school_settings')
+  .select('*')
+  .eq('user_id', user?.id)
+  .maybeSingle()
 
   const totalStudents = students?.length || 0
   const totalFees = students?.reduce((a, s) => a + s.total_fee, 0) || 0
@@ -187,21 +193,22 @@ export default async function AIPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* AI Chat */}
       <AIChat
-        totalStudents={totalStudents}
-        totalFees={totalFees}
-        totalCollected={totalCollected}
-        totalPending={totalPending}
-        collectionRate={collectionRate}
-        paidStudents={paidStudents}
-        unpaidStudents={unpaidStudents}
-        partialStudents={partialStudents}
-        classStats={classStats}
-        defaulters={defaulters}
-        isSubscribed={isSubscribed}
-      />
+  totalStudents={totalStudents}
+  totalFees={totalFees}
+  totalCollected={totalCollected}
+  totalPending={totalPending}
+  collectionRate={collectionRate}
+  paidStudents={paidStudents}
+  unpaidStudents={unpaidStudents}
+  partialStudents={partialStudents}
+  classStats={classStats}
+  defaulters={defaulters}
+  isSubscribed={isSubscribed}
+  schoolName={schoolSettings?.school_name || 'My School'}
+  schoolAddress={schoolSettings?.address || ''}
+  schoolMobile={schoolSettings?.mobile || ''}
+/>
     </div>
   )
 }

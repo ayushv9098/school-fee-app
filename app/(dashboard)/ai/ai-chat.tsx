@@ -17,6 +17,9 @@ interface Props {
   classStats: any[]
   defaulters: any[]
   isSubscribed: boolean
+  schoolName: string
+schoolAddress: string
+schoolMobile: string
 }
 
 interface Message {
@@ -80,6 +83,13 @@ export default function AIChat(props: Props) {
       }])
     }
     setLoading(false)
+    body: JSON.stringify({
+      message: userMessage,
+      context,
+      schoolName: props.schoolName,
+      schoolAddress: props.schoolAddress,
+      schoolMobile: props.schoolMobile,
+    })
   }
 
   if (!props.isSubscribed) {
@@ -121,12 +131,24 @@ export default function AIChat(props: Props) {
                 }
               </div>
               <div className={`max-w-xs px-3 py-2 rounded-xl text-sm ${
-                msg.role === 'assistant'
-                  ? 'bg-violet-50 text-zinc-800'
-                  : 'bg-zinc-900 text-white'
-              }`}>
-                {msg.content}
-              </div>
+  msg.role === 'assistant'
+    ? 'bg-violet-50 text-zinc-800'
+    : 'bg-zinc-900 text-white'
+}`}>
+  {msg.role === 'assistant' ? (
+    <div
+      className="prose prose-sm max-w-none"
+      dangerouslySetInnerHTML={{
+        __html: msg.content
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/\n/g, '<br/>')
+      }}
+    />
+  ) : (
+    msg.content
+  )}
+</div>
             </div>
           ))}
           {loading && (
