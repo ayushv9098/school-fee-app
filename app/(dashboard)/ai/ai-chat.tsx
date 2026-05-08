@@ -1,7 +1,7 @@
 'use client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Bot, Send, Loader2, User } from 'lucide-react'
+import { Bot, Send, User } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import SubscribeButton from './subscribe-button'
 
@@ -33,6 +33,7 @@ export default function AIChat(props: Props) {
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showQuickQuestions, setShowQuickQuestions] = useState(true)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -56,22 +57,17 @@ export default function AIChat(props: Props) {
 
   async function handleSend() {
     if (!input.trim() || loading) return
-
     const userMessage = input.trim()
     setInput('')
+    setShowQuickQuestions(false)
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
     setLoading(true)
-
     try {
       const response = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage,
-          context
-        })
+        body: JSON.stringify({ message: userMessage, context })
       })
-
       const data = await response.json()
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -83,7 +79,6 @@ export default function AIChat(props: Props) {
         content: 'Sorry, AI service is not available. Please add API key.'
       }])
     }
-
     setLoading(false)
   }
 
@@ -136,32 +131,39 @@ export default function AIChat(props: Props) {
           ))}
           {loading && (
             <div className="flex gap-2">
-              <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
                 <Bot className="w-4 h-4 text-violet-600" />
               </div>
-              <div className="px-3 py-2 rounded-xl bg-violet-50">
-                <Loader2 className="w-4 h-4 animate-spin text-violet-600" />
+              <div className="px-3 py-2 rounded-xl bg-violet-50 flex items-center gap-1">
+                <span className="w-1 h-1 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1 h-1 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1 h-1 bg-violet-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           )}
         </div>
 
         {/* Quick Questions */}
-        <div className="flex flex-wrap gap-2">
-          {[
-            'What is the collection rate?',
-            'Who are the top defaulters?',
-            'How many students are unpaid?',
-          ].map(q => (
-            <button
-              key={q}
-              onClick={() => { setInput(q); }}
-              className="text-xs px-3 py-1.5 rounded-full border border-violet-200 text-violet-600 hover:bg-violet-50 transition"
-            >
-              {q}
-            </button>
-          ))}
-        </div>
+        {showQuickQuestions && (
+          <div className="flex flex-wrap gap-2">
+            {[
+              'What is the collection rate?',
+              'Who are the top defaulters?',
+              'How many students are unpaid?',
+            ].map(q => (
+              <button
+                key={q}
+                onClick={() => {
+                  setInput(q)
+                  setShowQuickQuestions(false)
+                }}
+                className="text-xs px-3 py-1.5 rounded-full border border-violet-200 text-violet-600 hover:bg-violet-50 transition"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Input */}
         <div className="flex gap-2">
