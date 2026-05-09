@@ -14,37 +14,57 @@ export default function AddStudentPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
   const [form, setForm] = useState({
     name: '',
     class: '',
     mobile: '',
+    email: '', // ✅ New Email Field
     guardian_name: '',
     address: '',
     total_fee: '',
     academic_year: '2025-26',
   })
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  function handleChange(
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) {
+    setForm(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
-    if (!form.name.trim()) return setError('Name is required')
-    if (!form.class) return setError('Please select a class')
-    if (!form.total_fee || Number(form.total_fee) <= 0) return setError('Please enter a valid fee')
+    if (!form.name.trim()) {
+      return setError('Name is required')
+    }
+
+    if (!form.class) {
+      return setError('Please select a class')
+    }
+
+    if (!form.total_fee || Number(form.total_fee) <= 0) {
+      return setError('Please enter a valid fee')
+    }
 
     setLoading(true)
 
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     const { error } = await supabase.from('students').insert({
       name: form.name.trim(),
       class: form.class,
       mobile: form.mobile.trim(),
+      email: form.email.trim(), // ✅ Save Email
       guardian_name: form.guardian_name.trim(),
       address: form.address.trim(),
       total_fee: Number(form.total_fee),
@@ -53,6 +73,7 @@ export default function AddStudentPage() {
     })
 
     if (error) {
+      console.error(error)
       setError('Something went wrong — please try again')
       setLoading(false)
       return
@@ -65,24 +86,36 @@ export default function AddStudentPage() {
   return (
     <div className="min-h-screen bg-zinc-50 p-4 md:p-8">
       <div className="max-w-2xl mx-auto space-y-5">
-
+        {/* Header */}
         <div className="flex items-center gap-3">
-          <Link href="/students" className="p-2 rounded-xl hover:bg-zinc-100 transition">
+          <Link
+            href="/students"
+            className="p-2 rounded-xl hover:bg-zinc-100 transition"
+          >
             <ArrowLeft className="w-5 h-5 text-zinc-600" />
           </Link>
+
           <div>
-            <h1 className="text-lg font-semibold text-zinc-900">Add Student</h1>
-            <p className="text-sm text-zinc-500">Add a new student</p>
+            <h1 className="text-lg font-semibold text-zinc-900">
+              Add Student
+            </h1>
+            <p className="text-sm text-zinc-500">
+              Add a new student
+            </p>
           </div>
         </div>
 
+        {/* Form Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Student Information</CardTitle>
+            <CardTitle className="text-base">
+              Student Information
+            </CardTitle>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-
+              {/* Name + Class */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="name">Name *</Label>
@@ -95,6 +128,7 @@ export default function AddStudentPage() {
                     className="h-11"
                   />
                 </div>
+
                 <div className="space-y-1.5">
                   <Label htmlFor="class">Class *</Label>
                   <select
@@ -106,12 +140,15 @@ export default function AddStudentPage() {
                   >
                     <option value="">Select Class</option>
                     {CLASSES.map(c => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
                     ))}
                   </select>
                 </div>
               </div>
 
+              {/* Mobile + Email */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="mobile">Mobile</Label>
@@ -124,19 +161,37 @@ export default function AddStudentPage() {
                     className="h-11"
                   />
                 </div>
+
                 <div className="space-y-1.5">
-                  <Label htmlFor="guardian_name">Guardian Name</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="guardian_name"
-                    name="guardian_name"
-                    placeholder="Guardian name"
-                    value={form.guardian_name}
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="parent@gmail.com"
+                    value={form.email}
                     onChange={handleChange}
                     className="h-11"
                   />
                 </div>
               </div>
 
+              {/* Guardian Name */}
+              <div className="space-y-1.5">
+                <Label htmlFor="guardian_name">
+                  Guardian Name
+                </Label>
+                <Input
+                  id="guardian_name"
+                  name="guardian_name"
+                  placeholder="Guardian name"
+                  value={form.guardian_name}
+                  onChange={handleChange}
+                  className="h-11"
+                />
+              </div>
+
+              {/* Total Fee + Academic Year */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="total_fee">Total Fee *</Label>
@@ -150,8 +205,11 @@ export default function AddStudentPage() {
                     className="h-11"
                   />
                 </div>
+
                 <div className="space-y-1.5">
-                  <Label htmlFor="academic_year">Academic Year</Label>
+                  <Label htmlFor="academic_year">
+                    Academic Year
+                  </Label>
                   <Input
                     id="academic_year"
                     name="academic_year"
@@ -163,6 +221,7 @@ export default function AddStudentPage() {
                 </div>
               </div>
 
+              {/* Address */}
               <div className="space-y-1.5">
                 <Label htmlFor="address">Address</Label>
                 <textarea
@@ -176,10 +235,14 @@ export default function AddStudentPage() {
                 />
               </div>
 
+              {/* Error */}
               {error && (
-                <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+                <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">
+                  {error}
+                </p>
               )}
 
+              {/* Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Link
                   href="/students"
@@ -187,18 +250,22 @@ export default function AddStudentPage() {
                 >
                   Cancel
                 </Link>
+
                 <button
                   type="submit"
                   disabled={loading}
                   className="h-11 flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50 sm:flex-1"
                 >
-                  {loading
-                    ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
-                    : 'Add Student'
-                  }
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Add Student'
+                  )}
                 </button>
               </div>
-
             </form>
           </CardContent>
         </Card>

@@ -2,9 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, getProgressPercent } from '@/lib/calculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { TrendingUp, TrendingDown, Users, IndianRupee, AlertCircle, CheckCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Users, IndianRupee, AlertCircle, CheckCircle, BarChart3, AlertTriangle } from 'lucide-react'
 import AIChat from './ai-chat'
 import DefaulterRow from './defaulter-row'
+import CollapsibleSection from '@/components/ui/collapsible-section'
 
 export default async function AIPage() {
   const supabase = await createClient()
@@ -28,6 +29,24 @@ const { data: schoolSettings } = await supabase
   .eq('user_id', user?.id)
   .maybeSingle()
 
+  // ============================================
+  // ✅ NEW: FETCH EMAILS FROM STUDENTS TABLE
+  // ============================================
+  
+  const { data: studentsWithEmail } = await supabase
+    .from('students')
+    .select('id, name, email')
+    .eq('user_id', user?.id)
+
+  // Create lookup map: name → email
+  const emailMapByName = new Map(
+    (studentsWithEmail || [])
+      .filter(s => s.email)
+      .map(s => [s.name?.toLowerCase()?.trim(), s.email])
+  )
+
+  // ============================================
+
   const totalStudents = students?.length || 0
   const totalFees = students?.reduce((a, s) => a + s.total_fee, 0) || 0
   const totalCollected = students?.reduce((a, s) => a + s.total_paid, 0) || 0
@@ -37,10 +56,16 @@ const { data: schoolSettings } = await supabase
   const unpaidStudents = students?.filter(s => s.status === 'unpaid').length || 0
   const partialStudents = students?.filter(s => s.status === 'partial').length || 0
 
-  const defaulters = students
+  // ✅ UPDATED: Defaulters with emails
+  const defaultersRaw = students
     ?.filter(s => s.remaining_fee > 0)
     ?.sort((a, b) => b.remaining_fee - a.remaining_fee)
     ?.slice(0, 5) || []
+
+  const defaulters = defaultersRaw.map(defaulter => ({
+    ...defaulter,
+    email: emailMapByName.get(defaulter.name?.toLowerCase()?.trim()) || null
+  }))
 
   const classes = [...new Set(students?.map(s => s.class) || [])]
   const classStats = classes.map(cls => {
@@ -152,47 +177,49 @@ const { data: schoolSettings } = await supabase
         </Card>
       </div>
 
-      {/* Class wise */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Class-wise Collection</CardTitle>
-        </CardHeader>
-        <CardContent className="p-5 pt-0 space-y-4">
-          {classStats.length === 0 && (
-            <p className="text-sm text-zinc-400 text-center py-4">No data available</p>
-          )}
-          {classStats.map(cls => (
-            <div key={cls.name} className="space-y-1.5">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-zinc-900">{cls.name}</span>
-                <span className="text-zinc-500">{cls.percent}% • {cls.count} students</span>
-              </div>
-              <Progress value={cls.percent} />
-              <div className="flex justify-between text-xs">
-                <span className="text-green-600">{formatCurrency(cls.collected)}</span>
-                <span className="text-red-500">{formatCurrency(cls.totalFee - cls.collected)}</span>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      {/* Class wise - COLLAPSIBLE */}
+   {/* Class wise - COLLAPSIBLE */}
+<CollapsibleSection 
+  title="Class-wise Collection"
+  icon={<BarChart3 size={20} />}
+  defaultOpen={true}
+>
+  <div className="space-y-4">
+    {classStats.length === 0 && (
+      <p className="text-sm text-zinc-400 text-center py-4">No data available</p>
+    )}
+    {classStats.map(cls => (
+      <div key={cls.name} className="space-y-1.5">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-medium text-zinc-900">{cls.name}</span>
+          <span className="text-zinc-500">{cls.percent}% • {cls.count} students</span>
+        </div>
+        <Progress value={cls.percent} />
+        <div className="flex justify-between text-xs">
+          <span className="text-green-600">{formatCurrency(cls.collected)}</span>
+          <span className="text-red-500">{formatCurrency(cls.totalFee - cls.collected)}</span>
+        </div>
+      </div>
+    ))}
+  </div>
+</CollapsibleSection>
 
-      {/* Top Defaulters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Top Defaulters</CardTitle>
-        </CardHeader>
-        <CardContent className="p-5 pt-0">
-          {defaulters.length === 0 && (
-            <p className="text-sm text-zinc-400 text-center py-4">No pending fees!</p>
-          )}
-          <div className="space-y-3">
-            {defaulters.map((s, i) => (
-              <DefaulterRow key={s.id} student={s} index={i} />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Top Defaulters - COLLAPSIBLE */}
+<CollapsibleSection 
+  title="Top Defaulters"
+  icon={<AlertTriangle size={20} />}
+  defaultOpen={true}
+>
+  {defaulters.length === 0 && (
+    <p className="text-sm text-zinc-400 text-center py-4">No pending fees!</p>
+  )}
+  <div className="space-y-3">
+    {defaulters.map((s, i) => (
+      <DefaulterRow key={s.id} student={s} index={i} />
+    ))}
+  </div>
+</CollapsibleSection>
+
       <AIChat
   totalStudents={totalStudents}
   totalFees={totalFees}
