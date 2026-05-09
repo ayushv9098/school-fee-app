@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import AddPaymentButton from '../[id]/add-payment-button'
 import dayjs from 'dayjs'
+import ReceiptPDF from '@/components/receipt-pdf'
 
 export default async function StudentDetailPage({
   params,
@@ -115,6 +116,15 @@ export default async function StudentDetailPage({
           </div>
         </CardContent>
       </Card>
+      {/* Receipt PDF */}
+      <ReceiptPDF
+  studentName={student.name}
+  className={student.class}
+  amountPaid={student.total_paid}
+  totalFees={student.total_fee}
+  remainingFees={student.remaining_fee}
+  schoolName="Ayushman Educational Academy"
+/>
 
       {/* Payment History */}
       <Card>
