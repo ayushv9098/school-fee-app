@@ -280,7 +280,7 @@ export default function HowToUsePage() {
 
 {/* Instagram */}
 <a
-  href="https://instagram.com/ayush_educational_"
+  href="https://instagram.com/ayushman_educational_"
   target="_blank"
   rel="noopener noreferrer"
   className="group h-9 sm:h-10 px-2 sm:px-3 flex items-center justify-center gap-1.5 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300 hover:shadow-sm transition-all duration-200"
