@@ -8,6 +8,7 @@ import Link from 'next/link'
 import AddPaymentButton from '../[id]/add-payment-button'
 import dayjs from 'dayjs'
 import ReceiptPDF from '@/components/receipt-pdf'
+import EditStudentButton from './edit-student-button'
 
 export default async function StudentDetailPage({
   params,
@@ -58,6 +59,10 @@ export default async function StudentDetailPage({
           isPaid={student.status === 'paid'}
         />
       </div>
+      <div className="flex items-center gap-2">
+  <EditStudentButton student={student} />
+  
+</div>
 
       {/* Fee Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

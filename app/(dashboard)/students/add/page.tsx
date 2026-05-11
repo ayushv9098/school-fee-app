@@ -19,11 +19,13 @@ export default function AddStudentPage() {
     name: '',
     class: '',
     mobile: '',
-    email: '', // ✅ New Email Field
+    email: '',
     guardian_name: '',
     address: '',
     total_fee: '',
     academic_year: '2025-26',
+    diary_page_number: '',
+    is_free: false,
   })
 
   function handleChange(
@@ -49,10 +51,9 @@ export default function AddStudentPage() {
       return setError('Please select a class')
     }
 
-    if (!form.total_fee || Number(form.total_fee) <= 0) {
-      return setError('Please enter a valid fee')
-    }
-
+    if (!form.is_free && (!form.total_fee || Number(form.total_fee) <= 0))
+       return setError('Please enter a valid fee')
+      
     setLoading(true)
 
     const supabase = createClient()
@@ -64,11 +65,12 @@ export default function AddStudentPage() {
       name: form.name.trim(),
       class: form.class,
       mobile: form.mobile.trim(),
-      email: form.email.trim(), // ✅ Save Email
+      email: form.email.trim(),
       guardian_name: form.guardian_name.trim(),
       address: form.address.trim(),
-      total_fee: Number(form.total_fee),
+      total_fee: form.is_free ? 0 : Number(form.total_fee),
       academic_year: form.academic_year,
+      diary_page_number: form.diary_page_number.trim(),
       user_id: user?.id,
     })
 
@@ -192,19 +194,35 @@ export default function AddStudentPage() {
               </div>
 
               {/* Total Fee + Academic Year */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="total_fee">Total Fee *</Label>
-                  <Input
-                    id="total_fee"
-                    name="total_fee"
-                    type="number"
-                    placeholder="Total fee amount"
-                    value={form.total_fee}
-                    onChange={handleChange}
-                    className="h-11"
-                  />
-                </div>
+              <div className="space-y-1.5">
+  <Label htmlFor="total_fee">Total Fee *</Label>
+  <div className="space-y-2">
+    <div className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        id="is_free"
+        checked={form.is_free}
+        onChange={e => setForm(prev => ({ 
+          ...prev, 
+          is_free: e.target.checked,
+          total_fee: e.target.checked ? '0' : prev.total_fee
+        }))}
+        className="w-4 h-4 accent-violet-600"
+      />
+      <label htmlFor="is_free" className="text-sm text-zinc-600">Free (no fees)</label>
+    </div>
+    <Input
+      id="total_fee"
+      name="total_fee"
+      type="number"
+      placeholder="Total fee amount"
+      value={form.total_fee}
+      onChange={handleChange}
+      disabled={form.is_free}
+      className="h-11 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+    />
+  </div>
+</div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="academic_year">
@@ -219,7 +237,18 @@ export default function AddStudentPage() {
                     className="h-11"
                   />
                 </div>
-              </div>
+              
+              <div className="space-y-1.5">
+  <Label htmlFor="diary_page_number">Diary Page Number</Label>
+  <Input
+    id="diary_page_number"
+    name="diary_page_number"
+    placeholder="Page number"
+    value={form.diary_page_number}
+    onChange={handleChange}
+    className="h-11"
+  />
+</div>
 
               {/* Address */}
               <div className="space-y-1.5">
