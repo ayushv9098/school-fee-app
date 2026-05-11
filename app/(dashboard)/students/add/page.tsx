@@ -53,7 +53,7 @@ export default function AddStudentPage() {
 
     if (!form.is_free && (!form.total_fee || Number(form.total_fee) <= 0))
        return setError('Please enter a valid fee')
-      
+
     setLoading(true)
 
     const supabase = createClient()
@@ -239,7 +239,9 @@ export default function AddStudentPage() {
                 </div>
               
               <div className="space-y-1.5">
-  <Label htmlFor="diary_page_number">Diary Page Number</Label>
+  <Label htmlFor="diary_page_number">
+    Diary Page Number
+    </Label>
   <Input
     id="diary_page_number"
     name="diary_page_number"

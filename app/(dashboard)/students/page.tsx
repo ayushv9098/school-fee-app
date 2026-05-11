@@ -63,7 +63,7 @@ export default function StudentsPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           <input
-            placeholder="Name, mobile, class, diary number se search karo..."
+            placeholder="Search by name, mobile, class, diary number.."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full h-11 pl-9 pr-10 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
