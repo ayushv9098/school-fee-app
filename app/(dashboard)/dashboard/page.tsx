@@ -2,8 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, getProgressPercent } from '@/lib/calculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Users, IndianRupee, TrendingUp, AlertCircle } from 'lucide-react'
+import { Users, IndianRupee, TrendingUp, AlertCircle, GraduationCap } from 'lucide-react'
 import Link from 'next/link'
+import CollapsibleSection from '@/components/ui/collapsible-section' // <-- import your component
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -31,11 +32,13 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {/* Header */}
       <div>
         <h1 className="text-lg font-semibold text-zinc-900">Dashboard</h1>
         <p className="text-sm text-zinc-500">Ayushman Educational Academy</p>
       </div>
 
+      {/* KPI Cards (unchanged) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/students">
           <Card className="hover:shadow-md transition cursor-pointer">
@@ -90,14 +93,19 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <div>
-        <h2 className="text-base font-semibold text-zinc-900 mb-4">Class-wise Overview</h2>
+      {/* Class-wise Overview WITH CollapsibleSection */}
+      <CollapsibleSection
+        title="Class-wise Overview"
+        icon={<GraduationCap className="w-5 h-5" />}
+        badge={`${classStats.length} classes`}
+        defaultOpen={true}
+      >
         {classStats.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-zinc-400 text-sm">"No students right now — please add a student first."
-
-</p>
+              <p className="text-zinc-400 text-sm">
+                No students right now — please add a student first.
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -128,7 +136,7 @@ export default async function DashboardPage() {
             ))}
           </div>
         )}
-      </div>
+      </CollapsibleSection>
     </div>
   )
 }
