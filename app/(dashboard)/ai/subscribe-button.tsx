@@ -95,7 +95,7 @@ export default function SubscribeButton() {
       </div>
       <div>
         <p className="font-semibold text-zinc-900">Unlock the AI Assistant.</p>
-        <p className="text-sm text-zinc-500 mt-1">Unlimited AI chat for just ₹5 per month.</p>
+        <p className="text-sm text-zinc-500 mt-1">Unlimited AI chat for just ₹29 per month.</p>
       </div>
       <button
         onClick={handleSubscribe}
@@ -104,7 +104,7 @@ export default function SubscribeButton() {
       >
         {loading
           ? <><Loader2 className="w-4 h-4 animate-spin" />Processing...</>
-          : '₹5/month - Subscribe Now'
+          : '₹29/month - Subscribe Now'
         }
       </button>
     </div>
