@@ -2,9 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, getProgressPercent } from '@/lib/calculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Users, IndianRupee, TrendingUp, AlertCircle, GraduationCap } from 'lucide-react'
+import { Users, IndianRupee, TrendingUp, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
-import CollapsibleSection from '@/components/ui/collapsible-section'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -91,19 +90,14 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Class-wise Overview WITH CollapsibleSection */}
-      <CollapsibleSection
-        title="Class-wise Overview"
-        icon={<GraduationCap className="w-5 h-5" />}
-        badge={`${classStats.length} classes`}
-        defaultOpen={true}
-      >
+      <div>
+        <h2 className="text-base font-semibold text-zinc-900 mb-4">Class-wise Overview</h2>
         {classStats.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-zinc-400 text-sm">
-                No students right now — please add a student first.
-              </p>
+              <p className="text-zinc-400 text-sm">"No students right now — please add a student first."
+
+</p>
             </CardContent>
           </Card>
         ) : (
@@ -134,7 +128,7 @@ export default async function DashboardPage() {
             ))}
           </div>
         )}
-      </CollapsibleSection>
+      </div>
     </div>
   )
 }
