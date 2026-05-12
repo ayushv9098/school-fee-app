@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Users, IndianRupee, TrendingUp, AlertCircle, GraduationCap } from 'lucide-react'
 import Link from 'next/link'
-import CollapsibleSection from '@/components/ui/collapsible-section' // <-- import your component
+import CollapsibleSection from '@/components/ui/collapsible-section'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -32,13 +32,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-lg font-semibold text-zinc-900">Dashboard</h1>
         <p className="text-sm text-zinc-500">Ayushman Educational Academy</p>
       </div>
 
-      {/* KPI Cards (unchanged) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/students">
           <Card className="hover:shadow-md transition cursor-pointer">
