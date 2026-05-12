@@ -211,7 +211,7 @@ export default function AddStudentPage() {
       />
       <label htmlFor="is_free" className="text-sm text-zinc-600">Free (no fees)</label>
     </div>
-    <Input
+    <input
       id="total_fee"
       name="total_fee"
       type="number"
@@ -219,7 +219,8 @@ export default function AddStudentPage() {
       value={form.total_fee}
       onChange={handleChange}
       disabled={form.is_free}
-      className="h-11 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      onWheel={e => e.currentTarget.blur()}
+      className="flex h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
     />
   </div>
 </div>
