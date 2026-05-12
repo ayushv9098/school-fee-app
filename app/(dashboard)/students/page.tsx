@@ -101,10 +101,13 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      {/* Loading */}
       {loading && (
-        <div className="text-center py-8 text-zinc-400 text-sm">Searching...</div>
-      )}
+  <div className="space-y-3 animate-pulse">
+    {[1,2,3,4,5].map(i => (
+      <div key={i} className="h-16 bg-zinc-200 rounded-2xl" />
+    ))}
+  </div>
+)}
 
       {/* Desktop Table */}
       {!loading && (

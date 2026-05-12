@@ -4,6 +4,8 @@ import { DesktopSidebar, MobileSidebar } from '@/components/layout/sidebar'
 import Link from 'next/link'
 import { User, ArrowLeft } from 'lucide-react'
 import { usePathname } from 'next/navigation'
+import FloatingAIButton from '@/components/floating-ai-button'
+import { Suspense } from 'react'
 
 export default function DashboardLayout({
   children,
@@ -16,8 +18,24 @@ export default function DashboardLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+  <Suspense fallback={
+    <div className="p-4 md:p-6 space-y-5 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="h-6 bg-zinc-200 rounded-lg w-32" />
+        <div className="h-10 bg-zinc-200 rounded-xl w-28" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[1,2,3,4].map(i => (
+          <div key={i} className="h-24 bg-zinc-200 rounded-2xl" />
+        ))}
+      </div>
+      <div className="h-64 bg-zinc-200 rounded-2xl" />
+    </div>
+  }>
+    {children}
+  </Suspense>
+</main>
+<FloatingAIButton />
       </div>
     </div>
   )
