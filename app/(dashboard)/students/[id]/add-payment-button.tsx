@@ -101,10 +101,11 @@ export default function AddPaymentButton({
   return (
     <>
       {/* Trigger Button */}
-      <button
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
-      >
+     <button
+  id="add-payment-trigger"
+  onClick={() => setOpen(true)}
+  className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
+>
         <Plus className="w-4 h-4" />
         <span>Add Payment</span>
       </button>

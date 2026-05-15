@@ -9,6 +9,7 @@ import AddPaymentButton from '../[id]/add-payment-button'
 import dayjs from 'dayjs'
 import ReceiptPDF from '@/components/receipt-pdf'
 import EditStudentButton from './edit-student-button'
+import PaidCard from './paid-card'
 
 export default async function StudentDetailPage({
   params,
@@ -72,12 +73,7 @@ export default async function StudentDetailPage({
             <p className="text-2xl font-bold text-zinc-900">{formatCurrency(student.total_fee)}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-zinc-500 mb-1">Paid</p>
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(student.total_paid)}</p>
-          </CardContent>
-        </Card>
+        <PaidCard totalPaid={student.total_paid} remainingFee={student.remaining_fee} />
         <Card>
           <CardContent className="p-5">
             <p className="text-sm text-zinc-500 mb-1">Remaining</p>
