@@ -178,7 +178,6 @@ export default function ReceiptPDF(props: Props) {
   const [loading, setLoading] = useState(false)
   const [imgLoading, setImgLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [imageUrl, setImageUrl] = useState<string | null>(null)
   const receiptRef = useRef<HTMLDivElement>(null)
 
   async function handlePreview() {
@@ -191,30 +190,6 @@ export default function ReceiptPDF(props: Props) {
       console.error(err)
     }
     setLoading(false)
-  }
-
-  async function handleDownloadImage() {
-    setImgLoading(true)
-    try {
-      const el = receiptRef.current
-      if (!el) return
-
-      el.style.display = 'block'
-      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' })
-      el.style.display = 'none'
-
-      const imgUrl = canvas.toDataURL('image/jpeg', 0.95)
-      setImageUrl(imgUrl)
-
-      // Download image
-      const a = document.createElement('a')
-      a.href = imgUrl
-      a.download = `${props.studentName}-receipt.jpg`
-      a.click()
-    } catch (err) {
-      console.error(err)
-    }
-    setImgLoading(false)
   }
 
   async function handleWhatsApp() {
@@ -294,16 +269,6 @@ export default function ReceiptPDF(props: Props) {
           {loading ? (
             <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Generating...</>
           ) : '📄 View PDF Receipt'}
-        </button>
-
-        <button
-          onClick={handleDownloadImage}
-          disabled={imgLoading}
-          className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition disabled:opacity-50 flex items-center gap-2"
-        >
-          {imgLoading ? (
-            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Processing...</>
-          ) : '🖼️ Download as Image'}
         </button>
 
         <button
