@@ -45,9 +45,15 @@ interface Props {
   schoolName: string
   schoolAddress?: string
   schoolMobile?: string
+  payments?: {
+    id: string
+    amount: number
+    paid_at: string
+    mode: string
+  }[]
 }
 
-function ReceiptDocument({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile }: Props) {
+function ReceiptDocument({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments }: Props) {
   const receiptId = `REC-${Date.now()}`
   const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -77,26 +83,44 @@ function ReceiptDocument({ studentName, className, amountPaid, totalFees, remain
             <Text style={styles.value}>{className}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Payment Date</Text>
+            <Text style={styles.label}>Date of Generation</Text>
             <Text style={styles.value}>{date}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Total Fees</Text>
             <Text style={styles.value}>₹{totalFees.toLocaleString('en-IN')}</Text>
           </View>
+          
+          {/* Payment History Table for PDF */}
+          <View style={{ marginTop: 20, marginBottom: 10 }}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10, color: '#7C3AED' }}>Installment History</Text>
+            <View style={{ borderBottom: '1px solid #E4E4E7', flexDirection: 'row', paddingVertical: 5 }}>
+              <Text style={{ flex: 2, fontSize: 10, color: '#71717A' }}>Date</Text>
+              <Text style={{ flex: 1, fontSize: 10, color: '#71717A' }}>Mode</Text>
+              <Text style={{ flex: 1, fontSize: 10, color: '#71717A', textAlign: 'right' }}>Amount</Text>
+            </View>
+            {payments?.map((p) => (
+              <View key={p.id} style={{ borderBottom: '1px solid #F4F4F5', flexDirection: 'row', paddingVertical: 5 }}>
+                <Text style={{ flex: 2, fontSize: 10, color: '#18181B' }}>{new Date(p.paid_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+                <Text style={{ flex: 1, fontSize: 10, color: '#18181B', textTransform: 'capitalize' }}>{p.mode}</Text>
+                <Text style={{ flex: 1, fontSize: 10, fontWeight: 'bold', color: '#18181B', textAlign: 'right' }}>₹{p.amount.toLocaleString('en-IN')}</Text>
+              </View>
+            ))}
+          </View>
+
           <View style={styles.row}>
-            <Text style={styles.label}>Amount Paid</Text>
+            <Text style={styles.label}>Total Amount Paid</Text>
             <Text style={styles.valueGreen}>₹{amountPaid.toLocaleString('en-IN')}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Remaining Fees</Text>
+            <Text style={styles.label}>Outstanding Balance</Text>
             <Text style={remainingFees > 0 ? styles.valueRed : styles.valueGreen}>
               ₹{Math.max(remainingFees, 0).toLocaleString('en-IN')}
             </Text>
           </View>
         </View>
         <View style={styles.totalBox}>
-          <Text style={styles.totalLabel}>Amount Paid</Text>
+          <Text style={styles.totalLabel}>Grand Total Paid</Text>
           <Text style={styles.totalValue}>₹{amountPaid.toLocaleString('en-IN')}</Text>
         </View>
         <View style={styles.footer}>
@@ -111,7 +135,7 @@ function ReceiptDocument({ studentName, className, amountPaid, totalFees, remain
 }
 
 // Hidden receipt for image capture
-function ReceiptHTML({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile }: Props) {
+function ReceiptHTML({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments }: Props) {
   const receiptId = `REC-${Date.now()}`
   const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 
@@ -143,32 +167,67 @@ function ReceiptHTML({ studentName, className, amountPaid, totalFees, remainingF
       </div>
 
       {/* Details */}
-      <div style={{ borderTop: '1px solid #e4e4e7', marginBottom: '24px' }}>
-        {[
-          { label: 'Student Name', value: studentName },
-          { label: 'Class', value: className },
-          { label: 'Payment Date', value: date },
-          { label: 'Total Fees', value: `₹${totalFees.toLocaleString('en-IN')}` },
-          { label: 'Amount Paid', value: `₹${amountPaid.toLocaleString('en-IN')}`, highlight: '#16a34a' },
-          { label: 'Remaining Fees', value: `₹${Math.max(remainingFees, 0).toLocaleString('en-IN')}`, highlight: remainingFees > 0 ? '#dc2626' : '#16a34a' },
-        ].map((item, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f4f4f5' }}>
-            <span style={{ fontSize: '13px', color: '#71717a' }}>{item.label}</span>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: item.highlight || '#18181b' }}>{item.value}</span>
+      <div style={{ borderTop: '1px solid #e4e4e7', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f4f4f5' }}>
+          <span style={{ fontSize: '13px', color: '#71717a' }}>Student Name</span>
+          <span style={{ fontSize: '13px', fontWeight: '600' }}>{studentName}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f4f4f5' }}>
+          <span style={{ fontSize: '13px', color: '#71717a' }}>Class</span>
+          <span style={{ fontSize: '13px', fontWeight: '600' }}>{className}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f4f4f5' }}>
+          <span style={{ fontSize: '13px', color: '#71717a' }}>Total School Fee</span>
+          <span style={{ fontSize: '13px', fontWeight: '600' }}>₹{totalFees.toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+
+      {/* Payment History Table */}
+      <div style={{ marginBottom: '24px' }}>
+        <p style={{ fontSize: '12px', fontWeight: '700', color: '#7c3aed', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Installment History</p>
+        <div style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid #e4e4e7', paddingBottom: '8px', marginBottom: '8px' }}>
+            <span style={{ flex: 2, fontSize: '11px', color: '#71717a', fontWeight: '600' }}>Date</span>
+            <span style={{ flex: 1, fontSize: '11px', color: '#71717a', fontWeight: '600' }}>Mode</span>
+            <span style={{ flex: 1, fontSize: '11px', color: '#71717a', fontWeight: '600', textAlign: 'right' }}>Amount</span>
           </div>
-        ))}
+          {payments && payments.length > 0 ? (
+            payments.map((p) => (
+              <div key={p.id} style={{ display: 'flex', padding: '8px 0', borderBottom: '1px solid #f4f4f5' }}>
+                <span style={{ flex: 2, fontSize: '12px' }}>{new Date(p.paid_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                <span style={{ flex: 1, fontSize: '12px', textTransform: 'capitalize' }}>{p.mode}</span>
+                <span style={{ flex: 1, fontSize: '12px', fontWeight: '700', textAlign: 'right' }}>₹{p.amount.toLocaleString('en-IN')}</span>
+              </div>
+            ))
+          ) : (
+            <p style={{ fontSize: '12px', color: '#71717a', textAlign: 'center', padding: '10px' }}>No payments recorded</p>
+          )}
+        </div>
+      </div>
+
+      <div style={{ borderTop: '1px solid #e4e4e7', paddingTop: '12px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+          <span style={{ fontSize: '13px', color: '#71717a' }}>Total Amount Paid</span>
+          <span style={{ fontSize: '13px', fontWeight: '700', color: '#16a34a' }}>₹{amountPaid.toLocaleString('en-IN')}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+          <span style={{ fontSize: '13px', color: '#71717a' }}>Outstanding Balance</span>
+          <span style={{ fontSize: '13px', fontWeight: '700', color: remainingFees > 0 ? '#dc2626' : '#16a34a' }}>
+            ₹{Math.max(remainingFees, 0).toLocaleString('en-IN')}
+          </span>
+        </div>
       </div>
 
       {/* Total Box */}
       <div style={{ backgroundColor: '#f5f3ff', borderRadius: '12px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-        <span style={{ fontSize: '14px', fontWeight: '700', color: '#7c3aed' }}>Total Amount Paid</span>
+        <span style={{ fontSize: '14px', fontWeight: '700', color: '#7c3aed' }}>Grand Total Paid</span>
         <span style={{ fontSize: '24px', fontWeight: '800', color: '#7c3aed' }}>₹{amountPaid.toLocaleString('en-IN')}</span>
       </div>
 
       {/* Footer */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '20px', borderTop: '1px dotted #e4e4e7' }}>
         <p style={{ fontSize: '10px', color: '#a1a1aa', maxWidth: '200px', lineHeight: '1.5' }}>
-          This is a computer generated receipt and does not require a physical signature.
+          Generated digitally on {date}. This record shows all installments made towards the total school fee.
         </p>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: '120px', height: '1px', backgroundColor: '#71717a', marginBottom: '8px' }}></div>

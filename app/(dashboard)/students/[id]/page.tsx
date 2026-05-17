@@ -124,6 +124,7 @@ export default async function StudentDetailPage({
   amountPaid={student.total_paid}
   totalFees={student.total_fee}
   remainingFees={student.remaining_fee}
+  payments={payments || []}
   schoolName="Ayushman Educational Academy"
 />
 
