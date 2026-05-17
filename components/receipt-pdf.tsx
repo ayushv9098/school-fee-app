@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import html2canvas from 'html2canvas'
 
 const styles = StyleSheet.create({
   page: {
@@ -44,6 +45,7 @@ interface Props {
   schoolAddress?: string
   schoolMobile?: string
 }
+
 function ReceiptDocument({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile }: Props) {
   const receiptId = `REC-${Date.now()}`
   const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -78,9 +80,9 @@ function ReceiptDocument({ studentName, className, amountPaid, totalFees, remain
             <Text style={styles.value}>{date}</Text>
           </View>
           <View style={styles.row}>
-  <Text style={styles.label}>Total Fees</Text>
-  <Text style={styles.value}>₹{totalFees.toLocaleString('en-IN')}</Text>
-</View>
+            <Text style={styles.label}>Total Fees</Text>
+            <Text style={styles.value}>₹{totalFees.toLocaleString('en-IN')}</Text>
+          </View>
           <View style={styles.row}>
             <Text style={styles.label}>Amount Paid</Text>
             <Text style={styles.valueGreen}>₹{amountPaid.toLocaleString('en-IN')}</Text>
@@ -107,9 +109,77 @@ function ReceiptDocument({ studentName, className, amountPaid, totalFees, remain
   )
 }
 
+// Hidden receipt for image capture
+function ReceiptHTML({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile }: Props) {
+  const receiptId = `REC-${Date.now()}`
+  const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+
+  return (
+    <div style={{
+      width: '600px',
+      padding: '40px',
+      backgroundColor: '#ffffff',
+      fontFamily: 'Arial, sans-serif',
+    }}>
+      {/* Header Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <div>
+          <p style={{ fontSize: '11px', color: '#71717A', margin: 0 }}>Receipt ID</p>
+          <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#18181B', margin: 0 }}>{receiptId}</p>
+        </div>
+        <span style={{ backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: '11px', padding: '4px 12px', borderRadius: '20px', fontWeight: 'bold' }}>
+          ✓ Paid
+        </span>
+      </div>
+
+      {/* School */}
+      <div style={{ textAlign: 'center', borderBottom: '2px solid #7C3AED', paddingBottom: '20px', marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#7C3AED', margin: '0 0 4px' }}>{schoolName}</h1>
+        {schoolAddress && <p style={{ fontSize: '12px', color: '#71717A', margin: '2px 0' }}>{schoolAddress}</p>}
+        {schoolMobile && <p style={{ fontSize: '12px', color: '#71717A', margin: '2px 0' }}>📞 {schoolMobile}</p>}
+        <p style={{ fontSize: '13px', color: '#71717A', marginTop: '8px' }}>Fee Payment Receipt</p>
+      </div>
+
+      {/* Details */}
+      {[
+        { label: 'Student Name', value: studentName, color: '#18181B' },
+        { label: 'Class', value: className, color: '#18181B' },
+        { label: 'Payment Date', value: date, color: '#18181B' },
+        { label: 'Total Fees', value: `₹${totalFees.toLocaleString('en-IN')}`, color: '#18181B' },
+        { label: 'Amount Paid', value: `₹${amountPaid.toLocaleString('en-IN')}`, color: '#16A34A' },
+        { label: 'Remaining Fees', value: `₹${Math.max(remainingFees, 0).toLocaleString('en-IN')}`, color: remainingFees > 0 ? '#DC2626' : '#16A34A' },
+      ].map((item, i) => (
+        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #F4F4F5' }}>
+          <span style={{ fontSize: '13px', color: '#71717A' }}>{item.label}</span>
+          <span style={{ fontSize: '13px', fontWeight: 'bold', color: item.color }}>{item.value}</span>
+        </div>
+      ))}
+
+      {/* Total Box */}
+      <div style={{ backgroundColor: '#F5F3FF', borderRadius: '8px', padding: '16px', marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#7C3AED' }}>Amount Paid</span>
+        <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#7C3AED' }}>₹{amountPaid.toLocaleString('en-IN')}</span>
+      </div>
+
+      {/* Footer */}
+      <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #E4E4E7', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <p style={{ fontSize: '10px', color: '#A1A1AA', maxWidth: '200px' }}>Generated digitally by school fee management system.</p>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ borderTop: '1px solid #71717A', paddingTop: '4px', fontSize: '11px', color: '#71717A', width: '120px' }}>
+            Authorized Signature
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ReceiptPDF(props: Props) {
   const [loading, setLoading] = useState(false)
+  const [imgLoading, setImgLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const receiptRef = useRef<HTMLDivElement>(null)
 
   async function handlePreview() {
     setLoading(true)
@@ -123,7 +193,75 @@ export default function ReceiptPDF(props: Props) {
     setLoading(false)
   }
 
-  async function handleDownload() {
+  async function handleDownloadImage() {
+    setImgLoading(true)
+    try {
+      const el = receiptRef.current
+      if (!el) return
+
+      el.style.display = 'block'
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' })
+      el.style.display = 'none'
+
+      const imgUrl = canvas.toDataURL('image/jpeg', 0.95)
+      setImageUrl(imgUrl)
+
+      // Download image
+      const a = document.createElement('a')
+      a.href = imgUrl
+      a.download = `${props.studentName}-receipt.jpg`
+      a.click()
+    } catch (err) {
+      console.error(err)
+    }
+    setImgLoading(false)
+  }
+
+  async function handleWhatsApp() {
+  setImgLoading(true)
+  try {
+    const el = receiptRef.current
+    if (!el) return
+
+    el.style.display = 'block'
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' })
+    el.style.display = 'none'
+
+    // Convert to blob
+    canvas.toBlob(async (blob) => {
+      if (!blob) return
+
+      const file = new File([blob], `${props.studentName}-receipt.jpg`, { type: 'image/jpeg' })
+
+      // Check if Web Share API supports files (mobile)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `Fee Receipt - ${props.studentName}`,
+          text: `Dear Parent, fee receipt for ${props.studentName} (${props.className}). Amount Paid: ₹${props.amountPaid.toLocaleString('en-IN')}. Remaining: ₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}. — ${props.schoolName}`,
+        })
+      } else {
+        // Desktop fallback — download + open WhatsApp
+        const imgUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = imgUrl
+        a.download = `${props.studentName}-receipt.jpg`
+        a.click()
+
+        setTimeout(() => {
+          const message = `Dear Parent, fee receipt for *${props.studentName}* (${props.className}). Amount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*. Remaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*. — ${props.schoolName}`
+          window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
+        }, 1000)
+      }
+    }, 'image/jpeg', 0.95)
+
+  } catch (err) {
+    console.error(err)
+  }
+  setImgLoading(false)
+}
+
+  function handleDownloadPDF() {
     if (!previewUrl) return
     const a = document.createElement('a')
     a.href = previewUrl
@@ -138,25 +276,56 @@ export default function ReceiptPDF(props: Props) {
 
   return (
     <div className="w-full">
-      <button
-        onClick={handlePreview}
-        disabled={loading}
-        className="w-full sm:w-auto h-11 px-6 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50 flex items-center justify-center gap-2"
-      >
-        {loading ? 'Generating...' : '📄 View Receipt'}
-      </button>
 
-      {/* Preview Modal */}
+      {/* Hidden receipt for image capture */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+        <div ref={receiptRef} style={{ display: 'none' }}>
+          <ReceiptHTML {...props} />
+        </div>
+      </div>
+
+      {/* Buttons */}
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={handlePreview}
+          disabled={loading}
+          className="h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50 flex items-center gap-2"
+        >
+          {loading ? (
+            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Generating...</>
+          ) : '📄 View PDF Receipt'}
+        </button>
+
+        <button
+          onClick={handleDownloadImage}
+          disabled={imgLoading}
+          className="h-11 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition disabled:opacity-50 flex items-center gap-2"
+        >
+          {imgLoading ? (
+            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Processing...</>
+          ) : '🖼️ Download as Image'}
+        </button>
+
+        <button
+          onClick={handleWhatsApp}
+          disabled={imgLoading}
+          className="h-11 px-5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition disabled:opacity-50 flex items-center gap-2"
+        >
+          {imgLoading ? (
+            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Processing...</>
+          ) : '💬 Share on WhatsApp'}
+        </button>
+      </div>
+
+      {/* PDF Preview Modal */}
       {previewUrl && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl h-[85vh] flex flex-col">
-
-            {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-zinc-100">
               <h2 className="text-base font-semibold text-zinc-900">Receipt Preview</h2>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleDownload}
+                  onClick={handleDownloadPDF}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition"
                 >
                   ⬇️ Download PDF
@@ -169,14 +338,8 @@ export default function ReceiptPDF(props: Props) {
                 </button>
               </div>
             </div>
-
-            {/* PDF Preview */}
             <div className="flex-1 overflow-hidden rounded-b-2xl">
-              <iframe
-                src={previewUrl}
-                className="w-full h-full"
-                title="Receipt Preview"
-              />
+              <iframe src={previewUrl} className="w-full h-full" title="Receipt Preview" />
             </div>
           </div>
         </div>
