@@ -183,9 +183,15 @@ export default function ReceiptPDF(props: Props) {
   async function handlePreview() {
     setLoading(true)
     try {
-      const blob = await pdf(<ReceiptDocument {...props} />).toBlob()
-      const url = URL.createObjectURL(blob)
-      setPreviewUrl(url)
+      const el = receiptRef.current
+      if (!el) return
+
+      el.style.display = 'block'
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' })
+      el.style.display = 'none'
+
+      const imgUrl = canvas.toDataURL('image/jpeg', 0.95)
+      setPreviewUrl(imgUrl)
     } catch (err) {
       console.error(err)
     }
@@ -236,16 +242,15 @@ export default function ReceiptPDF(props: Props) {
   setImgLoading(false)
 }
 
-  function handleDownloadPDF() {
+  function handleDownloadImage() {
     if (!previewUrl) return
     const a = document.createElement('a')
     a.href = previewUrl
-    a.download = `${props.studentName}-receipt.pdf`
+    a.download = `${props.studentName}-receipt.jpg`
     a.click()
   }
 
   function handleClose() {
-    if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewUrl(null)
   }
 
@@ -268,7 +273,7 @@ export default function ReceiptPDF(props: Props) {
         >
           {loading ? (
             <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Generating...</>
-          ) : '📄 View PDF Receipt'}
+          ) : '📄 View Receipt'}
         </button>
 
         <button
@@ -282,18 +287,18 @@ export default function ReceiptPDF(props: Props) {
         </button>
       </div>
 
-      {/* PDF Preview Modal */}
+      {/* Preview Modal */}
       {previewUrl && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl h-[85vh] flex flex-col">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-zinc-100">
               <h2 className="text-base font-semibold text-zinc-900">Receipt Preview</h2>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleDownloadPDF}
+                  onClick={handleDownloadImage}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition"
                 >
-                  ⬇️ Download PDF
+                  ⬇️ Download Image
                 </button>
                 <button
                   onClick={handleClose}
@@ -303,8 +308,8 @@ export default function ReceiptPDF(props: Props) {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-hidden rounded-b-2xl">
-              <iframe src={previewUrl} className="w-full h-full" title="Receipt Preview" />
+            <div className="flex-1 overflow-auto p-4 bg-zinc-50 flex justify-center">
+              <img src={previewUrl} className="max-w-full h-auto shadow-md rounded-lg" alt="Receipt Preview" />
             </div>
           </div>
         </div>
