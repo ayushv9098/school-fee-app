@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import NProgress from 'nprogress'
 
@@ -57,7 +57,9 @@ export default function ProgressBar() {
           box-shadow: 0 0 10px #7C3AED, 0 0 5px #7C3AED;
         }
       `}</style>
-      <ProgressBarInner />
+      <Suspense fallback={null}>
+        <ProgressBarInner />
+      </Suspense>
     </>
   )
 }
