@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import html2canvas from 'html2canvas'
+import { Download, X } from 'lucide-react'
 
 const styles = StyleSheet.create({
   page: {
@@ -116,58 +117,62 @@ function ReceiptHTML({ studentName, className, amountPaid, totalFees, remainingF
 
   return (
     <div style={{
-      width: '600px',
+      width: '500px',
       padding: '40px',
       backgroundColor: '#ffffff',
-      fontFamily: 'Arial, sans-serif',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      color: '#18181b',
     }}>
-      {/* Header Row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+      {/* Receipt Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
         <div>
-          <p style={{ fontSize: '11px', color: '#71717A', margin: 0 }}>Receipt ID</p>
-          <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#18181B', margin: 0 }}>{receiptId}</p>
+          <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a', margin: '0 0 4px' }}>Receipt ID</p>
+          <p style={{ fontSize: '12px', fontWeight: '700', margin: 0 }}>{receiptId}</p>
         </div>
-        <span style={{ backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: '11px', padding: '4px 12px', borderRadius: '20px', fontWeight: 'bold' }}>
+        <div style={{ backgroundColor: '#dcfce7', color: '#16a34a', fontSize: '10px', fontWeight: '700', padding: '4px 10px', borderRadius: '12px', textTransform: 'uppercase' }}>
           ✓ Paid
-        </span>
+        </div>
       </div>
 
-      {/* School */}
-      <div style={{ textAlign: 'center', borderBottom: '2px solid #7C3AED', paddingBottom: '20px', marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#7C3AED', margin: '0 0 4px' }}>{schoolName}</h1>
-        {schoolAddress && <p style={{ fontSize: '12px', color: '#71717A', margin: '2px 0' }}>{schoolAddress}</p>}
-        {schoolMobile && <p style={{ fontSize: '12px', color: '#71717A', margin: '2px 0' }}>📞 {schoolMobile}</p>}
-        <p style={{ fontSize: '13px', color: '#71717A', marginTop: '8px' }}>Fee Payment Receipt</p>
+      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#7c3aed', margin: '0 0 8px' }}>{schoolName}</h1>
+        {schoolAddress && <p style={{ fontSize: '12px', color: '#71717a', margin: '0 0 4px' }}>{schoolAddress}</p>}
+        {schoolMobile && <p style={{ fontSize: '12px', color: '#71717a', margin: 0 }}>📞 {schoolMobile}</p>}
+        <div style={{ margin: '20px auto 0', height: '2px', width: '60px', backgroundColor: '#7c3aed' }}></div>
+        <p style={{ fontSize: '14px', fontWeight: '600', color: '#71717a', marginTop: '16px' }}>Fee Payment Receipt</p>
       </div>
 
       {/* Details */}
-      {[
-        { label: 'Student Name', value: studentName, color: '#18181B' },
-        { label: 'Class', value: className, color: '#18181B' },
-        { label: 'Payment Date', value: date, color: '#18181B' },
-        { label: 'Total Fees', value: `₹${totalFees.toLocaleString('en-IN')}`, color: '#18181B' },
-        { label: 'Amount Paid', value: `₹${amountPaid.toLocaleString('en-IN')}`, color: '#16A34A' },
-        { label: 'Remaining Fees', value: `₹${Math.max(remainingFees, 0).toLocaleString('en-IN')}`, color: remainingFees > 0 ? '#DC2626' : '#16A34A' },
-      ].map((item, i) => (
-        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #F4F4F5' }}>
-          <span style={{ fontSize: '13px', color: '#71717A' }}>{item.label}</span>
-          <span style={{ fontSize: '13px', fontWeight: 'bold', color: item.color }}>{item.value}</span>
-        </div>
-      ))}
+      <div style={{ borderTop: '1px solid #e4e4e7', marginBottom: '24px' }}>
+        {[
+          { label: 'Student Name', value: studentName },
+          { label: 'Class', value: className },
+          { label: 'Payment Date', value: date },
+          { label: 'Total Fees', value: `₹${totalFees.toLocaleString('en-IN')}` },
+          { label: 'Amount Paid', value: `₹${amountPaid.toLocaleString('en-IN')}`, highlight: '#16a34a' },
+          { label: 'Remaining Fees', value: `₹${Math.max(remainingFees, 0).toLocaleString('en-IN')}`, highlight: remainingFees > 0 ? '#dc2626' : '#16a34a' },
+        ].map((item, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f4f4f5' }}>
+            <span style={{ fontSize: '13px', color: '#71717a' }}>{item.label}</span>
+            <span style={{ fontSize: '13px', fontWeight: '600', color: item.highlight || '#18181b' }}>{item.value}</span>
+          </div>
+        ))}
+      </div>
 
       {/* Total Box */}
-      <div style={{ backgroundColor: '#F5F3FF', borderRadius: '8px', padding: '16px', marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#7C3AED' }}>Amount Paid</span>
-        <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#7C3AED' }}>₹{amountPaid.toLocaleString('en-IN')}</span>
+      <div style={{ backgroundColor: '#f5f3ff', borderRadius: '12px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+        <span style={{ fontSize: '14px', fontWeight: '700', color: '#7c3aed' }}>Total Amount Paid</span>
+        <span style={{ fontSize: '24px', fontWeight: '800', color: '#7c3aed' }}>₹{amountPaid.toLocaleString('en-IN')}</span>
       </div>
 
       {/* Footer */}
-      <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #E4E4E7', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <p style={{ fontSize: '10px', color: '#A1A1AA', maxWidth: '200px' }}>Generated digitally by school fee management system.</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '20px', borderTop: '1px dotted #e4e4e7' }}>
+        <p style={{ fontSize: '10px', color: '#a1a1aa', maxWidth: '200px', lineHeight: '1.5' }}>
+          This is a computer generated receipt and does not require a physical signature.
+        </p>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ borderTop: '1px solid #71717A', paddingTop: '4px', fontSize: '11px', color: '#71717A', width: '120px' }}>
-            Authorized Signature
-          </div>
+          <div style={{ width: '120px', height: '1px', backgroundColor: '#71717a', marginBottom: '8px' }}></div>
+          <p style={{ fontSize: '11px', color: '#71717a', fontWeight: '600' }}>Authorized Signatory</p>
         </div>
       </div>
     </div>
@@ -187,10 +192,10 @@ export default function ReceiptPDF(props: Props) {
       if (!el) return
 
       el.style.display = 'block'
-      const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' })
+      const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff', logging: false, useCORS: true })
       el.style.display = 'none'
 
-      const imgUrl = canvas.toDataURL('image/jpeg', 0.95)
+      const imgUrl = canvas.toDataURL('image/jpeg', 1.0)
       setPreviewUrl(imgUrl)
     } catch (err) {
       console.error(err)
@@ -205,7 +210,7 @@ export default function ReceiptPDF(props: Props) {
     if (!el) return
 
     el.style.display = 'block'
-    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff' })
+    const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff', logging: false, useCORS: true })
     el.style.display = 'none'
 
     // Convert to blob
@@ -269,47 +274,63 @@ export default function ReceiptPDF(props: Props) {
         <button
           onClick={handlePreview}
           disabled={loading}
-          className="h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50 flex items-center gap-2"
+          className="h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
         >
           {loading ? (
             <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Generating...</>
-          ) : '📄 View Receipt'}
+          ) : <>📄 View Receipt</>}
         </button>
 
         <button
           onClick={handleWhatsApp}
           disabled={imgLoading}
-          className="h-11 px-5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition disabled:opacity-50 flex items-center gap-2"
+          className="h-11 px-5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
         >
           {imgLoading ? (
             <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Processing...</>
-          ) : '💬 Share on WhatsApp'}
+          ) : <>💬 Share on WhatsApp</>}
         </button>
       </div>
 
       {/* Preview Modal */}
       {previewUrl && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-zinc-100">
-              <h2 className="text-base font-semibold text-zinc-900">Receipt Preview</h2>
-              <div className="flex items-center gap-2">
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 sm:p-6">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+              <h2 className="text-lg font-bold text-zinc-900">Receipt Preview</h2>
+              <div className="flex items-center gap-3">
                 <button
                   onClick={handleDownloadImage}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold shadow-sm transition-all hover:scale-105 active:scale-95"
                 >
-                  ⬇️ Download Image
+                  <Download className="w-4 h-4" />
+                  Download Image
                 </button>
                 <button
                   onClick={handleClose}
-                  className="p-2 rounded-xl hover:bg-zinc-100 transition text-zinc-500 text-lg"
+                  className="p-2 rounded-xl hover:bg-zinc-100 transition-colors text-zinc-400 hover:text-zinc-600"
                 >
-                  ✕
+                  <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-4 bg-zinc-50 flex justify-center">
-              <img src={previewUrl} className="max-w-full h-auto shadow-md rounded-lg" alt="Receipt Preview" />
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-auto bg-zinc-100/50 p-6 sm:p-8 flex justify-center">
+              <div className="relative">
+                <img 
+                  src={previewUrl} 
+                  className="max-w-full h-auto shadow-2xl rounded-lg ring-1 ring-black/5" 
+                  alt="Receipt Preview" 
+                />
+              </div>
+            </div>
+            
+            <div className="p-3 bg-zinc-50 border-t border-zinc-100 flex justify-center">
+               <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">
+                 Preview Mode • High Quality Capture
+               </p>
             </div>
           </div>
         </div>
