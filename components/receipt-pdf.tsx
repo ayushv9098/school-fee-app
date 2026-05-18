@@ -3,7 +3,20 @@
 import { useState, useRef } from 'react'
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import html2canvas from 'html2canvas'
-import { Download, X } from 'lucide-react'
+import { Download, X, FileText } from 'lucide-react'
+
+function WhatsAppIcon({ className }: { className?: string }) {
+  return (
+    <svg 
+      viewBox="0 0 24 24" 
+      className={className}
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.353-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.412.015 12.046c0 2.121.554 4.191 1.605 6.046L0 24l6.337-1.663a11.785 11.854 0 005.712 1.66h.005c6.637 0 12.032-5.412 12.035-12.047a11.805 11.805 0 00-3.576-8.497"/>
+    </svg>
+  )
+}
 
 const styles = StyleSheet.create({
   page: {
@@ -65,8 +78,8 @@ const translations = {
     remainingBalance: 'Remaining Balance',
     authorizedSignatory: 'Authorized Signatory',
     footer: (date: string) => `Generated digitally on ${date}. This record shows all installments made towards the total school fee.`,
-    viewReceipt: '📄 View Receipt',
-    shareWhatsApp: '💬 Share on WhatsApp',
+    viewReceipt: 'View Receipt',
+    shareWhatsApp: 'Share on WhatsApp',
     generating: 'Generating...',
     processing: 'Processing...',
   },
@@ -86,8 +99,8 @@ const translations = {
     remainingBalance: 'बकाया राशि',
     authorizedSignatory: 'अधिकृत हस्ताक्षर',
     footer: (date: string) => `${date} को डिजिटल रूप से बनाया गया। यह रिकॉर्ड स्कूल फीस के लिए किए गए सभी भुगतानों को दर्शाता है।`,
-    viewReceipt: '📄 रसीद देखें',
-    shareWhatsApp: '💬 व्हाट्सएप पर भेजें',
+    viewReceipt: 'रसीद देखें',
+    shareWhatsApp: 'व्हाट्सएप पर भेजें',
     generating: 'बना रहे हैं...',
     processing: 'प्रगति पर है...',
   }
@@ -436,7 +449,12 @@ export default function ReceiptPDF(props: Props) {
         >
           {loading ? (
             <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t.generating}</>
-          ) : <>{t.viewReceipt}</>}
+          ) : (
+            <>
+              <FileText className="w-4 h-4" />
+              {t.viewReceipt}
+            </>
+          )}
         </button>
 
         <button
@@ -446,7 +464,12 @@ export default function ReceiptPDF(props: Props) {
         >
           {imgLoading ? (
             <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t.processing}</>
-          ) : <>{t.shareWhatsApp}</>}
+          ) : (
+            <>
+              <WhatsAppIcon className="w-5 h-5" />
+              {t.shareWhatsApp}
+            </>
+          )}
         </button>
       </div>
 
