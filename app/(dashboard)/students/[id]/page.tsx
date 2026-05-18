@@ -141,23 +141,23 @@ export default async function StudentDetailPage({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100">
-                    <th className="text-left py-2 text-zinc-500 font-medium whitespace-nowrap">Date</th>
-                    <th className="text-left py-2 text-zinc-500 font-medium whitespace-nowrap">Amount</th>
-                    <th className="text-left py-2 text-zinc-500 font-medium whitespace-nowrap">Mode</th>
-                    <th className="text-left py-2 text-zinc-500 font-medium whitespace-nowrap">Note</th>
+                    <th className="text-left py-2 pr-4 text-zinc-500 font-medium whitespace-nowrap">Date</th>
+                    <th className="text-left py-2 pr-4 text-zinc-500 font-medium whitespace-nowrap">Amount</th>
+                    <th className="text-left py-2 pr-4 text-zinc-500 font-medium whitespace-nowrap">Mode</th>
+                    <th className="text-left py-2 text-zinc-500 font-medium">Note</th>
                   </tr>
                 </thead>
                 <tbody>
                   {payments?.map(p => (
                     <tr key={p.id} className="border-b border-zinc-50">
-                      <td className="py-3 text-zinc-600 whitespace-nowrap">
+                      <td className="py-3 pr-4 text-zinc-600 whitespace-nowrap">
                         {dayjs(p.paid_at).format('DD MMM YYYY')}
                       </td>
-                      <td className="py-3 font-medium text-green-600 whitespace-nowrap">
+                      <td className="py-3 pr-4 font-medium text-green-600 whitespace-nowrap">
                         {formatCurrency(p.amount)}
                       </td>
-                      <td className="py-3 text-zinc-600 whitespace-nowrap capitalize">{p.mode}</td>
-                      <td className="py-3 text-zinc-400">{p.note || '-'}</td>
+                      <td className="py-3 pr-4 text-zinc-600 whitespace-nowrap capitalize">{p.mode}</td>
+                      <td className="py-3 text-zinc-400 min-w-[150px]">{p.note || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
