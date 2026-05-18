@@ -1,11 +1,11 @@
 export default function DashboardLoading() {
   return (
     <div className="p-4 md:p-6 space-y-6 bg-zinc-50 min-h-[calc(100vh-56px)] relative">
-      {/* Central Spinner */}
+      {/* Compact Central Spinner */}
       <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none lg:pl-60">
-        <div className="flex flex-col items-center gap-3 bg-white/80 backdrop-blur-sm p-6 rounded-3xl shadow-xl border border-zinc-100 animate-in zoom-in duration-300">
-          <div className="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-medium text-zinc-600">Loading insights...</p>
+        <div className="flex flex-col items-center gap-2 bg-white/90 backdrop-blur-md px-5 py-4 rounded-2xl shadow-2xl border border-zinc-200/50 animate-in zoom-in-95 duration-300">
+          <div className="w-6 h-6 border-3 border-violet-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Loading</p>
         </div>
       </div>
 

@@ -1,12 +1,9 @@
 export default function LoadingPage() {
   return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center relative">
-      <div className="flex flex-col items-center gap-4 bg-white p-8 rounded-3xl shadow-xl border border-zinc-100">
-        <div className="w-12 h-12 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
-        <div className="space-y-2 text-center">
-          <p className="text-lg font-bold text-zinc-900">Ayushman</p>
-          <p className="text-sm text-zinc-500 animate-pulse">Preparing your dashboard...</p>
-        </div>
+      <div className="flex flex-col items-center gap-2 bg-white/90 backdrop-blur-md px-6 py-5 rounded-2xl shadow-2xl border border-zinc-200/50 animate-in zoom-in-95 duration-300">
+        <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mt-1">Loading</p>
       </div>
       
       {/* Background skeletons for depth */}
