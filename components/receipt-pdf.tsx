@@ -7,7 +7,7 @@ import { Download, X } from 'lucide-react'
 
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 32,
     fontFamily: 'Helvetica',
     backgroundColor: '#ffffff',
   },
@@ -15,26 +15,83 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
-  receiptId: { fontSize: 10, color: '#71717A' },
-  receiptIdValue: { fontSize: 11, fontWeight: 'bold', color: '#18181B' },
-  badge: { backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: 10, padding: '4px 10px', borderRadius: 20 },
-  header: { textAlign: 'center', marginBottom: 30, borderBottom: '2px solid #7C3AED', paddingBottom: 20 },
-  schoolName: { fontSize: 22, fontWeight: 'bold', color: '#7C3AED', marginBottom: 4 },
+  receiptId: { fontSize: 9, color: '#71717A', textTransform: 'uppercase' },
+  receiptIdValue: { fontSize: 11, fontWeight: 'bold', color: '#18181B', marginTop: 2 },
+  badge: { backgroundColor: '#DCFCE7', color: '#16A34A', fontSize: 10, fontWeight: 'bold', padding: '4px 10px', borderRadius: 12 },
+  header: { textAlign: 'center', marginBottom: 32, borderBottom: '2px solid #7C3AED', paddingBottom: 20 },
+  schoolName: { fontSize: 24, fontWeight: 'bold', color: '#7C3AED', marginBottom: 4 },
   subtitle: { fontSize: 11, color: '#71717A' },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottom: '1px solid #F4F4F5' },
+  sectionTitle: { fontSize: 11, fontWeight: 'bold', color: '#7C3AED', textTransform: 'uppercase', marginBottom: 12, marginTop: 20 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottom: '1px solid #F4F4F5' },
   label: { fontSize: 12, color: '#71717A' },
   value: { fontSize: 12, fontWeight: 'bold', color: '#18181B' },
   valueGreen: { fontSize: 12, fontWeight: 'bold', color: '#16A34A' },
   valueRed: { fontSize: 12, fontWeight: 'bold', color: '#DC2626' },
-  totalBox: { backgroundColor: '#F5F3FF', borderRadius: 8, padding: 16, marginTop: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { fontSize: 14, fontWeight: 'bold', color: '#7C3AED' },
-  totalValue: { fontSize: 18, fontWeight: 'bold', color: '#7C3AED' },
-  footer: { marginTop: 40, paddingTop: 20, borderTop: '1px solid #E4E4E7', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  footerText: { fontSize: 9, color: '#A1A1AA', maxWidth: 200 },
-  signatureLine: { borderTop: '1px solid #71717A', paddingTop: 4, fontSize: 10, color: '#71717A', width: 120, textAlign: 'center' },
+  totalBox: { 
+    backgroundColor: '#F5F3FF', 
+    borderRadius: 12, 
+    padding: 16, 
+    marginTop: 24, 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    border: '1px solid #DDD6FE'
+  },
+  totalBoxLabel: { fontSize: 10, fontWeight: 'bold', color: '#7C3AED', textTransform: 'uppercase', marginBottom: 2 },
+  totalBoxValue: { fontSize: 20, fontWeight: 'bold', color: '#7C3AED' },
+  balanceLabel: { fontSize: 9, color: '#7C3AED', fontWeight: 'bold', textAlign: 'right', textTransform: 'uppercase', marginBottom: 2 },
+  balanceValue: { fontSize: 16, fontWeight: 'bold', color: '#7C3AED', textAlign: 'right' },
+  footer: { marginTop: 'auto', paddingTop: 16, borderTop: '1px solid #E4E4E7', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+  footerText: { fontSize: 8, color: '#A1A1AA', maxWidth: 220, lineHeight: 1.4 },
+  signatureLine: { borderTop: '1px solid #71717A', paddingTop: 4, fontSize: 9, fontWeight: 'bold', color: '#71717A', width: 110, textAlign: 'center' },
 })
+
+const translations = {
+  en: {
+    receiptId: 'Receipt ID',
+    paid: 'PAID',
+    feeReceipt: 'FEE PAYMENT RECEIPT',
+    studentDetails: 'Student Details',
+    studentName: 'Student Name',
+    class: 'Class',
+    paymentBreakdown: 'Payment Breakdown',
+    totalFee: 'Total School Fee',
+    installmentPaid: 'Installment Paid',
+    totalAmountPaid: 'Total Amount Paid',
+    outstandingBalance: 'Outstanding Balance',
+    grandTotalPaid: 'Grand Total Paid',
+    remainingBalance: 'Remaining Balance',
+    authorizedSignatory: 'Authorized Signatory',
+    footer: (date: string) => `Generated digitally on ${date}. This record shows all installments made towards the total school fee.`,
+    viewReceipt: '📄 View Receipt',
+    shareWhatsApp: '💬 Share on WhatsApp',
+    generating: 'Generating...',
+    processing: 'Processing...',
+  },
+  hi: {
+    receiptId: 'रसीद संख्या',
+    paid: 'जमा',
+    feeReceipt: 'शुल्क भुगतान रसीद',
+    studentDetails: 'छात्र का विवरण',
+    studentName: 'छात्र का नाम',
+    class: 'कक्षा',
+    paymentBreakdown: 'भुगतान का विवरण',
+    totalFee: 'कुल स्कूल फीस',
+    installmentPaid: 'जमा किस्त',
+    totalAmountPaid: 'कुल जमा राशि',
+    outstandingBalance: 'शेष राशि',
+    grandTotalPaid: 'कुल जमा राशि',
+    remainingBalance: 'बकाया राशि',
+    authorizedSignatory: 'अधिकृत हस्ताक्षर',
+    footer: (date: string) => `${date} को डिजिटल रूप से बनाया गया। यह रिकॉर्ड स्कूल फीस के लिए किए गए सभी भुगतानों को दर्शाता है।`,
+    viewReceipt: '📄 रसीद देखें',
+    shareWhatsApp: '💬 व्हाट्सएप पर भेजें',
+    generating: 'बना रहे हैं...',
+    processing: 'प्रगति पर है...',
+  }
+}
 
 interface Props {
   studentName: string
@@ -51,82 +108,91 @@ interface Props {
     paid_at: string
     mode: string
   }[]
+  lang?: 'en' | 'hi'
 }
 
-function ReceiptDocument({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments }: Props) {
+function ReceiptDocument({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'en' }: Props) {
+  const t = translations[lang]
   const receiptId = `REC-${Date.now()}`
-  const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+  const date = new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.receiptId}>Receipt ID</Text>
+            <Text style={styles.receiptId}>{t.receiptId}</Text>
             <Text style={styles.receiptIdValue}>{receiptId}</Text>
           </View>
-          <Text style={styles.badge}>✓ Paid</Text>
+          <Text style={styles.badge}>✓ {t.paid.toUpperCase()}</Text>
         </View>
+
         <View style={styles.header}>
           <Text style={styles.schoolName}>{schoolName}</Text>
           {schoolAddress ? <Text style={styles.subtitle}>{schoolAddress}</Text> : null}
           {schoolMobile ? <Text style={styles.subtitle}>📞 {schoolMobile}</Text> : null}
-          <Text style={[styles.subtitle, { marginTop: 8 }]}>Fee Payment Receipt</Text>
+          <Text style={[styles.subtitle, { marginTop: 8, fontWeight: 'bold' }]}>{t.feeReceipt.toUpperCase()}</Text>
         </View>
+
         <View>
+          <Text style={styles.sectionTitle}>{t.studentDetails}</Text>
           <View style={styles.row}>
-            <Text style={styles.label}>Student Name</Text>
+            <Text style={styles.label}>{t.studentName}</Text>
             <Text style={styles.value}>{studentName}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Class</Text>
+            <Text style={styles.label}>{t.class}</Text>
             <Text style={styles.value}>{className}</Text>
           </View>
+
+          <Text style={styles.sectionTitle}>{t.paymentBreakdown}</Text>
           <View style={styles.row}>
-            <Text style={styles.label}>Date of Generation</Text>
-            <Text style={styles.value}>{date}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Total Fees</Text>
+            <Text style={styles.label}>{t.totalFee}</Text>
             <Text style={styles.value}>₹{totalFees.toLocaleString('en-IN')}</Text>
           </View>
           
-          {/* Payment History Table for PDF */}
-          <View style={{ marginTop: 20, marginBottom: 10 }}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 10, color: '#7C3AED' }}>Installment History</Text>
-            <View style={{ borderBottom: '1px solid #E4E4E7', flexDirection: 'row', paddingVertical: 5 }}>
-              <Text style={{ flex: 2, fontSize: 10, color: '#71717A' }}>Date</Text>
-              <Text style={{ flex: 1, fontSize: 10, color: '#71717A' }}>Mode</Text>
-              <Text style={{ flex: 1, fontSize: 10, color: '#71717A', textAlign: 'right' }}>Amount</Text>
-            </View>
-            {payments?.map((p) => (
-              <View key={p.id} style={{ borderBottom: '1px solid #F4F4F5', flexDirection: 'row', paddingVertical: 5 }}>
-                <Text style={{ flex: 2, fontSize: 10, color: '#18181B' }}>{new Date(p.paid_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
-                <Text style={{ flex: 1, fontSize: 10, color: '#18181B', textTransform: 'capitalize' }}>{p.mode}</Text>
-                <Text style={{ flex: 1, fontSize: 10, fontWeight: 'bold', color: '#18181B', textAlign: 'right' }}>₹{p.amount.toLocaleString('en-IN')}</Text>
+          {payments?.map((p) => (
+            <View key={p.id} style={styles.row}>
+              <View>
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#18181B' }}>{t.installmentPaid}</Text>
+                <Text style={{ fontSize: 9, color: '#71717A', marginTop: 1 }}>
+                  {new Date(p.paid_at).toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} • {p.mode}
+                </Text>
               </View>
-            ))}
-          </View>
+              <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#16A34A' }}>- ₹{p.amount.toLocaleString('en-IN')}</Text>
+            </View>
+          ))}
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Total Amount Paid</Text>
+          <View style={[styles.row, { borderBottom: 0, marginTop: 12 }]}>
+            <Text style={[styles.label, { fontWeight: 'bold', color: '#18181B' }]}>{t.totalAmountPaid}</Text>
             <Text style={styles.valueGreen}>₹{amountPaid.toLocaleString('en-IN')}</Text>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Outstanding Balance</Text>
+          <View style={[styles.row, { borderBottom: 0 }]}>
+            <Text style={[styles.label, { fontWeight: 'bold', color: '#18181B' }]}>{t.outstandingBalance}</Text>
             <Text style={remainingFees > 0 ? styles.valueRed : styles.valueGreen}>
               ₹{Math.max(remainingFees, 0).toLocaleString('en-IN')}
             </Text>
           </View>
         </View>
+
         <View style={styles.totalBox}>
-          <Text style={styles.totalLabel}>Grand Total Paid</Text>
-          <Text style={styles.totalValue}>₹{amountPaid.toLocaleString('en-IN')}</Text>
-        </View>
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Generated digitally by school fee management system.</Text>
           <View>
-            <Text style={styles.signatureLine}>Authorized Signature</Text>
+            <Text style={styles.totalBoxLabel}>{t.grandTotalPaid}</Text>
+            <Text style={styles.totalBoxValue}>₹{amountPaid.toLocaleString('en-IN')}</Text>
+          </View>
+          <View>
+            <Text style={styles.balanceLabel}>{t.remainingBalance}</Text>
+            <Text style={styles.balanceValue}>₹{Math.max(remainingFees, 0).toLocaleString('en-IN')}</Text>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            {t.footer(date)}
+          </Text>
+          <View>
+            <View style={{ width: 110, height: 1, backgroundColor: '#71717A', marginBottom: 4 }} />
+            <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#71717A', textAlign: 'center' }}>{t.authorizedSignatory}</Text>
           </View>
         </View>
       </Page>
@@ -135,103 +201,112 @@ function ReceiptDocument({ studentName, className, amountPaid, totalFees, remain
 }
 
 // Hidden receipt for image capture
-function ReceiptHTML({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments }: Props) {
+function ReceiptHTML({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'en' }: Props) {
+  const t = translations[lang]
   const receiptId = `REC-${Date.now()}`
-  const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+  const date = new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
     <div style={{
       width: '500px',
-      padding: '40px',
+      padding: '32px',
       backgroundColor: '#ffffff',
       fontFamily: 'system-ui, -apple-system, sans-serif',
       color: '#18181b',
     }}>
       {/* Receipt Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
-          <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a', margin: '0 0 4px' }}>Receipt ID</p>
+          <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a', margin: '0 0 4px' }}>{t.receiptId}</p>
           <p style={{ fontSize: '12px', fontWeight: '700', margin: 0 }}>{receiptId}</p>
         </div>
-        <div style={{ backgroundColor: '#dcfce7', color: '#16a34a', fontSize: '10px', fontWeight: '700', padding: '4px 10px', borderRadius: '12px', textTransform: 'uppercase' }}>
-          ✓ Paid
+        <div style={{ backgroundColor: '#dcfce7', color: '#16a34a', fontSize: '10px', fontWeight: '800', padding: '4px 12px', borderRadius: '12px', textTransform: 'uppercase' }}>
+          ✓ {t.paid}
         </div>
       </div>
 
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#7c3aed', margin: '0 0 8px' }}>{schoolName}</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#7c3aed', margin: '0 0 8px', letterSpacing: '-0.02em' }}>{schoolName}</h1>
         {schoolAddress && <p style={{ fontSize: '12px', color: '#71717a', margin: '0 0 4px' }}>{schoolAddress}</p>}
         {schoolMobile && <p style={{ fontSize: '12px', color: '#71717a', margin: 0 }}>📞 {schoolMobile}</p>}
-        <div style={{ margin: '20px auto 0', height: '2px', width: '60px', backgroundColor: '#7c3aed' }}></div>
-        <p style={{ fontSize: '14px', fontWeight: '600', color: '#71717a', marginTop: '16px' }}>Fee Payment Receipt</p>
+        <div style={{ margin: '20px auto 0', height: '2px', width: '40px', backgroundColor: '#7c3aed', borderRadius: '2px' }}></div>
+        <p style={{ fontSize: '13px', fontWeight: '700', color: '#71717a', marginTop: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.feeReceipt}</p>
       </div>
 
       {/* Details */}
-      <div style={{ borderTop: '1px solid #e4e4e7', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f4f4f5' }}>
-          <span style={{ fontSize: '13px', color: '#71717a' }}>Student Name</span>
-          <span style={{ fontSize: '13px', fontWeight: '600' }}>{studentName}</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f4f4f5' }}>
-          <span style={{ fontSize: '13px', color: '#71717a' }}>Class</span>
-          <span style={{ fontSize: '13px', fontWeight: '600' }}>{className}</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f4f4f5' }}>
-          <span style={{ fontSize: '13px', color: '#71717a' }}>Total School Fee</span>
-          <span style={{ fontSize: '13px', fontWeight: '600' }}>₹{totalFees.toLocaleString('en-IN')}</span>
-        </div>
-      </div>
-
-      {/* Payment History Table */}
       <div style={{ marginBottom: '24px' }}>
-        <p style={{ fontSize: '12px', fontWeight: '700', color: '#7c3aed', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Installment History</p>
-        <div style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <div style={{ display: 'flex', borderBottom: '1px solid #e4e4e7', paddingBottom: '8px', marginBottom: '8px' }}>
-            <span style={{ flex: 2, fontSize: '11px', color: '#71717a', fontWeight: '600' }}>Date</span>
-            <span style={{ flex: 1, fontSize: '11px', color: '#71717a', fontWeight: '600' }}>Mode</span>
-            <span style={{ flex: 1, fontSize: '11px', color: '#71717a', fontWeight: '600', textAlign: 'right' }}>Amount</span>
-          </div>
-          {payments && payments.length > 0 ? (
-            payments.map((p) => (
-              <div key={p.id} style={{ display: 'flex', padding: '8px 0', borderBottom: '1px solid #f4f4f5' }}>
-                <span style={{ flex: 2, fontSize: '12px' }}>{new Date(p.paid_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                <span style={{ flex: 1, fontSize: '12px', textTransform: 'capitalize' }}>{p.mode}</span>
-                <span style={{ flex: 1, fontSize: '12px', fontWeight: '700', textAlign: 'right' }}>₹{p.amount.toLocaleString('en-IN')}</span>
-              </div>
-            ))
-          ) : (
-            <p style={{ fontSize: '12px', color: '#71717a', textAlign: 'center', padding: '10px' }}>No payments recorded</p>
-          )}
+        <p style={{ fontSize: '11px', fontWeight: '800', color: '#7c3aed', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.studentDetails}</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f4f4f5' }}>
+          <span style={{ fontSize: '13px', color: '#71717a' }}>{t.studentName}</span>
+          <span style={{ fontSize: '13px', fontWeight: '700' }}>{studentName}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f4f4f5' }}>
+          <span style={{ fontSize: '13px', color: '#71717a' }}>{t.class}</span>
+          <span style={{ fontSize: '13px', fontWeight: '700' }}>{className}</span>
         </div>
       </div>
 
-      <div style={{ borderTop: '1px solid #e4e4e7', paddingTop: '12px', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-          <span style={{ fontSize: '13px', color: '#71717a' }}>Total Amount Paid</span>
-          <span style={{ fontSize: '13px', fontWeight: '700', color: '#16a34a' }}>₹{amountPaid.toLocaleString('en-IN')}</span>
+      {/* Payment Breakdown */}
+      <div style={{ marginBottom: '24px' }}>
+        <p style={{ fontSize: '11px', fontWeight: '800', color: '#7c3aed', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.paymentBreakdown}</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f4f4f5' }}>
+          <span style={{ fontSize: '13px', color: '#71717a' }}>{t.totalFee}</span>
+          <span style={{ fontSize: '13px', fontWeight: '700' }}>₹{totalFees.toLocaleString('en-IN')}</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-          <span style={{ fontSize: '13px', color: '#71717a' }}>Outstanding Balance</span>
-          <span style={{ fontSize: '13px', fontWeight: '700', color: remainingFees > 0 ? '#dc2626' : '#16a34a' }}>
+
+        {payments && payments.length > 0 ? (
+          payments.map((p) => (
+            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f4f4f5' }}>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: '700', margin: 0 }}>{t.installmentPaid}</p>
+                <p style={{ fontSize: '11px', color: '#71717a', margin: '2px 0 0' }}>{new Date(p.paid_at).toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} • {p.mode}</p>
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: '800', color: '#16a34a' }}>- ₹{p.amount.toLocaleString('en-IN')}</span>
+            </div>
+          ))
+        ) : null}
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 8px' }}>
+          <span style={{ fontSize: '13px', fontWeight: '700' }}>{t.totalAmountPaid}</span>
+          <span style={{ fontSize: '13px', fontWeight: '800', color: '#16a34a' }}>₹{amountPaid.toLocaleString('en-IN')}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 0 12px' }}>
+          <span style={{ fontSize: '13px', fontWeight: '700' }}>{t.outstandingBalance}</span>
+          <span style={{ fontSize: '13px', fontWeight: '800', color: remainingFees > 0 ? '#dc2626' : '#16a34a' }}>
             ₹{Math.max(remainingFees, 0).toLocaleString('en-IN')}
           </span>
         </div>
       </div>
 
-      {/* Total Box */}
-      <div style={{ backgroundColor: '#f5f3ff', borderRadius: '12px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-        <span style={{ fontSize: '14px', fontWeight: '700', color: '#7c3aed' }}>Grand Total Paid</span>
-        <span style={{ fontSize: '24px', fontWeight: '800', color: '#7c3aed' }}>₹{amountPaid.toLocaleString('en-IN')}</span>
+      {/* Total Box - More compact and balanced */}
+      <div style={{ 
+        backgroundColor: '#f5f3ff', 
+        borderRadius: '12px', 
+        padding: '16px 20px', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '40px',
+        border: '1px solid #ddd6fe'
+      }}>
+        <div>
+          <p style={{ fontSize: '11px', fontWeight: '700', color: '#7c3aed', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.grandTotalPaid}</p>
+          <p style={{ fontSize: '24px', fontWeight: '800', color: '#7c3aed', margin: 0 }}>₹{amountPaid.toLocaleString('en-IN')}</p>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+           <p style={{ fontSize: '10px', color: '#7c3aed', opacity: 0.8, margin: '0 0 2px', fontWeight: '700', textTransform: 'uppercase' }}>{t.remainingBalance}</p>
+           <p style={{ fontSize: '18px', fontWeight: '800', color: '#7c3aed', margin: 0 }}>₹{Math.max(remainingFees, 0).toLocaleString('en-IN')}</p>
+        </div>
       </div>
 
       {/* Footer */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '20px', borderTop: '1px dotted #e4e4e7' }}>
-        <p style={{ fontSize: '10px', color: '#a1a1aa', maxWidth: '200px', lineHeight: '1.5' }}>
-          Generated digitally on {date}. This record shows all installments made towards the total school fee.
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '16px', borderTop: '1px solid #e4e4e7' }}>
+        <p style={{ fontSize: '9px', color: '#a1a1aa', maxWidth: '240px', lineHeight: '1.4' }}>
+          {t.footer(date)}
         </p>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '120px', height: '1px', backgroundColor: '#71717a', marginBottom: '8px' }}></div>
-          <p style={{ fontSize: '11px', color: '#71717a', fontWeight: '600' }}>Authorized Signatory</p>
+          <div style={{ width: '110px', height: '1px', backgroundColor: '#71717a', marginBottom: '6px' }}></div>
+          <p style={{ fontSize: '11px', color: '#71717a', fontWeight: '700' }}>{t.authorizedSignatory}</p>
         </div>
       </div>
     </div>
@@ -242,7 +317,9 @@ export default function ReceiptPDF(props: Props) {
   const [loading, setLoading] = useState(false)
   const [imgLoading, setImgLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [lang, setLang] = useState<'en' | 'hi'>('en')
   const receiptRef = useRef<HTMLDivElement>(null)
+  const t = translations[lang]
 
   async function handlePreview() {
     setLoading(true)
@@ -276,25 +353,31 @@ export default function ReceiptPDF(props: Props) {
     canvas.toBlob(async (blob) => {
       if (!blob) return
 
-      const file = new File([blob], `${props.studentName}-receipt.jpg`, { type: 'image/jpeg' })
+      const file = new File([blob], `${props.studentName}-receipt-${lang}.jpg`, { type: 'image/jpeg' })
 
       // Check if Web Share API supports files (mobile)
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        const text = lang === 'en' 
+          ? `Dear Parent, fee receipt for ${props.studentName} (${props.className}). Amount Paid: ₹${props.amountPaid.toLocaleString('en-IN')}. Remaining: ₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}. — ${props.schoolName}`
+          : `प्रिय अभिभावक, ${props.studentName} (${props.className}) की फीस रसीद। जमा राशि: ₹${props.amountPaid.toLocaleString('en-IN')}। शेष राशि: ₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}। — ${props.schoolName}`
+
         await navigator.share({
           files: [file],
           title: `Fee Receipt - ${props.studentName}`,
-          text: `Dear Parent, fee receipt for ${props.studentName} (${props.className}). Amount Paid: ₹${props.amountPaid.toLocaleString('en-IN')}. Remaining: ₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}. — ${props.schoolName}`,
+          text: text,
         })
       } else {
         // Desktop fallback — download + open WhatsApp
         const imgUrl = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = imgUrl
-        a.download = `${props.studentName}-receipt.jpg`
+        a.download = `${props.studentName}-receipt-${lang}.jpg`
         a.click()
 
         setTimeout(() => {
-          const message = `Dear Parent, fee receipt for *${props.studentName}* (${props.className}). Amount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*. Remaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*. — ${props.schoolName}`
+          const message = lang === 'en'
+            ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}). Amount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*. Remaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*. — ${props.schoolName}`
+            : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद। जमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*। शेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*। — ${props.schoolName}`
           window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
         }, 1000)
       }
@@ -310,7 +393,7 @@ export default function ReceiptPDF(props: Props) {
     if (!previewUrl) return
     const a = document.createElement('a')
     a.href = previewUrl
-    a.download = `${props.studentName}-receipt.jpg`
+    a.download = `${props.studentName}-receipt-${lang}.jpg`
     a.click()
   }
 
@@ -319,12 +402,28 @@ export default function ReceiptPDF(props: Props) {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-4">
+
+      {/* Language Toggle */}
+      <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-xl w-fit">
+        <button
+          onClick={() => setLang('en')}
+          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${lang === 'en' ? 'bg-white text-violet-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+        >
+          English
+        </button>
+        <button
+          onClick={() => setLang('hi')}
+          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${lang === 'hi' ? 'bg-white text-violet-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+        >
+          हिंदी (Hindi)
+        </button>
+      </div>
 
       {/* Hidden receipt for image capture */}
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
         <div ref={receiptRef} style={{ display: 'none' }}>
-          <ReceiptHTML {...props} />
+          <ReceiptHTML {...props} lang={lang} />
         </div>
       </div>
 
@@ -336,8 +435,8 @@ export default function ReceiptPDF(props: Props) {
           className="h-11 px-5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
         >
           {loading ? (
-            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Generating...</>
-          ) : <>📄 View Receipt</>}
+            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t.generating}</>
+          ) : <>{t.viewReceipt}</>}
         </button>
 
         <button
@@ -346,8 +445,8 @@ export default function ReceiptPDF(props: Props) {
           className="h-11 px-5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
         >
           {imgLoading ? (
-            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Processing...</>
-          ) : <>💬 Share on WhatsApp</>}
+            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t.processing}</>
+          ) : <>{t.shareWhatsApp}</>}
         </button>
       </div>
 
@@ -357,14 +456,14 @@ export default function ReceiptPDF(props: Props) {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-              <h2 className="text-lg font-bold text-zinc-900">Receipt Preview</h2>
+              <h2 className="text-lg font-bold text-zinc-900">{lang === 'hi' ? 'रसीद पूर्वावलोकन' : 'Receipt Preview'}</h2>
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleDownloadImage}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold shadow-sm transition-all hover:scale-105 active:scale-95"
                 >
                   <Download className="w-4 h-4" />
-                  Download Image
+                  {lang === 'hi' ? 'डाउनलोड करें' : 'Download Image'}
                 </button>
                 <button
                   onClick={handleClose}
@@ -388,7 +487,7 @@ export default function ReceiptPDF(props: Props) {
             
             <div className="p-3 bg-zinc-50 border-t border-zinc-100 flex justify-center">
                <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">
-                 Preview Mode • High Quality Capture
+                 {lang === 'hi' ? 'पूर्वावलोकन मोड • उच्च गुणवत्ता वाली रसीद' : 'Preview Mode • High Quality Capture'}
                </p>
             </div>
           </div>
