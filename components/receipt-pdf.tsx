@@ -383,39 +383,45 @@ export default function ReceiptPDF(props: Props) {
 
     setImgLoading(true)
     try {
-      // 1. Generate PDF Blob
-      const blob = await pdf(<ReceiptDocument {...props} lang={lang} />).toBlob()
-      if (!blob) throw new Error('Failed to generate PDF')
-
-      // 2. Upload to Supabase Storage (Bucket: receipts)
       const supabase = createClient()
-      const fileName = `${props.studentName.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.pdf`
+      const timestamp = Date.now()
+      const baseFileName = `${props.studentName.replace(/\s+/g, '-').toLowerCase()}-${timestamp}`
+
+      // 1. Generate & Upload JPEG (for visual link)
+      const el = receiptRef.current
+      if (!el) return
+      el.style.display = 'block'
+      await new Promise(r => setTimeout(r, 100))
+      const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff', logging: false, useCORS: true })
+      el.style.display = 'none'
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('receipts')
-        .upload(fileName, blob, {
-          contentType: 'application/pdf',
-          upsert: false
-        })
-
-      let message = ''
-      if (uploadError) {
-        console.error('Upload error:', uploadError)
-        // Fallback: Send message without link if upload fails
-        message = lang === 'en'
-          ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}). Amount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*. Remaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*. — ${props.schoolName}`
-          : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद। जमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*। शेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*। — ${props.schoolName}`
-      } else {
-        const { data: { publicUrl } } = supabase.storage
-          .from('receipts')
-          .getPublicUrl(fileName)
-
-        message = lang === 'en'
-          ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}).\n\nAmount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*\nRemaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\nView/Download Receipt: ${publicUrl}\n\n— ${props.schoolName}`
-          : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद।\n\nजमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*\nशेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\nरसीद देखें/डाउनलोड करें: ${publicUrl}\n\n— ${props.schoolName}`
+      const imgBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95))
+      let imageUrl = ''
+      if (imgBlob) {
+        const { error: imgErr } = await supabase.storage.from('receipts').upload(`${baseFileName}.jpg`, imgBlob, { contentType: 'image/jpeg', upsert: false })
+        if (!imgErr) {
+          const { data } = supabase.storage.from('receipts').getPublicUrl(`${baseFileName}.jpg`)
+          imageUrl = data.publicUrl
+        }
       }
 
-      // 3. Open WhatsApp with pre-filled message
+      // 2. Generate & Upload PDF (for formal record)
+      const pdfBlob = await pdf(<ReceiptDocument {...props} lang={lang} />).toBlob()
+      let pdfUrl = ''
+      if (pdfBlob) {
+        const { error: pdfErr } = await supabase.storage.from('receipts').upload(`${baseFileName}.pdf`, pdfBlob, { contentType: 'application/pdf', upsert: false })
+        if (!pdfErr) {
+          const { data } = supabase.storage.from('receipts').getPublicUrl(`${baseFileName}.pdf`)
+          pdfUrl = data.publicUrl
+        }
+      }
+
+      const message = lang === 'en'
+        ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}).\n\nAmount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*\nRemaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\nView Receipt: ${imageUrl || pdfUrl}\n\n— ${props.schoolName}`
+        : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद।\n\nजमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*\nशेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\nरसीद देखें: ${imageUrl || pdfUrl}\n\n— ${props.schoolName}`
+
+      // 3. SHARE LOGIC (Link-based only to avoid mobile download issues)
+      // Open direct WhatsApp chat with the link
       const whatsappURL = cleanedMobile 
         ? `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`
         : `https://wa.me/?text=${encodeURIComponent(message)}`
@@ -424,7 +430,6 @@ export default function ReceiptPDF(props: Props) {
 
     } catch (err) {
       console.error('WhatsApp share error:', err)
-      // Final fallback to generic WhatsApp if everything fails
       const fallbackMessage = `Fee receipt for ${props.studentName} - Amount: ₹${props.amountPaid}`
       const fallbackURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fallbackMessage)}`
       window.open(fallbackURL, '_blank')
