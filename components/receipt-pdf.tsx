@@ -115,6 +115,7 @@ interface Props {
   schoolName: string
   schoolAddress?: string
   schoolMobile?: string
+  parentMobile?: string
   payments?: {
     id: string
     amount: number
@@ -331,6 +332,7 @@ export default function ReceiptPDF(props: Props) {
   const [imgLoading, setImgLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [lang, setLang] = useState<'en' | 'hi'>('en')
+  const [whatsappError, setWhatsappError] = useState<string | null>(null)
   const receiptRef = useRef<HTMLDivElement>(null)
   const t = translations[lang]
 
@@ -353,54 +355,70 @@ export default function ReceiptPDF(props: Props) {
   }
 
   async function handleWhatsApp() {
-  setImgLoading(true)
-  try {
-    const el = receiptRef.current
-    if (!el) return
+    if (!props.parentMobile) {
+      setWhatsappError(lang === 'hi' ? 'अभिभावक का मोबाइल नंबर नहीं मिला' : 'Parent mobile number not found')
+      setTimeout(() => setWhatsappError(null), 3000)
+    }
 
-    el.style.display = 'block'
-    const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff', logging: false, useCORS: true })
-    el.style.display = 'none'
+    setImgLoading(true)
+    try {
+      const el = receiptRef.current
+      if (!el) return
 
-    // Convert to blob
-    canvas.toBlob(async (blob) => {
-      if (!blob) return
+      el.style.display = 'block'
+      const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff', logging: false, useCORS: true })
+      el.style.display = 'none'
 
-      const file = new File([blob], `${props.studentName}-receipt-${lang}.jpg`, { type: 'image/jpeg' })
+      // Convert to blob
+      canvas.toBlob(async (blob) => {
+        if (!blob) return
 
-      // Check if Web Share API supports files (mobile)
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        const text = lang === 'en' 
-          ? `Dear Parent, fee receipt for ${props.studentName} (${props.className}). Amount Paid: ₹${props.amountPaid.toLocaleString('en-IN')}. Remaining: ₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}. — ${props.schoolName}`
-          : `प्रिय अभिभावक, ${props.studentName} (${props.className}) की फीस रसीद। जमा राशि: ₹${props.amountPaid.toLocaleString('en-IN')}। शेष राशि: ₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}। — ${props.schoolName}`
+        const file = new File([blob], `${props.studentName}-receipt-${lang}.jpg`, { type: 'image/jpeg' })
 
-        await navigator.share({
-          files: [file],
-          title: `Fee Receipt - ${props.studentName}`,
-          text: text,
-        })
-      } else {
-        // Desktop fallback — download + open WhatsApp
-        const imgUrl = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = imgUrl
-        a.download = `${props.studentName}-receipt-${lang}.jpg`
-        a.click()
+        // Check if Web Share API supports files (mobile)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          const text = lang === 'en' 
+            ? `Dear Parent, fee receipt for ${props.studentName} (${props.className}). Amount Paid: ₹${props.amountPaid.toLocaleString('en-IN')}. Remaining: ₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}. — ${props.schoolName}`
+            : `प्रिय अभिभावक, ${props.studentName} (${props.className}) की फीस रसीद। जमा राशि: ₹${props.amountPaid.toLocaleString('en-IN')}। शेष राशि: ₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}। — ${props.schoolName}`
 
-        setTimeout(() => {
-          const message = lang === 'en'
-            ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}). Amount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*. Remaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*. — ${props.schoolName}`
-            : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद। जमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*। शेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*। — ${props.schoolName}`
-          window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
-        }, 1000)
-      }
-    }, 'image/jpeg', 0.95)
+          await navigator.share({
+            files: [file],
+            title: `Fee Receipt - ${props.studentName}`,
+            text: text,
+          })
+        } else {
+          // Desktop fallback — download + open WhatsApp
+          const imgUrl = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = imgUrl
+          a.download = `${props.studentName}-receipt-${lang}.jpg`
+          a.click()
 
-  } catch (err) {
-    console.error(err)
+          setTimeout(() => {
+            const message = lang === 'en'
+              ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}). Amount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*. Remaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*. — ${props.schoolName}`
+              : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद। जमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*। शेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*। — ${props.schoolName}`
+            
+            // Clean mobile number
+            let cleanedMobile = props.parentMobile?.replace(/\D/g, '') || ''
+            if (cleanedMobile.length === 10) {
+              cleanedMobile = `91${cleanedMobile}`
+            }
+            
+            const whatsappURL = cleanedMobile 
+              ? `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`
+              : `https://wa.me/?text=${encodeURIComponent(message)}`
+              
+            window.open(whatsappURL, '_blank')
+          }, 1000)
+        }
+      }, 'image/jpeg', 0.95)
+
+    } catch (err) {
+      console.error(err)
+    }
+    setImgLoading(false)
   }
-  setImgLoading(false)
-}
 
   function handleDownloadImage() {
     if (!previewUrl) return
@@ -460,7 +478,7 @@ export default function ReceiptPDF(props: Props) {
         <button
           onClick={handleWhatsApp}
           disabled={imgLoading}
-          className="h-11 px-5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+          className="h-11 px-5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 relative"
         >
           {imgLoading ? (
             <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t.processing}</>
@@ -469,6 +487,12 @@ export default function ReceiptPDF(props: Props) {
               <WhatsAppIcon className="w-5 h-5" />
               {t.shareWhatsApp}
             </>
+          )}
+          
+          {whatsappError && (
+            <div className="absolute -top-10 left-0 right-0 bg-red-50 text-red-600 text-[10px] py-1 px-2 rounded-lg border border-red-100 text-center animate-in fade-in slide-in-from-bottom-1 duration-300">
+              {whatsappError}
+            </div>
           )}
         </button>
       </div>
