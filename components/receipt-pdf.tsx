@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import html2canvas from 'html2canvas'
 import { Download, X, FileText } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -53,9 +54,9 @@ const styles = StyleSheet.create({
     border: '1px solid #DDD6FE'
   },
   totalBoxLabel: { fontSize: 10, fontWeight: 'bold', color: '#7C3AED', textTransform: 'uppercase', marginBottom: 2 },
-  totalBoxValue: { fontSize: 20, fontWeight: 'bold', color: '#7C3AED' },
+  totalBoxValue: { fontSize: 14, fontWeight: 'bold', color: '#7C3AED' },
   balanceLabel: { fontSize: 9, color: '#7C3AED', fontWeight: 'bold', textAlign: 'right', textTransform: 'uppercase', marginBottom: 2 },
-  balanceValue: { fontSize: 16, fontWeight: 'bold', color: '#7C3AED', textAlign: 'right' },
+  balanceValue: { fontSize: 18, fontWeight: 'bold', color: '#DC2626', textAlign: 'right' },
   footer: { marginTop: 'auto', paddingTop: 16, borderTop: '1px solid #E4E4E7', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   footerText: { fontSize: 8, color: '#A1A1AA', maxWidth: 220, lineHeight: 1.4 },
   signatureLine: { borderTop: '1px solid #71717A', paddingTop: 4, fontSize: 9, fontWeight: 'bold', color: '#71717A', width: 110, textAlign: 'center' },
@@ -77,6 +78,7 @@ const translations = {
     grandTotalPaid: 'Grand Total Paid',
     remainingBalance: 'Remaining Balance',
     authorizedSignatory: 'Authorized Signatory',
+    fatherName: "Father's Name",
     footer: (date: string) => `Generated digitally on ${date}. This record shows all installments made towards the total school fee.`,
     viewReceipt: 'View Receipt',
     shareWhatsApp: 'Share on WhatsApp',
@@ -98,6 +100,7 @@ const translations = {
     grandTotalPaid: 'कुल जमा राशि',
     remainingBalance: 'बकाया राशि',
     authorizedSignatory: 'अधिकृत हस्ताक्षर',
+    fatherName: 'पिता का नाम',
     footer: (date: string) => `${date} को डिजिटल रूप से बनाया गया। यह रिकॉर्ड स्कूल फीस के लिए किए गए सभी भुगतानों को दर्शाता है।`,
     viewReceipt: 'रसीद देखें',
     shareWhatsApp: 'व्हाट्सएप पर भेजें',
@@ -108,6 +111,7 @@ const translations = {
 
 interface Props {
   studentName: string
+  fatherName?: string
   className: string
   amountPaid: number
   totalFees: number
@@ -125,7 +129,7 @@ interface Props {
   lang?: 'en' | 'hi'
 }
 
-function ReceiptDocument({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'en' }: Props) {
+function ReceiptDocument({ studentName, fatherName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'en' }: Props) {
   const t = translations[lang]
   const receiptId = `REC-${Date.now()}`
   const date = new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -154,6 +158,12 @@ function ReceiptDocument({ studentName, className, amountPaid, totalFees, remain
             <Text style={styles.label}>{t.studentName}</Text>
             <Text style={styles.value}>{studentName}</Text>
           </View>
+          {fatherName && (
+            <View style={styles.row}>
+              <Text style={styles.label}>{t.fatherName}</Text>
+              <Text style={styles.value}>{fatherName}</Text>
+            </View>
+          )}
           <View style={styles.row}>
             <Text style={styles.label}>{t.class}</Text>
             <Text style={styles.value}>{className}</Text>
@@ -215,7 +225,7 @@ function ReceiptDocument({ studentName, className, amountPaid, totalFees, remain
 }
 
 // Hidden receipt for image capture
-function ReceiptHTML({ studentName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'en' }: Props) {
+function ReceiptHTML({ studentName, fatherName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'en' }: Props) {
   const t = translations[lang]
   const receiptId = `REC-${Date.now()}`
   const date = new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -254,6 +264,12 @@ function ReceiptHTML({ studentName, className, amountPaid, totalFees, remainingF
           <span style={{ fontSize: '13px', color: '#71717a' }}>{t.studentName}</span>
           <span style={{ fontSize: '13px', fontWeight: '700' }}>{studentName}</span>
         </div>
+        {fatherName && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f4f4f5' }}>
+            <span style={{ fontSize: '13px', color: '#71717a' }}>{t.fatherName}</span>
+            <span style={{ fontSize: '13px', fontWeight: '700' }}>{fatherName}</span>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f4f4f5' }}>
           <span style={{ fontSize: '13px', color: '#71717a' }}>{t.class}</span>
           <span style={{ fontSize: '13px', fontWeight: '700' }}>{className}</span>
@@ -305,11 +321,11 @@ function ReceiptHTML({ studentName, className, amountPaid, totalFees, remainingF
       }}>
         <div>
           <p style={{ fontSize: '11px', fontWeight: '700', color: '#7c3aed', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.grandTotalPaid}</p>
-          <p style={{ fontSize: '24px', fontWeight: '800', color: '#7c3aed', margin: 0 }}>₹{amountPaid.toLocaleString('en-IN')}</p>
+          <p style={{ fontSize: '14px', fontWeight: '800', color: '#7c3aed', margin: 0 }}>₹{amountPaid.toLocaleString('en-IN')}</p>
         </div>
         <div style={{ textAlign: 'right' }}>
            <p style={{ fontSize: '10px', color: '#7c3aed', opacity: 0.8, margin: '0 0 2px', fontWeight: '700', textTransform: 'uppercase' }}>{t.remainingBalance}</p>
-           <p style={{ fontSize: '18px', fontWeight: '800', color: '#7c3aed', margin: 0 }}>₹{Math.max(remainingFees, 0).toLocaleString('en-IN')}</p>
+           <p style={{ fontSize: '20px', fontWeight: '800', color: '#dc2626', margin: 0 }}>₹{Math.max(remainingFees, 0).toLocaleString('en-IN')}</p>
         </div>
       </div>
 
@@ -367,56 +383,51 @@ export default function ReceiptPDF(props: Props) {
 
     setImgLoading(true)
     try {
-      const el = receiptRef.current
-      if (!el) return
+      // 1. Generate PDF Blob
+      const blob = await pdf(<ReceiptDocument {...props} lang={lang} />).toBlob()
+      if (!blob) throw new Error('Failed to generate PDF')
 
-      el.style.display = 'block'
-      const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff', logging: false, useCORS: true })
-      el.style.display = 'none'
+      // 2. Upload to Supabase Storage (Bucket: receipts)
+      const supabase = createClient()
+      const fileName = `${props.studentName.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.pdf`
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('receipts')
+        .upload(fileName, blob, {
+          contentType: 'application/pdf',
+          upsert: false
+        })
 
-      // Convert to blob
-      canvas.toBlob(async (blob) => {
-        if (!blob) return
-
-        const file = new File([blob], `${props.studentName}-receipt-${lang}.jpg`, { type: 'image/jpeg' })
-        const message = lang === 'en'
+      let message = ''
+      if (uploadError) {
+        console.error('Upload error:', uploadError)
+        // Fallback: Send message without link if upload fails
+        message = lang === 'en'
           ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}). Amount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*. Remaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*. — ${props.schoolName}`
           : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद। जमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*। शेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*। — ${props.schoolName}`
+      } else {
+        const { data: { publicUrl } } = supabase.storage
+          .from('receipts')
+          .getPublicUrl(fileName)
 
-        // If we have a mobile number, ALWAYS use wa.me for direct chat as requested
-        if (cleanedMobile) {
-          // Download the image so user can attach it in the chat
-          const imgUrl = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = imgUrl
-          a.download = `${props.studentName}-receipt-${lang}.jpg`
-          a.click()
+        message = lang === 'en'
+          ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}).\n\nAmount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*\nRemaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\nView/Download Receipt: ${publicUrl}\n\n— ${props.schoolName}`
+          : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद।\n\nजमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*\nशेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\nरसीद देखें/डाउनलोड करें: ${publicUrl}\n\n— ${props.schoolName}`
+      }
 
-          // Open direct WhatsApp chat
-          const whatsappURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`
-          window.open(whatsappURL, '_blank')
-        } else if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          // No number, fallback to system share sheet if on mobile
-          await navigator.share({
-            files: [file],
-            title: `Fee Receipt - ${props.studentName}`,
-            text: message.replace(/\*/g, ''), // Remove asterisks for generic share
-          })
-        } else {
-          // Desktop/Web fallback without number
-          const imgUrl = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = imgUrl
-          a.download = `${props.studentName}-receipt-${lang}.jpg`
-          a.click()
-
-          const whatsappURL = `https://wa.me/?text=${encodeURIComponent(message)}`
-          window.open(whatsappURL, '_blank')
-        }
-      }, 'image/jpeg', 0.95)
+      // 3. Open WhatsApp with pre-filled message
+      const whatsappURL = cleanedMobile 
+        ? `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`
+        : `https://wa.me/?text=${encodeURIComponent(message)}`
+      
+      window.open(whatsappURL, '_blank')
 
     } catch (err) {
-      console.error(err)
+      console.error('WhatsApp share error:', err)
+      // Final fallback to generic WhatsApp if everything fails
+      const fallbackMessage = `Fee receipt for ${props.studentName} - Amount: ₹${props.amountPaid}`
+      const fallbackURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fallbackMessage)}`
+      window.open(fallbackURL, '_blank')
     }
     setImgLoading(false)
   }

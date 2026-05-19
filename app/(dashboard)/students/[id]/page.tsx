@@ -123,16 +123,16 @@ export default async function StudentDetailPage({
       </Card>
       {/* Receipt PDF */}
       <ReceiptPDF
-  studentName={student.name}
-  className={student.class}
-  amountPaid={student.total_paid}
-  totalFees={student.total_fee}
-  remainingFees={student.remaining_fee}
-  parentMobile={student.mobile}
-  payments={payments || []}
-  schoolName="Ayushman Educational Academy"
-/>
-
+      studentName={student.name}
+      fatherName={student.guardian_name}
+      className={student.class}
+      amountPaid={student.total_paid}
+      totalFees={student.total_fee}
+      remainingFees={student.remaining_fee}
+      parentMobile={student.mobile}
+      payments={payments || []}
+      schoolName="Ayushman Educational Academy"
+      />
       {/* Payment History */}
       <Card>
         <CardHeader>
