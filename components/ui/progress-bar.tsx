@@ -6,11 +6,22 @@ import NProgress from 'nprogress'
 
 NProgress.configure({ 
   showSpinner: true, 
-  trickleSpeed: 200,
-  minimum: 0.08,
-  easing: 'ease',
-  speed: 400
+  trickleSpeed: 100,
+  minimum: 0.1,
+  easing: 'ease-out',
+  speed: 200
 })
+
+const ALLOWED_PATHS = [
+  '/dashboard',
+  '/ai',
+  '/classes',
+  '/students',
+  '/payments',
+  '/how-to-use',
+  '/expenses',
+  '/profile'
+]
 
 function ProgressBarInner() {
   const pathname = usePathname()
@@ -18,9 +29,15 @@ function ProgressBarInner() {
   const [isNavigating, setIsNavigating] = useState(false)
 
   useEffect(() => {
-    const handleStart = () => {
-      NProgress.start()
-      setIsNavigating(true)
+    const handleStart = (url: string) => {
+      // Only show loader for specific paths
+      const targetPath = new URL(url, location.origin).pathname
+      const isAllowed = ALLOWED_PATHS.some(path => targetPath === path || targetPath.startsWith(path + '/'))
+      
+      if (isAllowed) {
+        NProgress.start()
+        setIsNavigating(true)
+      }
     }
 
     const handleClick = (event: MouseEvent) => {
@@ -44,11 +61,14 @@ function ProgressBarInner() {
       // Don't start if it's the current page
       if (anchor.href === location.href) return
       
-      handleStart()
+      handleStart(anchor.href)
     }
 
-    const handleSubmit = () => {
-      handleStart()
+    const handleSubmit = (event: Event) => {
+      const form = event.target as HTMLFormElement
+      const action = form.getAttribute('action')
+      if (action) handleStart(action)
+      else handleStart(location.href)
     }
 
     window.addEventListener('click', handleClick, true)
@@ -68,7 +88,7 @@ function ProgressBarInner() {
   return (
     <>
       {isNavigating && (
-        <div className="fixed inset-0 bg-white/10 backdrop-blur-[1px] z-[9998] pointer-events-none transition-opacity duration-300 animate-in fade-in" />
+        <div className="fixed inset-0 bg-white/5 backdrop-blur-[1px] z-[9998] pointer-events-none transition-opacity duration-200 animate-in fade-in" />
       )}
     </>
   )
@@ -109,22 +129,14 @@ export default function ProgressBar() {
           right: 15px;
         }
         #nprogress .spinner-icon {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           box-sizing: border-box;
           border: solid 2px transparent;
           border-top-color: #7C3AED;
           border-left-color: #7C3AED;
           border-radius: 50%;
-          animation: nprogress-spinner 400ms linear infinite;
-        }
-        .nprogress-custom-parent {
-          overflow: hidden;
-          position: relative;
-        }
-        .nprogress-custom-parent #nprogress .spinner,
-        .nprogress-custom-parent #nprogress .bar {
-          position: absolute;
+          animation: nprogress-spinner 300ms linear infinite;
         }
         @keyframes nprogress-spinner {
           0%   { transform: rotate(0deg); }
