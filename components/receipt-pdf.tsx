@@ -355,6 +355,11 @@ export default function ReceiptPDF(props: Props) {
   }
 
   async function handleWhatsApp() {
+    let cleanedMobile = props.parentMobile?.replace(/\D/g, '') || ''
+    if (cleanedMobile.length === 10) {
+      cleanedMobile = `91${cleanedMobile}`
+    }
+
     if (!props.parentMobile) {
       setWhatsappError(lang === 'hi' ? 'अभिभावक का मोबाइल नंबर नहीं मिला' : 'Parent mobile number not found')
       setTimeout(() => setWhatsappError(null), 3000)
@@ -374,43 +379,39 @@ export default function ReceiptPDF(props: Props) {
         if (!blob) return
 
         const file = new File([blob], `${props.studentName}-receipt-${lang}.jpg`, { type: 'image/jpeg' })
+        const message = lang === 'en'
+          ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}). Amount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*. Remaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*. — ${props.schoolName}`
+          : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद। जमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*। शेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*। — ${props.schoolName}`
 
-        // Check if Web Share API supports files (mobile)
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          const text = lang === 'en' 
-            ? `Dear Parent, fee receipt for ${props.studentName} (${props.className}). Amount Paid: ₹${props.amountPaid.toLocaleString('en-IN')}. Remaining: ₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}. — ${props.schoolName}`
-            : `प्रिय अभिभावक, ${props.studentName} (${props.className}) की फीस रसीद। जमा राशि: ₹${props.amountPaid.toLocaleString('en-IN')}। शेष राशि: ₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}। — ${props.schoolName}`
-
-          await navigator.share({
-            files: [file],
-            title: `Fee Receipt - ${props.studentName}`,
-            text: text,
-          })
-        } else {
-          // Desktop fallback — download + open WhatsApp
+        // If we have a mobile number, ALWAYS use wa.me for direct chat as requested
+        if (cleanedMobile) {
+          // Download the image so user can attach it in the chat
           const imgUrl = URL.createObjectURL(blob)
           const a = document.createElement('a')
           a.href = imgUrl
           a.download = `${props.studentName}-receipt-${lang}.jpg`
           a.click()
 
-          setTimeout(() => {
-            const message = lang === 'en'
-              ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}). Amount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*. Remaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*. — ${props.schoolName}`
-              : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद। जमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*। शेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*। — ${props.schoolName}`
-            
-            // Clean mobile number
-            let cleanedMobile = props.parentMobile?.replace(/\D/g, '') || ''
-            if (cleanedMobile.length === 10) {
-              cleanedMobile = `91${cleanedMobile}`
-            }
-            
-            const whatsappURL = cleanedMobile 
-              ? `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`
-              : `https://wa.me/?text=${encodeURIComponent(message)}`
-              
-            window.open(whatsappURL, '_blank')
-          }, 1000)
+          // Open direct WhatsApp chat
+          const whatsappURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`
+          window.open(whatsappURL, '_blank')
+        } else if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          // No number, fallback to system share sheet if on mobile
+          await navigator.share({
+            files: [file],
+            title: `Fee Receipt - ${props.studentName}`,
+            text: message.replace(/\*/g, ''), // Remove asterisks for generic share
+          })
+        } else {
+          // Desktop/Web fallback without number
+          const imgUrl = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = imgUrl
+          a.download = `${props.studentName}-receipt-${lang}.jpg`
+          a.click()
+
+          const whatsappURL = `https://wa.me/?text=${encodeURIComponent(message)}`
+          window.open(whatsappURL, '_blank')
         }
       }, 'image/jpeg', 0.95)
 
