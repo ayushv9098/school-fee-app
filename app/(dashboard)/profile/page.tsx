@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { User, Mail, LogOut, School, Download, Save, Pencil } from 'lucide-react'
 import ImportStudents from './import-students'
+import { ContactPicker } from '@/components/contact-picker'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -118,13 +119,19 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Mobile</Label>
-              <Input
-                placeholder="Mobile number"
-                value={school.mobile}
-                onChange={e => setSchool(prev => ({ ...prev, mobile: e.target.value }))}
-                className="h-11"
-                disabled={!editing}
-              />
+              <div className="relative">
+                <Input
+                  placeholder="Mobile number"
+                  value={school.mobile}
+                  onChange={e => setSchool(prev => ({ ...prev, mobile: e.target.value }))}
+                  className="h-11 pr-10"
+                  disabled={!editing}
+                />
+                <ContactPicker 
+                  onSelect={(phone) => setSchool(prev => ({ ...prev, mobile: phone }))} 
+                  disabled={!editing}
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Instagram</Label>

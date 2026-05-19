@@ -7,6 +7,7 @@ import { CLASSES } from '@/lib/constants'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Pencil, X } from 'lucide-react'
+import { ContactPicker } from '@/components/contact-picker'
 
 interface Props {
   student: {
@@ -137,13 +138,18 @@ export default function EditStudentButton({ student }: Props) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>Mobile</Label>
-                  <Input
-                    name="mobile"
-                    placeholder="Mobile number"
-                    value={form.mobile}
-                    onChange={handleChange}
-                    className="h-11"
-                  />
+                  <div className="relative">
+                    <Input
+                      name="mobile"
+                      placeholder="Mobile number"
+                      value={form.mobile}
+                      onChange={handleChange}
+                      className="h-11 pr-10"
+                    />
+                    <ContactPicker 
+                      onSelect={(phone) => setForm(prev => ({ ...prev, mobile: phone }))} 
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Email</Label>

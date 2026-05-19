@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { ContactPicker } from '@/components/contact-picker'
 
 export default function AddStudentPage() {
   const router = useRouter()
@@ -154,14 +155,19 @@ export default function AddStudentPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="mobile">Mobile</Label>
-                  <Input
-                    id="mobile"
-                    name="mobile"
-                    placeholder="Mobile number"
-                    value={form.mobile}
-                    onChange={handleChange}
-                    className="h-11"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="mobile"
+                      name="mobile"
+                      placeholder="Mobile number"
+                      value={form.mobile}
+                      onChange={handleChange}
+                      className="h-11 pr-10"
+                    />
+                    <ContactPicker 
+                      onSelect={(phone) => setForm(prev => ({ ...prev, mobile: phone }))} 
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
