@@ -110,6 +110,10 @@ export default async function StudentDetailPage({
               <p className="text-zinc-500">Academic Year</p>
               <p className="font-medium text-zinc-900">{student.academic_year || '-'}</p>
             </div>
+            <div>
+              <p className="text-zinc-500">Diary Page Number</p>
+              <p className="font-medium text-zinc-900">{student.diary_page_number || '-'}</p>
+            </div>
             <div className="sm:col-span-2">
               <p className="text-zinc-500">Address</p>
               <p className="font-medium text-zinc-900">{student.address || '-'}</p>

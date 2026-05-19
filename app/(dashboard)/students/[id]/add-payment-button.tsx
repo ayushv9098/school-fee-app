@@ -7,7 +7,7 @@ import { formatCurrency } from '@/lib/calculations'
 import { PAYMENT_MODES } from '@/lib/constants'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Plus, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 
 interface Props {
   studentId: string
@@ -248,14 +248,7 @@ export default function AddPaymentButton({
                   disabled={loading}
                   className="flex-1 h-11 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Payment'
-                  )}
+                  {loading ? 'Saving...' : 'Save Payment'}
                 </button>
               </div>
             </form>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, Zap } from 'lucide-react'
+import { Zap } from 'lucide-react'
 
 export default function SubscribeButton() {
   const [loading, setLoading] = useState(false)
@@ -103,7 +103,7 @@ export default function SubscribeButton() {
         className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50"
       >
         {loading
-          ? <><Loader2 className="w-4 h-4 animate-spin" />Processing...</>
+          ? 'Processing...'
           : '₹29/month - Subscribe Now'
         }
       </button>

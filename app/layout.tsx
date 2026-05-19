@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
-import ProgressBar from '@/components/ui/progress-bar'
 import './globals.css'
 
 const geist = Geist({ subsets: ['latin'] })
@@ -18,7 +17,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={geist.className}>
-        <ProgressBar />
         <div className="fade-in-page">{children}</div>
       </body>
     </html>

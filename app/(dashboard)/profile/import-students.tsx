@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Download, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { Download, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface ImportResult {
   imported: number
@@ -109,7 +109,7 @@ export default function ImportStudents() {
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition disabled:opacity-50"
         >
           {loading
-            ? <><Loader2 className="w-4 h-4 animate-spin" />Importing...</>
+            ? 'Importing...'
             : <><Download className="w-4 h-4" />Import Students</>
           }
         </button>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { formatCurrency } from '@/lib/calculations'
-import { Copy, Check, Mail, Loader2 } from 'lucide-react'
+import { Copy, Check, Mail } from 'lucide-react'
 import EmailPreviewModal from './email-preview-modal'
 
 // ✅ WHATSAPP ICON COMPONENT (Real look!)
@@ -164,11 +164,7 @@ export default function DefaulterRow({
               } ${sending ? 'opacity-50 cursor-not-allowed' : ''}`}
               title={sending ? 'Sending...' : parentEmail ? 'Send email reminder' : 'No email'}
             >
-              {sending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Mail className="w-3.5 h-3.5" />
-              )}
+              {!sending && <Mail className="w-3.5 h-3.5" />}
               <span className="hidden xs:inline">
                 {sending ? 'Sending...' : 'Email'}
               </span>

@@ -7,7 +7,7 @@ import { CLASSES } from '@/lib/constants'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AddStudentPage() {
@@ -225,6 +225,7 @@ export default function AddStudentPage() {
   </div>
 </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="academic_year">
                     Academic Year
@@ -238,20 +239,21 @@ export default function AddStudentPage() {
                     className="h-11"
                   />
                 </div>
-              
-              <div className="space-y-1.5">
-  <Label htmlFor="diary_page_number">
-    Diary Page Number
-    </Label>
-  <Input
-    id="diary_page_number"
-    name="diary_page_number"
-    placeholder="Page number"
-    value={form.diary_page_number}
-    onChange={handleChange}
-    className="h-11"
-  />
-</div>
+                
+                <div className="space-y-1.5">
+                  <Label htmlFor="diary_page_number">
+                    Diary Page Number
+                  </Label>
+                  <Input
+                    id="diary_page_number"
+                    name="diary_page_number"
+                    placeholder="Page number"
+                    value={form.diary_page_number}
+                    onChange={handleChange}
+                    className="h-11"
+                  />
+                </div>
+              </div>
 
               {/* Address */}
               <div className="space-y-1.5">
@@ -288,14 +290,7 @@ export default function AddStudentPage() {
                   disabled={loading}
                   className="h-11 flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50 sm:flex-1"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Add Student'
-                  )}
+                  {loading ? 'Saving...' : 'Add Student'}
                 </button>
               </div>
             </form>

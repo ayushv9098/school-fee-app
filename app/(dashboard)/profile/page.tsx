@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { User, Mail, LogOut, School, Download, Loader2, Save, Pencil } from 'lucide-react'
+import { User, Mail, LogOut, School, Download, Save, Pencil } from 'lucide-react'
 import ImportStudents from './import-students'
 
 export default function ProfilePage() {
@@ -152,7 +152,7 @@ export default function ProfilePage() {
                 className="flex-1 h-11 flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50"
               >
                 {saving
-                  ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</>
+                  ? 'Saving...'
                   : <><Save className="w-4 h-4" />Save</>
                 }
               </button>

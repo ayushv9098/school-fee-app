@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { CLASSES } from '@/lib/constants'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Pencil, X } from 'lucide-react'
+import { Pencil, X } from 'lucide-react'
 
 interface Props {
   student: {
@@ -233,10 +233,7 @@ export default function EditStudentButton({ student }: Props) {
                   disabled={loading}
                   className="flex-1 h-11 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50"
                 >
-                  {loading
-                    ? <><Loader2 className="w-4 h-4 mr-2 animate-spin inline" />Saving...</>
-                    : 'Save Changes'
-                  }
+                  {loading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
 

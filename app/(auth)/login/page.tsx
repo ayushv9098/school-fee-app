@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GraduationCap, Loader2 } from 'lucide-react'
+import { GraduationCap } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -139,9 +139,10 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full h-11 flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50"
               >
-                {loading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Please wait...</>
-                ) : isLogin ? 'Log In' : 'Create Account'}
+                {loading 
+                  ? (isLogin ? 'Logging in...' : 'Creating Account...') 
+                  : (isLogin ? 'Log In' : 'Create Account')
+                }
               </button>
 
               <div className="text-center pt-1">

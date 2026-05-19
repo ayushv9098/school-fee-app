@@ -101,14 +101,6 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      {loading && (
-  <div className="space-y-3 animate-pulse">
-    {[1,2,3,4,5].map(i => (
-      <div key={i} className="h-16 bg-zinc-200 rounded-2xl" />
-    ))}
-  </div>
-)}
-
       {/* Desktop Table */}
       {!loading && (
         <div className="hidden md:block">

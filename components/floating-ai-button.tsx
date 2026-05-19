@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Bot, Lock, X, Send, Loader2, User } from 'lucide-react'
+import { Bot, Lock, X, Send, User } from 'lucide-react'
 
 
 export default function FloatingAIButton() {

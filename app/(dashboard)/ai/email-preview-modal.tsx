@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Mail, Send, Loader2, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react'
+import { X, Mail, Send, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react'
 
 interface EmailPreviewModalProps {
   isOpen: boolean
@@ -222,7 +222,7 @@ export default function EmailPreviewModal({
 
           {/* Success Message */}
           {sendStatus === 'success' && (
-            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3 sm:p-4 flex items-start gap-2 sm:gap-3 animate-pulse">
+            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3 sm:p-4 flex items-start gap-2 sm:gap-3">
               <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
               <div>
                 <p className="font-bold text-green-800 text-sm sm:text-base">✅ Email Sent Successfully!</p>
@@ -274,10 +274,7 @@ export default function EmailPreviewModal({
             className="w-full sm:w-auto px-6 py-2.5 bg-violet-600 text-white rounded-lg font-medium hover:bg-violet-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md text-sm sm:text-base order-1 sm:order-2"
           >
             {isSending ? (
-              <>
-                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-                Sending...
-              </>
+              'Sending...'
             ) : sendStatus === 'success' ? (
               <>
                 <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />

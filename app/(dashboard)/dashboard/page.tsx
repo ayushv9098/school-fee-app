@@ -5,12 +5,13 @@ import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, getProgressPercent } from '@/lib/calculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Users, IndianRupee, TrendingUp, AlertCircle, Eye, EyeOff, BarChart3 } from 'lucide-react'
+import { Users, IndianRupee, TrendingUp, AlertCircle, Eye, EyeOff, BarChart3, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import CollapsibleSection from '@/components/ui/collapsible-section'
 
 export default function DashboardPage() {
   const [students, setStudents] = useState<any[]>([])
+  const [expenses, setExpenses] = useState<any[]>([])
   const [hidden, setHidden] = useState(true)
 
   useEffect(() => {
@@ -18,12 +19,17 @@ export default function DashboardPage() {
     supabase.from('student_fee_summary').select('*').then(({ data }) => {
       setStudents(data || [])
     })
+    supabase.from('expenses').select('amount').then(({ data }) => {
+      setExpenses(data || [])
+    })
   }, [])
 
   const totalStudents = students.length
   const totalFees = students.reduce((a, s) => a + s.total_fee, 0)
   const totalCollected = students.reduce((a, s) => a + s.total_paid, 0)
   const totalPending = students.reduce((a, s) => a + s.remaining_fee, 0)
+  const totalExpenses = expenses.reduce((a, e) => a + Number(e.amount), 0)
+  const netProfit = totalCollected - totalExpenses
 
   const classes = [...new Set(students.map(s => s.class))]
   const classStats = classes.map(cls => {
@@ -65,7 +71,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Link href="/students">
           <Card className="hover:shadow-md transition cursor-pointer">
             <CardContent className="p-5">
@@ -119,6 +125,22 @@ export default function DashboardPage() {
               </div>
               <p className="text-2xl font-bold text-red-600">
                 {hidden ? mask : formatCurrency(totalPending)}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/expenses">
+          <Card className={`hover:shadow-md transition cursor-pointer ${netProfit >= 0 ? 'border-green-100' : 'border-red-100'}`}>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-zinc-500">Net Profit</span>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+                  <Wallet className={`w-4 h-4 ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                </div>
+              </div>
+              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {hidden ? mask : formatCurrency(netProfit)}
               </p>
             </CardContent>
           </Card>
