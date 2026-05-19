@@ -385,19 +385,26 @@ export default function ReceiptPDF(props: Props) {
     try {
       const supabase = createClient()
       const timestamp = Date.now()
-      const baseFileName = `${props.studentName.replace(/\s+/g, '-').toLowerCase()}-${timestamp}`
+      const baseFileName = `receipt-${props.studentName.replace(/\s+/g, '-').toLowerCase()}-${timestamp}`
 
-      // 1. Generate & Upload JPEG (for visual link)
+      // 1. Generate Image (This is what people want to see directly)
       const el = receiptRef.current
       if (!el) return
       el.style.display = 'block'
       await new Promise(r => setTimeout(r, 100))
-      const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff', logging: false, useCORS: true })
+      const canvas = await html2canvas(el, { 
+        scale: 2, 
+        backgroundColor: '#ffffff', 
+        logging: false, 
+        useCORS: true 
+      })
       el.style.display = 'none'
       
-      const imgBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95))
+      const imgBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9))
+      
       let imageUrl = ''
       if (imgBlob) {
+        // Upload JPEG for the fallback link
         const { error: imgErr } = await supabase.storage.from('receipts').upload(`${baseFileName}.jpg`, imgBlob, { contentType: 'image/jpeg', upsert: false })
         if (!imgErr) {
           const { data } = supabase.storage.from('receipts').getPublicUrl(`${baseFileName}.jpg`)
@@ -405,28 +412,44 @@ export default function ReceiptPDF(props: Props) {
         }
       }
 
-      // 2. Generate & Upload PDF (for formal record)
-      const pdfBlob = await pdf(<ReceiptDocument {...props} lang={lang} />).toBlob()
-      let pdfUrl = ''
-      if (pdfBlob) {
-        const { error: pdfErr } = await supabase.storage.from('receipts').upload(`${baseFileName}.pdf`, pdfBlob, { contentType: 'application/pdf', upsert: false })
-        if (!pdfErr) {
-          const { data } = supabase.storage.from('receipts').getPublicUrl(`${baseFileName}.pdf`)
-          pdfUrl = data.publicUrl
+      // 2. Prepare Message
+      const message = lang === 'en'
+        ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}).\n\nAmount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*\nRemaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\n— ${props.schoolName}`
+        : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद।\n\nजमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*\nशेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\n— ${props.schoolName}`
+
+      const fullMessage = imageUrl ? `${message}\n\nView Full Receipt: ${imageUrl}` : message
+
+      // 3. ATTEMPT NATIVE SHARE (Best for Mobile - sends ACTUAL image)
+      if (navigator.share && imgBlob) {
+        try {
+          const file = new File([imgBlob], `${baseFileName}.jpg`, { type: 'image/jpeg' })
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: `Receipt: ${props.studentName}`,
+              text: fullMessage
+            })
+            setImgLoading(false)
+            return // Successfully shared via native menu
+          }
+        } catch (shareErr) {
+          console.log('Native share skipped or failed, using WhatsApp link fallback')
         }
       }
 
-      const message = lang === 'en'
-        ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}).\n\nAmount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*\nRemaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\nView Receipt: ${imageUrl || pdfUrl}\n\n— ${props.schoolName}`
-        : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद।\n\nजमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*\nशेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\nरसीद देखें: ${imageUrl || pdfUrl}\n\n— ${props.schoolName}`
-
-      // 3. SHARE LOGIC (Link-based only to avoid mobile download issues)
-      // Open direct WhatsApp chat with the link
+      // 4. FALLBACK: wa.me (Best for Desktop)
       const whatsappURL = cleanedMobile 
-        ? `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`
-        : `https://wa.me/?text=${encodeURIComponent(message)}`
+        ? `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fullMessage)}`
+        : `https://wa.me/?text=${encodeURIComponent(fullMessage)}`
       
       window.open(whatsappURL, '_blank')
+
+      // 5. Background PDF Upload (Silent, don't wait for it if sharing image)
+      pdf(<ReceiptDocument {...props} lang={lang} />).toBlob().then(async (pdfBlob) => {
+        if (pdfBlob) {
+          await supabase.storage.from('receipts').upload(`${baseFileName}.pdf`, pdfBlob, { contentType: 'application/pdf', upsert: false })
+        }
+      }).catch(err => console.error('Silent PDF upload failed:', err))
 
     } catch (err) {
       console.error('WhatsApp share error:', err)
