@@ -102,7 +102,7 @@ const faqs = [
   { q: 'Is data safe?', a: 'Yes! Each user"s data is stored encrypted.' },
   { q: 'How to unlock AI chat?', a: 'AI chat is unlocked by paying Rs.5/month.' },
   { q: 'How to save school name in PDF receipt?', a: 'School name is saved on the profile page.' },
-  { q: 'Can multiple users use it?', a: 'Yes! Each teacher/admin can create their own account.' },
+  { q: 'Can multiple users use it?', a: 'Yes! Each staff/admin can create their own account.' },
   { q: 'Is it mobile-friendly?', a: 'Yes! The app is mobile responsive.' }
 ]
 

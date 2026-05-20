@@ -184,7 +184,7 @@ export default function EditStudentButton({ student }: Props) {
                     placeholder="Total fee amount"
                     value={form.total_fee}
                     onChange={handleChange}
-                    className="h-11 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="h-11"
                   />
                 </div>
                 <div className="space-y-1.5">

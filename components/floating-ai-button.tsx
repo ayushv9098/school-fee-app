@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Bot, Lock, X, Send, User } from 'lucide-react'
-
+import { cn } from '@/lib/utils'
 
 export default function FloatingAIButton() {
   const router = useRouter()
@@ -71,15 +71,19 @@ useEffect(() => {
       {/* Floating Button */}
       <button
         onClick={() => isSubscribed ? setOpen(true) : router.push('/ai')}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-        style={{ background: isSubscribed ? '#7C3AED' : '#71717A' }}
+        className={cn(
+          "fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 border-2 border-white/20",
+          isSubscribed 
+            ? "bg-gradient-to-br from-violet-500 to-violet-700 shadow-violet-500/20" 
+            : "bg-gradient-to-br from-zinc-600 to-zinc-800 shadow-black/20"
+        )}
       >
         {isSubscribed ? (
           <Bot className="w-6 h-6 text-white" />
         ) : (
           <div className="relative">
             <Bot className="w-6 h-6 text-white" />
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center border border-white/50">
               <Lock className="w-2.5 h-2.5 text-yellow-900" />
             </div>
           </div>

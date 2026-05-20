@@ -66,7 +66,7 @@ export default function DashboardPage() {
           }`}
         >
           {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          {hidden ? 'Hidden' : 'Hide Amounts'}
+          {hidden ? 'Hidden' : 'Hide '}
         </button>
       </div>
 

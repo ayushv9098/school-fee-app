@@ -109,7 +109,7 @@ export default function AddExpenseButton() {
               <div className="space-y-1.5">
                 <Label>Title *</Label>
                 <Input
-                  placeholder="e.g. Teacher Salary"
+                  placeholder="e.g. Staff Salary"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="h-11"
@@ -125,7 +125,7 @@ export default function AddExpenseButton() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   onWheel={e => e.currentTarget.blur()}
-                  className="h-11 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="h-11"
                 />
               </div>
 
