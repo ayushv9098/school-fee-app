@@ -426,16 +426,8 @@ export default function ReceiptPDF(props: Props) {
 
       const fullMessage = imageUrl ? `${message}\n\nView Full Receipt: ${imageUrl}` : message
 
-      // 4. SEAMLESS EXPERIENCE: PRIORITIZE DIRECT WHATSAPP IF MOBILE NUMBER EXISTS
-      // This skips the system share sheet and goes straight to the parent's chat
-      if (cleanedMobile) {
-        const whatsappURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fullMessage)}`
-        window.open(whatsappURL, '_blank')
-        setImgLoading(false)
-        return
-      }
-
-      // 5. FALLBACK: NATIVE SHARE (If no number, let them pick someone)
+      // 4. ATTEMPT NATIVE SHARE (PRIORITY FOR MOBILE - SENDS ACTUAL IMAGE)
+      // This satisfies the "image must be attached" requirement.
       if (navigator.share && imgBlob) {
         try {
           const file = new File([imgBlob], `${baseFileName}.jpg`, { type: 'image/jpeg' })
@@ -446,11 +438,20 @@ export default function ReceiptPDF(props: Props) {
               text: fullMessage
             })
             setImgLoading(false)
-            return // Successfully shared via native menu
+            return // Successfully shared via native menu (user picks contact)
           }
         } catch (shareErr) {
-          console.log('Native share skipped or failed')
+          console.log('Native share skipped or failed, using WhatsApp link fallback')
         }
+      }
+
+      // 5. SEAMLESS FALLBACK: DIRECT WHATSAPP IF MOBILE NUMBER EXISTS
+      // This opens the specific chat but only supports text (due to browser limitations)
+      if (cleanedMobile) {
+        const whatsappURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fullMessage)}`
+        window.open(whatsappURL, '_blank')
+        setImgLoading(false)
+        return
       }
 
       // 6. LAST RESORT: General wa.me (opens WhatsApp contact picker)
