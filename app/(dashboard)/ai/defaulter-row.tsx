@@ -112,12 +112,17 @@ export default function DefaulterRow({
     handleCopyMessage()
     
     if (parentMobile) {
-      // Open WhatsApp with pre-filled message
-      const whatsappURL = `https://wa.me/${parentMobile.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`
-      
-      if (confirm(`📱 Open WhatsApp to ${parentMobile}?\n\nClick OK for WhatsApp\nClick Cancel to copy only`)) {
-        window.open(whatsappURL, '_blank')
+      // Clean Mobile Number
+      let cleanedMobile = parentMobile.replace(/\D/g, '')
+      if (cleanedMobile.length === 10) {
+        cleanedMobile = `91${cleanedMobile}`
+      } else if (cleanedMobile.length === 11 && cleanedMobile.startsWith('0')) {
+        cleanedMobile = `91${cleanedMobile.substring(1)}`
       }
+
+      // Open WhatsApp with pre-filled message (Seamlessly!)
+      const whatsappURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(message)}`
+      window.open(whatsappURL, '_blank')
     } else {
       alert('📋 Message copied!\n\nNo phone number on record.\nPaste in any messaging app.')
     }

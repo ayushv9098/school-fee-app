@@ -371,9 +371,14 @@ export default function ReceiptPDF(props: Props) {
   }
 
   async function handleWhatsApp() {
+    // 1. Clean Mobile Number (Robust handling for Indian numbers)
     let cleanedMobile = props.parentMobile?.replace(/\D/g, '') || ''
     if (cleanedMobile.length === 10) {
       cleanedMobile = `91${cleanedMobile}`
+    } else if (cleanedMobile.length === 11 && cleanedMobile.startsWith('0')) {
+      cleanedMobile = `91${cleanedMobile.substring(1)}`
+    } else if (cleanedMobile.length > 12 && cleanedMobile.startsWith('00')) {
+      cleanedMobile = cleanedMobile.substring(2)
     }
 
     if (!props.parentMobile) {
@@ -387,11 +392,13 @@ export default function ReceiptPDF(props: Props) {
       const timestamp = Date.now()
       const baseFileName = `receipt-${props.studentName.replace(/\s+/g, '-').toLowerCase()}-${timestamp}`
 
-      // 1. Generate Image (This is what people want to see directly)
+      // 2. Generate Image (This is what people want to see directly)
       const el = receiptRef.current
       if (!el) return
       el.style.display = 'block'
-      await new Promise(r => setTimeout(r, 100))
+      // Give a tiny bit of time for styles to apply if needed
+      await new Promise(r => setTimeout(r, 50))
+      
       const canvas = await html2canvas(el, { 
         scale: 2, 
         backgroundColor: '#ffffff', 
@@ -412,14 +419,23 @@ export default function ReceiptPDF(props: Props) {
         }
       }
 
-      // 2. Prepare Message
+      // 3. Prepare Message
       const message = lang === 'en'
         ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}).\n\nAmount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*\nRemaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\n— ${props.schoolName}`
         : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद।\n\nजमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*\nशेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\n— ${props.schoolName}`
 
       const fullMessage = imageUrl ? `${message}\n\nView Full Receipt: ${imageUrl}` : message
 
-      // 3. ATTEMPT NATIVE SHARE (Best for Mobile - sends ACTUAL image)
+      // 4. SEAMLESS EXPERIENCE: PRIORITIZE DIRECT WHATSAPP IF MOBILE NUMBER EXISTS
+      // This skips the system share sheet and goes straight to the parent's chat
+      if (cleanedMobile) {
+        const whatsappURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fullMessage)}`
+        window.open(whatsappURL, '_blank')
+        setImgLoading(false)
+        return
+      }
+
+      // 5. FALLBACK: NATIVE SHARE (If no number, let them pick someone)
       if (navigator.share && imgBlob) {
         try {
           const file = new File([imgBlob], `${baseFileName}.jpg`, { type: 'image/jpeg' })
@@ -433,18 +449,15 @@ export default function ReceiptPDF(props: Props) {
             return // Successfully shared via native menu
           }
         } catch (shareErr) {
-          console.log('Native share skipped or failed, using WhatsApp link fallback')
+          console.log('Native share skipped or failed')
         }
       }
 
-      // 4. FALLBACK: wa.me (Best for Desktop)
-      const whatsappURL = cleanedMobile 
-        ? `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fullMessage)}`
-        : `https://wa.me/?text=${encodeURIComponent(fullMessage)}`
-      
-      window.open(whatsappURL, '_blank')
+      // 6. LAST RESORT: General wa.me (opens WhatsApp contact picker)
+      const fallbackURL = `https://wa.me/?text=${encodeURIComponent(fullMessage)}`
+      window.open(fallbackURL, '_blank')
 
-      // 5. Background PDF Upload (Silent, don't wait for it if sharing image)
+      // Background PDF Upload (Silent)
       pdf(<ReceiptDocument {...props} lang={lang} />).toBlob().then(async (pdfBlob) => {
         if (pdfBlob) {
           await supabase.storage.from('receipts').upload(`${baseFileName}.pdf`, pdfBlob, { contentType: 'application/pdf', upsert: false })
@@ -454,8 +467,10 @@ export default function ReceiptPDF(props: Props) {
     } catch (err) {
       console.error('WhatsApp share error:', err)
       const fallbackMessage = `Fee receipt for ${props.studentName} - Amount: ₹${props.amountPaid}`
-      const fallbackURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fallbackMessage)}`
-      window.open(fallbackURL, '_blank')
+      const finalFallback = cleanedMobile 
+        ? `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fallbackMessage)}`
+        : `https://wa.me/?text=${encodeURIComponent(fallbackMessage)}`
+      window.open(finalFallback, '_blank')
     }
     setImgLoading(false)
   }
