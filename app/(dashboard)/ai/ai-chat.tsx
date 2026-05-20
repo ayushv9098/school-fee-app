@@ -31,7 +31,7 @@ export default function AIChat(props: Props) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Hello! I'm your Fee Management AI Assistant. I can help you analyze your fee collection data. Ask me anything about your students and payments!`
+      content: `Namaste! Main aapka software expert aur consultant hoon. Main aapki fee collection badhane aur software use karne mein help kar sakta hoon. Poochiye, main kaise help karu?`
     }
   ])
   const [input, setInput] = useState('')
@@ -45,7 +45,7 @@ export default function AIChat(props: Props) {
   }, [messages])
 
   const context = `
-    School: Ayushman Educational Academy
+    School: ${props.schoolName || 'Ayushman Educational Academy'}
     Total Students: ${props.totalStudents}
     Total Fees: ₹${props.totalFees}
     Total Collected: ₹${props.totalCollected}
@@ -65,11 +65,18 @@ export default function AIChat(props: Props) {
     setShowQuickQuestions(false)
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
     setLoading(true)
+    
     try {
       const response = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, context })
+        body: JSON.stringify({ 
+          message: userMessage, 
+          context,
+          schoolName: props.schoolName,
+          schoolAddress: props.schoolAddress,
+          schoolMobile: props.schoolMobile
+        })
       })
       const data = await response.json()
       setMessages(prev => [...prev, {
@@ -79,17 +86,10 @@ export default function AIChat(props: Props) {
     } catch (err) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Sorry, AI service is not available. Please add API key.'
+        content: 'Sorry, AI service is not available right now. Please check your connection.'
       }])
     }
     setLoading(false)
-    body: JSON.stringify({
-      message: userMessage,
-      context,
-      schoolName: props.schoolName,
-      schoolAddress: props.schoolAddress,
-      schoolMobile: props.schoolMobile,
-    })
   }
 
   if (!props.isSubscribed) {
@@ -169,9 +169,10 @@ export default function AIChat(props: Props) {
         {showQuickQuestions && (
           <div className="flex flex-wrap gap-2">
             {[
-              'What is the collection rate?',
-              'Who are the top defaulters?',
-              'How many students are unpaid?',
+              'Add payment kaise karein?',
+              'Pending fee recovery strategies kya hain?',
+              'Staff salary manage kaise karein?',
+              'Defaulters list check karni hai.',
             ].map(q => (
               <button
                 key={q}

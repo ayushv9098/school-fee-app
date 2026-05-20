@@ -129,7 +129,7 @@ interface Props {
   lang?: 'en' | 'hi'
 }
 
-function ReceiptDocument({ studentName, fatherName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'en' }: Props) {
+function ReceiptDocument({ studentName, fatherName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'hi' }: Props) {
   const t = translations[lang]
   const receiptId = `REC-${Date.now()}`
   const date = new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -225,7 +225,7 @@ function ReceiptDocument({ studentName, fatherName, className, amountPaid, total
 }
 
 // Hidden receipt for image capture
-function ReceiptHTML({ studentName, fatherName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'en' }: Props) {
+function ReceiptHTML({ studentName, fatherName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'hi' }: Props) {
   const t = translations[lang]
   const receiptId = `REC-${Date.now()}`
   const date = new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -347,7 +347,7 @@ export default function ReceiptPDF(props: Props) {
   const [loading, setLoading] = useState(false)
   const [imgLoading, setImgLoading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [lang, setLang] = useState<'en' | 'hi'>('en')
+  const [lang, setLang] = useState<'en' | 'hi'>('hi')
   const [whatsappError, setWhatsappError] = useState<string | null>(null)
   const receiptRef = useRef<HTMLDivElement>(null)
   const t = translations[lang]

@@ -11,7 +11,7 @@ export default function FloatingAIButton() {
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([
-    { role: 'assistant', content: 'Hello! Ask something about fee management!' }
+    { role: 'assistant', content: 'Namaste! Main aapka software expert hoon. Kya help chahiye?' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
