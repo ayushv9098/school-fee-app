@@ -37,6 +37,7 @@ export default async function AttendancePage() {
       todayAttendance={todayAttendance || []}
       monthlyAttendance={monthlyAttendance || []}
       adminEmail={user?.email || ''}
+      adminId={user?.id || ''}
     />
   )
 }

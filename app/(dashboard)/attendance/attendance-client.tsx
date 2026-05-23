@@ -37,9 +37,10 @@ interface Props {
   todayAttendance: AttendanceRecord[]
   monthlyAttendance: AttendanceRecord[]
   adminEmail: string
+  adminId: string
 }
 
-export default function AttendanceClient({ initialTeachers, todayAttendance, monthlyAttendance, adminEmail }: Props) {
+export default function AttendanceClient({ initialTeachers, todayAttendance, monthlyAttendance, adminEmail, adminId }: Props) {
   const router = useRouter()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
@@ -78,12 +79,10 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
     e.preventDefault()
     setLoading(true)
     
-    const { data: { user } } = await supabase.auth.getUser()
-    
     const { data: teacher, error } = await supabase
       .from('teachers')
       .insert({
-        user_id: user?.id,
+        user_id: adminId, // Use the prop instead of fetching
         name: newTeacher.name,
         subject: newTeacher.subject,
         monthly_salary: Number(newTeacher.salary),
