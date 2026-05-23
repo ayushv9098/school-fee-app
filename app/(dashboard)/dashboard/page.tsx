@@ -16,12 +16,31 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const supabase = createClient()
+    
+    // Fetch students
     supabase.from('student_fee_summary').select('*').then(({ data }) => {
       setStudents(data || [])
     })
-    supabase.from('expenses').select('amount').then(({ data }) => {
-      setExpenses(data || [])
-    })
+
+    // Fetch all types of expenses
+    const fetchExpenses = async () => {
+      const [legacy, teachers, vehicles, building] = await Promise.all([
+        supabase.from('expenses').select('amount'),
+        supabase.from('teacher_payments').select('amount'),
+        supabase.from('vehicle_expenses').select('amount'),
+        supabase.from('building_expenses').select('amount')
+      ])
+
+      const allExpenses = [
+        ...(legacy.data || []),
+        ...(teachers.data || []),
+        ...(vehicles.data || []),
+        ...(building.data || [])
+      ]
+      setExpenses(allExpenses)
+    }
+
+    fetchExpenses()
   }, [])
 
   const totalStudents = students.length

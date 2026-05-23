@@ -7,8 +7,91 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { CLASSES } from '@/lib/constants'
 import Link from 'next/link'
-import { Plus, Search, X } from 'lucide-react'
+import { Plus, Search, X, FileDown } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
+import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+
+// PDF Styles
+const pdfStyles = StyleSheet.create({
+  page: { padding: 30, backgroundColor: '#ffffff' },
+  header: { marginBottom: 20, borderBottom: '2px solid #7C3AED', paddingBottom: 10 },
+  schoolName: { fontSize: 18, fontWeight: 'bold', color: '#7C3AED' },
+  reportTitle: { fontSize: 14, marginTop: 4, color: '#4b5563' },
+  metaInfo: { fontSize: 10, color: '#6b7280', marginTop: 4 },
+  table: { width: 'auto', marginTop: 10 },
+  tableRow: { flexDirection: 'row', borderBottomColor: '#eeeeee', borderBottomWidth: 1, minHeight: 25, alignItems: 'center' },
+  alternateRow: { backgroundColor: '#f9fafb' },
+  tableHeader: { backgroundColor: '#f3f4f6' },
+  tableColSr: { width: '4%' },
+  tableColName: { width: '18%' },
+  tableColGuardian: { width: '18%' },
+  tableColClass: { width: '8%' },
+  tableColMobile: { width: '10%' },
+  tableColFee: { width: '10%', textAlign: 'right' },
+  tableColPaid: { width: '10%', textAlign: 'right' },
+  tableColRemaining: { width: '10%', textAlign: 'right' },
+  tableColStatus: { width: '12%', textAlign: 'center' },
+  tableCell: { fontSize: 9, padding: 4 },
+  headerCell: { fontSize: 10, fontWeight: 'bold', color: '#374151' },
+  statusPaid: { color: '#16a34a', fontWeight: 'bold' },
+  statusPartial: { color: '#ca8a04', fontWeight: 'bold' },
+  statusUnpaid: { color: '#dc2626', fontWeight: 'bold' },
+  footer: { position: 'absolute', bottom: 30, left: 30, right: 30, borderTop: '1px solid #eeeeee', paddingTop: 10, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: '#9ca3af' }
+})
+
+// PDF Component
+const StudentsReportPDF = ({ students, schoolName, reportTitle, date, count }: any) => (
+  <Document>
+    <Page size="A4" orientation="landscape" style={pdfStyles.page}>
+      <View style={pdfStyles.header}>
+        <Text style={pdfStyles.schoolName}>{schoolName}</Text>
+        <Text style={pdfStyles.reportTitle}>{reportTitle}</Text>
+        <Text style={pdfStyles.metaInfo}>Date: {date}  |  Total Students: {count}</Text>
+      </View>
+
+      <View style={pdfStyles.table}>
+        {/* Header */}
+        <View style={[pdfStyles.tableRow, pdfStyles.tableHeader]}>
+          <Text style={[pdfStyles.tableCell, pdfStyles.headerCell, pdfStyles.tableColSr]}>Sr No</Text>
+          <Text style={[pdfStyles.tableCell, pdfStyles.headerCell, pdfStyles.tableColName]}>Student Name</Text>
+          <Text style={[pdfStyles.tableCell, pdfStyles.headerCell, pdfStyles.tableColGuardian]}>Father/Guardian</Text>
+          <Text style={[pdfStyles.tableCell, pdfStyles.headerCell, pdfStyles.tableColClass]}>Class</Text>
+          <Text style={[pdfStyles.tableCell, pdfStyles.headerCell, pdfStyles.tableColMobile]}>Mobile</Text>
+          <Text style={[pdfStyles.tableCell, pdfStyles.headerCell, pdfStyles.tableColFee]}>Total Fee</Text>
+          <Text style={[pdfStyles.tableCell, pdfStyles.headerCell, pdfStyles.tableColPaid]}>Paid</Text>
+          <Text style={[pdfStyles.tableCell, pdfStyles.headerCell, pdfStyles.tableColRemaining]}>Remaining</Text>
+          <Text style={[pdfStyles.tableCell, pdfStyles.headerCell, pdfStyles.tableColStatus]}>Status</Text>
+        </View>
+
+        {/* Rows */}
+        {students.map((s: any, i: number) => (
+          <View key={s.id} style={[pdfStyles.tableRow, i % 2 === 1 ? pdfStyles.alternateRow : {}]}>
+            <Text style={[pdfStyles.tableCell, pdfStyles.tableColSr]}>{i + 1}</Text>
+            <Text style={[pdfStyles.tableCell, pdfStyles.tableColName]}>{s.name}</Text>
+            <Text style={[pdfStyles.tableCell, pdfStyles.tableColGuardian]}>{s.guardian_name || '-'}</Text>
+            <Text style={[pdfStyles.tableCell, pdfStyles.tableColClass]}>{s.class}</Text>
+            <Text style={[pdfStyles.tableCell, pdfStyles.tableColMobile]}>{s.mobile || '-'}</Text>
+            <Text style={[pdfStyles.tableCell, pdfStyles.tableColFee]}>{s.total_fee.toLocaleString('en-IN')}</Text>
+            <Text style={[pdfStyles.tableCell, pdfStyles.tableColPaid]}>{s.total_paid.toLocaleString('en-IN')}</Text>
+            <Text style={[pdfStyles.tableCell, pdfStyles.tableColRemaining]}>{s.remaining_fee.toLocaleString('en-IN')}</Text>
+            <Text style={[
+              pdfStyles.tableCell, 
+              pdfStyles.tableColStatus,
+              s.status === 'paid' ? pdfStyles.statusPaid : 
+              s.status === 'partial' ? pdfStyles.statusPartial : 
+              pdfStyles.statusUnpaid
+            ]}>{s.status.toUpperCase()}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={pdfStyles.footer}>
+        <Text>Generated by School Fee Manager</Text>
+        <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} fixed />
+      </View>
+    </Page>
+  </Document>
+)
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([])
@@ -16,6 +99,19 @@ export default function StudentsPage() {
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
   const [loading, setLoading] = useState(true)
+  const [pdfLoading, setPdfLoading] = useState(false)
+  const [schoolName, setSchoolName] = useState('School Fee Report')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.from('school_settings').select('school_name').eq('user_id', user.id).maybeSingle().then(({ data }) => {
+          if (data?.school_name) setSchoolName(data.school_name)
+        })
+      }
+    })
+  }, [])
 
   const fetchStudents = useCallback(async () => {
     setLoading(true)
@@ -38,6 +134,42 @@ export default function StudentsPage() {
   useEffect(() => {
     fetchStudents()
   }, [fetchStudents])
+
+  const downloadPDF = async () => {
+    if (students.length === 0) return
+    setPdfLoading(true)
+    
+    try {
+      const reportTitle = selectedStatus === 'unpaid' ? "Unpaid Students Report" :
+                         selectedStatus === 'partial' ? "Partial Payment Students Report" :
+                         selectedStatus === 'paid' ? "Paid Students Report" :
+                         "All Students Report"
+      
+      const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+      
+      const blob = await pdf(
+        <StudentsReportPDF 
+          students={students} 
+          schoolName={schoolName}
+          reportTitle={reportTitle}
+          date={date}
+          count={students.length}
+        />
+      ).toBlob()
+      
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      const filename = `${selectedStatus || 'all'}-students.pdf`
+      link.href = url
+      link.download = filename
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error("PDF Error:", err)
+    } finally {
+      setPdfLoading(false)
+    }
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-5">
@@ -77,27 +209,44 @@ export default function StudentsPage() {
             </button>
           )}
         </div>
-        <div className="flex gap-3">
-          <select
-            value={selectedClass}
-            onChange={e => setSelectedClass(e.target.value)}
-            className="flex-1 h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-          >
-            <option value="">All Classes</option>
-            {CLASSES.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-          <select
-            value={selectedStatus}
-            onChange={e => setSelectedStatus(e.target.value)}
-            className="flex-1 h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-          >
-            <option value="">All Status</option>
-            <option value="paid">Paid</option>
-            <option value="partial">Partial</option>
-            <option value="unpaid">Unpaid</option>
-          </select>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex gap-3 flex-1">
+            <select
+              value={selectedClass}
+              onChange={e => setSelectedClass(e.target.value)}
+              className="flex-1 h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            >
+              <option value="">All Classes</option>
+              {CLASSES.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              value={selectedStatus}
+              onChange={e => setSelectedStatus(e.target.value)}
+              className="flex-1 h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            >
+              <option value="">All Status</option>
+              <option value="paid">Paid</option>
+              <option value="partial">Partial</option>
+              <option value="unpaid">Unpaid</option>
+            </select>
+          </div>
+
+          {students.length > 0 && (
+            <button
+              onClick={downloadPDF}
+              disabled={pdfLoading}
+              className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl h-11 px-4 transition whitespace-nowrap disabled:opacity-50"
+            >
+              {pdfLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <FileDown className="w-4 h-4" />
+              )}
+              Download PDF
+            </button>
+          )}
         </div>
       </div>
 

@@ -148,12 +148,18 @@ export default function ExpensesClient({
     setLoading(true)
     setError(null)
     const { data: { user } } = await supabase.auth.getUser()
+
+    const dateObj = new Date(modalData.date)
+    const month = dateObj.getMonth() + 1
+    const year = dateObj.getFullYear()
+
     const { error } = await supabase.from('teacher_payments').insert({
       user_id: user?.id,
       teacher_id: modalData.teacherId,
       amount: Number(modalData.amount),
-      month: Number(modalData.month),
-      year: Number(modalData.year),
+      month: month,
+      year: year,
+      paid_at: modalData.date,
       note: modalData.note
     })
     if (error) {
@@ -275,11 +281,23 @@ export default function ExpensesClient({
     <div className="px-3 py-5 md:p-6 space-y-6 md:space-y-8 max-w-7xl mx-auto">
       
       {/* --- SUMMARY BAR --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+        <Card className="border-blue-100 bg-blue-50/30">
+          <CardContent className="p-4 md:p-5 flex items-center justify-between">
+            <div>
+              <p className="text-xs md:text-sm text-zinc-500 font-medium">Total Collected</p>
+              <p className="text-xl md:text-2xl font-bold text-blue-600">{formatCurrency(totalCollected)}</p>
+            </div>
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-xl md:rounded-2xl flex items-center justify-center text-blue-600">
+              <TrendingUp size={20} className="md:w-6 md:h-6" />
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border-red-100 bg-red-50/30">
           <CardContent className="p-4 md:p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm text-zinc-500 font-medium">Expenses This Month</p>
+              <p className="text-xs md:text-sm text-zinc-500 font-medium">Total Expenses</p>
               <p className="text-xl md:text-2xl font-bold text-red-600">{formatCurrency(totalExpensesThisMonth)}</p>
             </div>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-red-100 rounded-xl md:rounded-2xl flex items-center justify-center text-red-600">
@@ -291,13 +309,13 @@ export default function ExpensesClient({
         <Card className={netProfit >= 0 ? "border-green-100 bg-green-50/30" : "border-red-100 bg-red-50/30"}>
           <CardContent className="p-4 md:p-5 flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm text-zinc-500 font-medium">Net Profit (Collected - Expenses)</p>
+              <p className="text-xs md:text-sm text-zinc-500 font-medium">Net Profit</p>
               <p className={`text-xl md:text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(netProfit)}
               </p>
             </div>
             <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center ${netProfit >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-              <TrendingUp size={20} className="md:w-6 md:h-6" />
+              {netProfit >= 0 ? <TrendingUp size={20} className="md:w-6 md:h-6" /> : <TrendingDown size={20} className="md:w-6 md:h-6" />}
             </div>
           </CardContent>
         </Card>
@@ -378,23 +396,21 @@ export default function ExpensesClient({
                         >
                           <History size={14} className="md:w-4 md:h-4" />
                         </button>
-                        <button 
-                          onClick={() => {
-                            setActiveModal('pay-salary')
-                            setError(null)
-                            setModalData({ 
-                              teacherId: teacher.id, 
-                              teacherName: teacher.name,
-                              amount: '', 
-                              suggestedAmount: String(teacher.monthly_salary - paidThisMonth > 0 ? teacher.monthly_salary - paidThisMonth : teacher.monthly_salary),
-                              month: String(CURRENT_MONTH), 
-                              year: String(CURRENT_YEAR),
-                              note: ''
-                            })
-                          }}
-                          className="px-3 md:px-4 py-1.5 md:py-2 bg-violet-600 text-white hover:bg-violet-700 rounded-lg text-[11px] md:text-xs font-bold transition shadow-sm whitespace-nowrap"
-                        >
-                          Pay Salary
+                        <button
+                         onClick={() => {
+                           setActiveModal('pay-salary')
+                           setError(null)
+                           setModalData({
+                             teacherId: teacher.id,
+                             teacherName: teacher.name,
+                             amount: '',
+                             suggestedAmount: String(teacher.monthly_salary - paidThisMonth > 0 ? teacher.monthly_salary - paidThisMonth : teacher.monthly_salary),
+                             date: new Date().toISOString().split('T')[0],
+                             note: ''
+                           })
+                         }}
+                         className="px-3 md:px-4 py-1.5 md:py-2 bg-violet-600 text-white hover:bg-violet-700 rounded-lg text-[11px] md:text-xs font-bold transition shadow-sm whitespace-nowrap"
+                        >                          Pay Salary
                         </button>
                       </div>
                     </div>
@@ -747,31 +763,15 @@ export default function ExpensesClient({
                       className="h-11"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label>Month</Label>
-                      <select 
-                        value={modalData.month}
-                        onChange={e => setModalData({...modalData, month: e.target.value})}
-                        className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:ring-2 focus:ring-violet-500 outline-none"
-                      >
-                        {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                          <option key={m} value={m}>{new Date(2000, m-1).toLocaleString('default', { month: 'long' })}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Year</Label>
-                      <select 
-                        value={modalData.year}
-                        onChange={e => setModalData({...modalData, year: e.target.value})}
-                        className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:ring-2 focus:ring-violet-500 outline-none"
-                      >
-                        {[2024, 2025, 2026, 2027].map(y => (
-                          <option key={y} value={y}>{y}</option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label>Date</Label>
+                    <Input 
+                      required
+                      type="date"
+                      value={modalData.date}
+                      onChange={e => setModalData({...modalData, date: e.target.value})}
+                      className="h-11"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Note (Optional)</Label>
