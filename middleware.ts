@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
@@ -6,12 +7,10 @@ export async function middleware(request: NextRequest) {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      'Missing Supabase environment variables. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY ' +
-        'or SUPABASE_URL and SUPABASE_ANON_KEY to your environment.'
-    )
+    throw new Error('Missing Supabase environment variables.')
   }
 
   const supabase = createServerClient(
@@ -40,15 +39,17 @@ export async function middleware(request: NextRequest) {
   const isPublicPage = pathname === '/login' || pathname === '/teacher-signup'
 
   if (!user && !isPublicPage) {
-    // Exclude API routes from redirecting to login to avoid breaking webhooks/fetch calls
     if (!pathname.startsWith('/api')) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
   if (user) {
-    // Check role from teachers table
-    const { data: teacher } = await supabase
+    // Use an Admin client to bypass RLS for role checking in middleware
+    // This is safer and more reliable for routing logic
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey!)
+    
+    const { data: teacher } = await supabaseAdmin
       .from('teachers')
       .select('role')
       .eq('auth_user_id', user.id)
@@ -60,15 +61,14 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(isTeacher ? '/teacher/attendance' : '/dashboard', request.url))
     }
 
-    // Only apply role restrictions to page routes, not API routes
     if (!pathname.startsWith('/api')) {
       if (isTeacher) {
-        // If user is teacher → only allow /teacher/* routes
+        // Teachers can ONLY access /teacher/* routes
         if (!pathname.startsWith('/teacher')) {
           return NextResponse.redirect(new URL('/teacher/attendance', request.url))
         }
       } else {
-        // If user is admin → prevent accessing /teacher/*
+        // Admins can access everything EXCEPT /teacher/*
         if (pathname.startsWith('/teacher')) {
           return NextResponse.redirect(new URL('/dashboard', request.url))
         }
