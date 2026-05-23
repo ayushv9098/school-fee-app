@@ -36,14 +36,44 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  const isLoginPage = request.nextUrl.pathname === '/login'
+  const pathname = request.nextUrl.pathname
+  const isPublicPage = pathname === '/login' || pathname === '/teacher-signup'
 
-  if (!user && !isLoginPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  if (!user && !isPublicPage) {
+    // Exclude API routes from redirecting to login to avoid breaking webhooks/fetch calls
+    if (!pathname.startsWith('/api')) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
   }
 
-  if (user && isLoginPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  if (user) {
+    // Check role from teachers table
+    const { data: teacher } = await supabase
+      .from('teachers')
+      .select('role')
+      .eq('auth_user_id', user.id)
+      .maybeSingle()
+
+    const isTeacher = teacher?.role === 'teacher'
+
+    if (isPublicPage) {
+      return NextResponse.redirect(new URL(isTeacher ? '/teacher/attendance' : '/dashboard', request.url))
+    }
+
+    // Only apply role restrictions to page routes, not API routes
+    if (!pathname.startsWith('/api')) {
+      if (isTeacher) {
+        // If user is teacher → only allow /teacher/* routes
+        if (!pathname.startsWith('/teacher')) {
+          return NextResponse.redirect(new URL('/teacher/attendance', request.url))
+        }
+      } else {
+        // If user is admin → prevent accessing /teacher/*
+        if (pathname.startsWith('/teacher')) {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+      }
+    }
   }
 
   return supabaseResponse

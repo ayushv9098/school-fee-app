@@ -12,6 +12,7 @@ const navItems = [
   { href: '/students', label: 'Students', icon: Users },
   { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/expenses', label: 'Expenses', icon: Wallet },
+  { href: '/attendance', label: 'Attendance', icon: User },
   { href: '/classes', label: 'Classes', icon: BookOpen },
   { href: '/ai', label: 'AI Insights', icon: Bot },
   { href: '/how-to-use', label: 'How to Use', icon: HelpCircle },

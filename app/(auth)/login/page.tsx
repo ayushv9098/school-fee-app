@@ -25,13 +25,21 @@ export default function LoginPage() {
     const supabase = createClient()
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         setError('Invalid email or password')
         setLoading(false)
         return
       }
-      router.push('/dashboard')
+      
+      // Check role for redirection
+      const { data: teacher } = await supabase
+        .from('teachers')
+        .select('role')
+        .eq('auth_user_id', data.user?.id)
+        .maybeSingle()
+
+      router.push(teacher?.role === 'teacher' ? '/teacher/attendance' : '/dashboard')
       router.refresh()
     } else {
       if (password.length < 6) {
@@ -52,7 +60,26 @@ export default function LoginPage() {
         return
       }
       if (data.user) {
-        router.push('/dashboard')
+        // Link teacher account if email exists in teachers table
+        const { data: invitedTeacher } = await supabase
+          .from('teachers')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle()
+
+        if (invitedTeacher) {
+          await supabase
+            .from('teachers')
+            .update({ 
+              auth_user_id: data.user.id,
+              role: 'teacher' 
+            })
+            .eq('id', invitedTeacher.id)
+          
+          router.push('/teacher/attendance')
+        } else {
+          router.push('/dashboard')
+        }
         router.refresh()
       }
       setLoading(false)
