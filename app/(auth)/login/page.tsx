@@ -32,14 +32,18 @@ export default function LoginPage() {
         return
       }
       
-      // Check role for redirection
+      // Check role from teachers table
       const { data: teacher } = await supabase
         .from('teachers')
         .select('role')
         .eq('auth_user_id', data.user?.id)
         .maybeSingle()
 
-      router.push(teacher?.role === 'teacher' ? '/teacher/attendance' : '/dashboard')
+      if (teacher?.role === 'teacher') {
+        router.push('/teacher/attendance')
+      } else {
+        router.push('/dashboard')
+      }
       router.refresh()
     } else {
       if (password.length < 6) {
@@ -60,7 +64,7 @@ export default function LoginPage() {
         return
       }
       if (data.user) {
-        // Link teacher account if email exists in teachers table
+        // Check if this email was invited as a teacher
         const { data: invitedTeacher } = await supabase
           .from('teachers')
           .select('id')
@@ -68,14 +72,18 @@ export default function LoginPage() {
           .maybeSingle()
 
         if (invitedTeacher) {
-          await supabase
-            .from('teachers')
-            .update({ 
-              auth_user_id: data.user.id,
-              role: 'teacher' 
+          // Use the server API to link (Service Role)
+          await fetch('/api/complete-teacher-signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: data.user.id,
+              teacherId: invitedTeacher.id,
+              role: 'teacher'
             })
-            .eq('id', invitedTeacher.id)
+          })
           
+          alert('Teacher account linked! Redirecting to attendance... ✅')
           router.push('/teacher/attendance')
         } else {
           router.push('/dashboard')
