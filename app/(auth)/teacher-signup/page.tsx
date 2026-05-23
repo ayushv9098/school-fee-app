@@ -64,35 +64,39 @@ function TeacherSignupForm() {
       console.log('✅ Auth successful, user:', data.user?.id)
 
       if (data.user) {
-        // Link the created user to the teacher record
-        const { error: updateError } = await supabase
-          .from('teachers')
-          .update({ 
-            auth_user_id: data.user.id, 
-            role: 'teacher' 
+        // frontend se update karne ke bajaye hum API call karenge (Service Role use karne ke liye)
+        const linkRes = await fetch('/api/complete-teacher-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: data.user.id,
+            teacherId: teacherId,
+            role: 'teacher'
           })
-          .eq('id', teacherId)
+        })
 
-        if (updateError) {
-          console.error('❌ Database Update Error:', updateError)
-          setError('Account created but failed to link to teacher profile.')
-          alert('Database Error: Your account was created, but we could not link it to your teacher profile. Please ask Admin to link manually. Error: ' + updateError.message)
+        const linkData = await linkRes.json()
+
+        if (!linkRes.ok) {
+          console.error('❌ Linking Failed:', linkData.error)
+          alert('Account created but linking failed: ' + linkData.error)
           setLoading(false)
           return
         }
 
-        console.log('✅ Teacher record updated successfully')
-        
+        console.log('✅ Teacher record linked successfully via API')
+
         // Handle Email Confirmation case
         if (data.user && !data.session) {
-          alert('Account created! Please CHECK YOUR EMAIL for a confirmation link before logging in. ✅')
+          alert('Account created! Please CHECK YOUR EMAIL for a confirmation link. Once verified, you can mark attendance. ✅')
           router.push('/login')
         } else {
-          alert('Account created and logged in successfully! Redirecting... ✅')
+          alert('Account created and verified! Redirecting... ✅')
           router.push('/teacher/attendance')
         }
         router.refresh()
-      } else {
+      }
+ else {
         alert('Signup failed: No user data returned from Supabase.')
       }
     } catch (err: any) {
