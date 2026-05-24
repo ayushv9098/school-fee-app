@@ -190,7 +190,7 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition shadow-sm"
+          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm md:text-base font-bold px-4 py-2.5 rounded-xl transition shadow-sm"
         >
           <Plus className="w-4 h-4 md:w-5 md:h-5" />
           Add Teacher
@@ -229,11 +229,13 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
           <table className="w-full table-fixed md:table-auto border-collapse">
             <thead className="bg-zinc-50/30 font-sans">
               <tr className="border-b border-zinc-100 font-sans">
-                <th className="text-left p-3 pl-4 font-bold text-zinc-400 uppercase text-[10px] md:text-xs w-[38%] md:w-auto">Staff</th>
-                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[10px] md:text-xs w-[12%] md:w-auto">St</th>
-                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[10px] md:text-xs w-[25%] md:w-auto">Time</th>
-                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[10px] md:text-xs w-[15%] md:w-auto">Img</th>
-                <th className="text-right p-3 pr-4 font-bold text-zinc-400 uppercase text-[10px] md:text-xs w-[10%] md:w-auto"></th>
+                <th className="text-left p-3 pl-4 font-bold text-zinc-400 uppercase text-[9px] md:text-xs w-[40%] md:w-auto">Staff</th>
+                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[9px] md:text-xs w-[12%] md:w-auto">St</th>
+                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[9px] md:text-xs w-[25%] md:w-auto">Time</th>
+                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[9px] md:text-xs w-[15%] md:w-auto">Img</th>
+                <th className="text-right p-3 pr-2 font-bold text-zinc-400 uppercase text-[9px] md:text-xs w-[8%] md:w-auto">
+                   <span className="hidden md:inline">Action</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -278,7 +280,7 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
                         )}
                       </div>
                     </td>
-                    <td className="p-3 pr-4 text-right relative align-middle">
+                    <td className="p-3 pr-2 text-right relative align-middle">
                       <button
                         onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === teacher.id ? null : teacher.id); }}
                         className="p-2 hover:bg-zinc-100 rounded-lg text-zinc-400 transition-colors"
