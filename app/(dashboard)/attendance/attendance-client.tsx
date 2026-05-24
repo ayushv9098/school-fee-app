@@ -182,15 +182,15 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
   const dates = Array.from({ length: daysInMonth }, (_, i) => dayjs().date(i + 1).format('YYYY-MM-DD'))
 
   return (
-    <div className="p-4 md:p-6 space-y-6 pb-20">
+    <div className="p-4 md:p-6 space-y-6 pb-20 font-sans">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-900 leading-tight">Teacher Attendance</h1>
-          <p className="text-sm text-zinc-500 mt-0.5">Control and track staff records</p>
+          <h1 className="text-lg font-bold text-zinc-900 tracking-tight leading-tight">Teacher Attendance</h1>
+          <p className="text-sm text-zinc-500 mt-0.5 font-medium">Control and track staff records</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm"
+          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition shadow-sm"
         >
           <Plus className="w-4 h-4" />
           Add Teacher
@@ -208,7 +208,7 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
             <CardContent className="p-5 flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{stat.label}</p>
-                <p className={`text-3xl font-black text-${stat.color}-600 tracking-tighter mt-1`}>{stat.value}</p>
+                <p className={`text-3xl font-bold text-${stat.color}-600 tracking-tighter mt-1`}>{stat.value}</p>
               </div>
               <div className={`w-12 h-12 bg-${stat.color}-100 rounded-2xl flex items-center justify-center text-${stat.color}-600`}>
                 <stat.icon size={24} />
@@ -218,71 +218,74 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
         ))}
       </div>
 
-      {/* List */}
-      <Card className="border-zinc-200 shadow-sm rounded-2xl overflow-hidden">
-        <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 p-4">
-          <CardTitle className="text-sm font-bold text-zinc-700 uppercase tracking-widest flex items-center gap-2">
-             <Calendar size={16} className="text-violet-600" /> Today's Status
+      {/* List Card */}
+      <Card className="border-zinc-200 shadow-sm rounded-2xl overflow-hidden font-sans">
+        <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 p-3">
+          <CardTitle className="text-xs font-bold text-zinc-700 uppercase tracking-widest flex items-center gap-2 font-sans">
+             <Calendar size={14} className="text-violet-600 font-sans" /> Today's Status
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="w-full">
-            <table className="w-full text-sm table-fixed">
-              <thead className="bg-zinc-50/30">
-                <tr className="border-b border-zinc-100">
-                  <th className="text-left p-2 pl-4 font-bold text-zinc-400 uppercase text-[8px] w-[35%]">Staff</th>
-                  <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[8px] w-[15%]">Status</th>
-                  <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[8px] w-[20%]">Time</th>
-                  <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[8px] w-[15%]">Photo</th>
-                  <th className="text-right p-2 pr-4 font-bold text-zinc-400 uppercase text-[8px] w-[15%]">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {initialTeachers.map(teacher => {
-                  const record = todayAttendance.find(a => a.teacher_id === teacher.id)
-                  const isRegistered = !!teacher.auth_user_id
-                  return (
-                    <tr key={teacher.id} className="hover:bg-zinc-50/50 transition-colors">
-                      <td className="p-2 pl-4">
-                        <p className="font-bold text-zinc-900 text-[11px] truncate leading-tight">{teacher.name}</p>
-                        <p className="text-[9px] text-zinc-400 truncate leading-tight">{teacher.subject}</p>
-                      </td>
-                      <td className="p-2 text-center">
-                        {record?.status === 'present' ? (
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-100 text-green-700 text-[9px] font-bold shadow-sm" title="Present">P</span>
-                        ) : (
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-50 text-red-500 text-[9px] font-bold shadow-sm" title="Absent">A</span>
-                        )}
-                      </td>
-                      <td className="p-2 text-center text-zinc-600 font-mono font-bold text-[9px]">
-                        {record?.check_in_time ? dayjs(record.check_in_time).format('hh:mm A') : '--:--'}
-                      </td>
-                      <td className="p-2">
-                        <div className="flex justify-center">
-                          {record?.selfie_url ? (
-                            <div className="w-7 h-7 rounded-lg overflow-hidden border border-zinc-200 shadow-sm ring-1 ring-white">
-                              <img 
-                                src={supabase.storage.from('attendance-selfies').getPublicUrl(record.selfie_url).data.publicUrl} 
-                                alt="S" className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-7 h-7 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-300">
-                              <Camera size={10} />
-                            </div>
-                          )}
+        <CardContent className="p-0 overflow-hidden font-sans">
+          <table className="w-full table-fixed border-collapse">
+            <thead className="bg-zinc-50/30 font-sans">
+              <tr className="border-b border-zinc-100">
+                <th className="text-left p-2 pl-3 font-bold text-zinc-400 uppercase text-[8px] w-[42%]">Staff</th>
+                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[8px] w-[13%]">St</th>
+                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[8px] w-[20%]">Time</th>
+                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[8px] w-[15%]">Img</th>
+                <th className="text-right p-2 pr-3 font-bold text-zinc-400 uppercase text-[8px] w-[10%]"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {initialTeachers.map(teacher => {
+                const record = todayAttendance.find(a => a.teacher_id === teacher.id)
+                const isRegistered = !!teacher.auth_user_id
+                return (
+                  <tr key={teacher.id} className="hover:bg-zinc-50/50 transition-colors h-12">
+                    <td className="p-2 pl-3 overflow-hidden">
+                      <p className="font-bold text-zinc-900 text-[10px] truncate leading-tight w-full">{teacher.name}</p>
+                      <p className="text-[8px] text-zinc-400 truncate leading-tight w-full font-medium">{teacher.subject}</p>
+                    </td>
+                    <td className="p-1 text-center">
+                      {record?.status === 'present' ? (
+                        <div className="w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center mx-auto ring-1 ring-green-200 shadow-sm">
+                           <span className="text-[9px] font-bold font-sans">P</span>
                         </div>
-                      </td>
-                      <td className="p-2 pr-4 text-right relative">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === teacher.id ? null : teacher.id); }}
-                          className="p-2 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-400 hover:text-zinc-900"
-                        >
-                          <MoreVertical size={18} />
-                        </button>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto ring-1 ring-red-100 shadow-sm">
+                           <span className="text-[9px] font-bold font-sans">A</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-1 text-center text-zinc-600 font-bold text-[9px] font-sans">
+                      {record?.check_in_time ? dayjs(record.check_in_time).format('hh:mm A') : '--:--'}
+                    </td>
+                    <td className="p-1">
+                      <div className="flex justify-center">
+                        {record?.selfie_url ? (
+                          <div className="w-7 h-7 rounded-lg overflow-hidden border border-zinc-200 shadow-sm">
+                            <img 
+                              src={supabase.storage.from('attendance-selfies').getPublicUrl(record.selfie_url).data.publicUrl} 
+                              alt="S" className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 rounded-lg bg-zinc-50 flex items-center justify-center text-zinc-200">
+                            <Camera size={10} />
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-1 pr-3 text-right relative">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === teacher.id ? null : teacher.id); }}
+                        className="p-1.5 hover:bg-zinc-100 rounded-md text-zinc-400 transition-colors"
+                      >
+                        <MoreVertical size={14} />
+                      </button>
                         
                         {openMenuId === teacher.id && (
-                          <div className="absolute right-4 top-12 w-48 bg-white rounded-xl shadow-xl border border-zinc-100 z-50 py-1.5 animate-in fade-in zoom-in-95 duration-200 text-left">
+                          <div className="absolute right-4 top-10 w-48 bg-white rounded-xl shadow-xl border border-zinc-100 z-50 py-1.5 animate-in fade-in zoom-in-95 duration-200 text-left text-sans">
                             {!isRegistered && (
                               <button
                                 onClick={() => handleCopyInvite(teacher.id, teacher.email)}
@@ -310,33 +313,32 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
                     </tr>
                   )
                 })}
-              </tbody>
-            </table>
-          </div>
+            </tbody>
+          </table>
         </CardContent>
       </Card>
 
       {/* Monthly Grid */}
-      <Card className="border-zinc-200 shadow-sm rounded-2xl overflow-hidden mb-10">
+      <Card className="border-zinc-200 shadow-sm rounded-2xl overflow-hidden mb-10 font-sans">
         <CardHeader className="flex flex-row items-center justify-between p-4 border-b border-zinc-100 bg-zinc-50/50">
           <CardTitle className="text-sm font-bold text-zinc-700 uppercase tracking-widest">Monthly Register</CardTitle>
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-violet-600 hover:bg-violet-50 border border-violet-100 transition-colors">
             <Download size={14} /> Export PDF
           </button>
         </CardHeader>
-        <CardContent className="p-0 overflow-x-auto scrollbar-hide">
-          <table className="w-full text-[10px] border-collapse min-w-[800px]">
-            <thead className="bg-zinc-50/30">
+        <CardContent className="p-0 overflow-x-auto scrollbar-hide font-sans">
+          <table className="w-full text-[10px] border-collapse min-w-[800px] table-fixed font-sans">
+            <thead className="bg-zinc-50/30 font-sans">
               <tr>
-                <th className="text-left p-3 border-r border-zinc-100 sticky left-0 bg-zinc-50 z-10 font-bold text-zinc-400 uppercase tracking-tighter">Teacher</th>
+                <th className="text-left p-3 border-r border-zinc-100 sticky left-0 bg-zinc-50 z-10 font-bold text-zinc-400 uppercase tracking-tighter w-[120px]">Teacher</th>
                 {dates.map(date => (
-                  <th key={date} className="p-2 border-r border-zinc-100 text-center font-bold text-zinc-400 min-w-[32px]">
+                  <th key={date} className="p-2 border-r border-zinc-100 text-center font-bold text-zinc-400 min-w-[32px] w-[32px]">
                     {dayjs(date).format('D')}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100">
+            <tbody className="divide-y divide-zinc-100 font-sans">
               {initialTeachers.map(teacher => (
                 <tr key={teacher.id}>
                   <td className="p-3 border-r border-zinc-100 font-bold text-zinc-800 sticky left-0 bg-white z-10 truncate max-w-[120px]">{teacher.name}</td>
@@ -363,38 +365,38 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
 
       {/* Add Teacher Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden">
-            <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-              <h2 className="text-base font-bold text-zinc-900">Add New Staff Member</h2>
+        <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm font-sans">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden font-sans">
+            <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50 font-sans">
+              <h2 className="text-base font-bold text-zinc-900 font-sans">Add New Staff Member</h2>
               <button onClick={() => setShowAddModal(false)} className="text-zinc-400 hover:text-zinc-600 transition">
-                <XCircle size={20} />
+                <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleAddTeacher} className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Full Name</Label>
-                <Input required placeholder="e.g. Rahul Sharma" value={newTeacher.name} onChange={e => setNewTeacher({ ...newTeacher, name: e.target.value })} className="h-11 rounded-xl" />
+            <form onSubmit={handleAddTeacher} className="p-6 space-y-4 font-sans">
+              <div className="space-y-1.5 font-sans">
+                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Full Name</Label>
+                <Input required placeholder="e.g. Rahul Sharma" value={newTeacher.name} onChange={e => setNewTeacher({ ...newTeacher, name: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Subject / Role</Label>
-                <Input required placeholder="e.g. Mathematics" value={newTeacher.subject} onChange={e => setNewTeacher({ ...newTeacher, subject: e.target.value })} className="h-11 rounded-xl" />
+              <div className="space-y-1.5 font-sans">
+                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Subject / Role</Label>
+                <Input required placeholder="e.g. Mathematics" value={newTeacher.subject} onChange={e => setNewTeacher({ ...newTeacher, subject: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Salary (₹)</Label>
-                  <Input required type="number" placeholder="20000" value={newTeacher.salary} onChange={e => setNewTeacher({ ...newTeacher, salary: e.target.value })} className="h-11 rounded-xl" />
+              <div className="grid grid-cols-2 gap-4 font-sans">
+                <div className="space-y-1.5 font-sans">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Salary (₹)</Label>
+                  <Input required type="number" placeholder="20000" value={newTeacher.salary} onChange={e => setNewTeacher({ ...newTeacher, salary: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Email</Label>
-                  <Input required type="email" placeholder="rahul@example.com" value={newTeacher.email} onChange={e => setNewTeacher({ ...newTeacher, email: e.target.value })} className="h-11 rounded-xl" />
+                <div className="space-y-1.5 font-sans">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Email</Label>
+                  <Input required type="email" placeholder="rahul@example.com" value={newTeacher.email} onChange={e => setNewTeacher({ ...newTeacher, email: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-4 font-sans">
                 <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 h-12 rounded-xl border border-zinc-200 text-sm font-bold text-zinc-600 hover:bg-zinc-50 transition">Cancel</button>
                 <button type="submit" disabled={loading} className="flex-1 h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition disabled:opacity-50 shadow-lg shadow-violet-100">
-                  {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : 'Save & Invite'}
+                  {loading ? <Loader2 className="animate-spin mx-auto font-sans" size={20} /> : 'Save & Invite'}
                 </button>
               </div>
             </form>
@@ -404,38 +406,38 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
 
       {/* Edit Teacher Modal */}
       {showEditModal && editingTeacher && (
-        <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden">
-            <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-              <h2 className="text-base font-bold text-zinc-900">Edit Staff Details</h2>
+        <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm font-sans">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden font-sans">
+            <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50 font-sans">
+              <h2 className="text-base font-bold text-zinc-900 font-sans">Edit Staff Details</h2>
               <button onClick={() => { setShowEditModal(false); setEditingTeacher(null); }} className="text-zinc-400 hover:text-zinc-600 transition">
                 <XCircle size={20} />
               </button>
             </div>
-            <form onSubmit={handleEditTeacher} className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Full Name</Label>
-                <Input required value={editingTeacher.name} onChange={e => setEditingTeacher({ ...editingTeacher, name: e.target.value })} className="h-11 rounded-xl" />
+            <form onSubmit={handleEditTeacher} className="p-6 space-y-4 font-sans">
+              <div className="space-y-1.5 font-sans">
+                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Full Name</Label>
+                <Input required value={editingTeacher.name} onChange={e => setEditingTeacher({ ...editingTeacher, name: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Subject / Role</Label>
-                <Input required value={editingTeacher.subject} onChange={e => setEditingTeacher({ ...editingTeacher, subject: e.target.value })} className="h-11 rounded-xl" />
+              <div className="space-y-1.5 font-sans">
+                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Subject / Role</Label>
+                <Input required value={editingTeacher.subject} onChange={e => setEditingTeacher({ ...editingTeacher, subject: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Salary (₹)</Label>
-                  <Input required type="number" value={editingTeacher.monthly_salary} onChange={e => setEditingTeacher({ ...editingTeacher, monthly_salary: Number(e.target.value) })} className="h-11 rounded-xl" />
+              <div className="grid grid-cols-2 gap-4 font-sans">
+                <div className="space-y-1.5 font-sans">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Salary (₹)</Label>
+                  <Input required type="number" value={editingTeacher.monthly_salary} onChange={e => setEditingTeacher({ ...editingTeacher, monthly_salary: Number(e.target.value) })} className="h-11 rounded-xl font-bold font-sans" />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Email</Label>
-                  <Input required type="email" value={editingTeacher.email} onChange={e => setEditingTeacher({ ...editingTeacher, email: e.target.value })} className="h-11 rounded-xl" />
+                <div className="space-y-1.5 font-sans">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Email</Label>
+                  <Input required type="email" value={editingTeacher.email} onChange={e => setEditingTeacher({ ...editingTeacher, email: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => { setShowEditModal(false); setEditingTeacher(null); }} className="flex-1 h-12 rounded-xl border border-zinc-200 text-sm font-bold text-zinc-600 hover:bg-zinc-50 transition">Cancel</button>
-                <button type="submit" disabled={loading} className="flex-1 h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition shadow-lg shadow-violet-100">
-                  {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : 'Update Details'}
+              <div className="flex gap-3 pt-4 font-sans">
+                <button type="button" onClick={() => { setShowEditModal(false); setEditingTeacher(null); }} className="flex-1 h-12 rounded-xl border border-zinc-200 text-sm font-bold text-zinc-600 hover:bg-zinc-50 transition font-sans">Cancel</button>
+                <button type="submit" disabled={loading} className="flex-1 h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition shadow-lg shadow-violet-100 font-sans">
+                  {loading ? <Loader2 className="animate-spin mx-auto font-sans" size={20} /> : 'Update Details'}
                 </button>
               </div>
             </form>
