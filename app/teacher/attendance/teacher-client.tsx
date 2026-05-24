@@ -9,7 +9,7 @@ import {
   Camera, MapPin, CheckCircle, AlertTriangle, 
   Loader2, Navigation, History as HistoryIcon, 
   User, Clock, Calendar as CalendarIcon, 
-  ChevronRight, Sparkles, Check, X, ArrowRight, Mail, Home
+  ChevronRight, Sparkles, Check, X, ArrowRight, Mail, Home, Download, Plus
 } from 'lucide-react'
 import dayjs from 'dayjs'
 
@@ -32,8 +32,37 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
   const [history, setHistory] = useState<any[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
   
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showInstallBtn, setShowInstallBtn] = useState(false)
+  
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      setShowInstallBtn(true)
+    }
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall)
+    window.addEventListener('appinstalled', () => {
+      setShowInstallBtn(false)
+      setDeferredPrompt(null)
+    })
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
+    }
+  }, [])
+
+  async function handleInstall() {
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false)
+    }
+    setDeferredPrompt(null)
+  }
 
   useEffect(() => {
     if (activeTab === 'history') {
@@ -169,6 +198,24 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
           {activeTab === 'attendance' && (
             <div className="space-y-4 animate-in fade-in duration-500">
               
+              {showInstallBtn && (
+                <button 
+                  onClick={handleInstall}
+                  className="w-full bg-white border border-violet-100 p-4 rounded-3xl flex items-center gap-4 shadow-sm hover:shadow-md transition-all active:scale-95 group relative overflow-hidden"
+                >
+                  <div className="w-12 h-12 bg-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-200 shrink-0 group-hover:scale-110 transition-transform">
+                    <Download size={22} strokeWidth={2.5} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-zinc-900 leading-tight">Install App</p>
+                    <p className="text-[10px] text-zinc-500 font-medium mt-0.5">Install the app for faster attendance access</p>
+                  </div>
+                  <div className="ml-auto w-8 h-8 bg-violet-50 rounded-full flex items-center justify-center text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Plus size={14} strokeWidth={3} />
+                  </div>
+                </button>
+              )}
+
               {/* Sleek Clock Card */}
               <div className="bg-violet-600 rounded-3xl p-5 text-white shadow-lg shadow-violet-200">
                  <div className="flex items-center justify-between mb-4">
