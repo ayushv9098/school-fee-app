@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { CheckCircle2, XCircle, Users, Mail, Plus, Calendar, Download, MapPin, Camera, Copy, Check } from 'lucide-react'
+import { CheckCircle2, XCircle, Users, Mail, Plus, Calendar, Download, MapPin, Camera, Copy, Check, Pencil, Trash2 } from 'lucide-react'
 import dayjs from 'dayjs'
 
 interface Teacher {
@@ -45,6 +45,7 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [newTeacher, setNewTeacher] = useState({
     name: '',
@@ -52,15 +53,16 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
     salary: '',
     email: '',
   })
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
 
   const presentCount = todayAttendance.filter(a => a.status === 'present').length
   const absentCount = initialTeachers.length - presentCount
 
   async function handleCopyInvite(teacherId: string, email: string) {
-    const origin = process.env.NEXT_PUBLIC_APP_URL
+    const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
     
-    if (!origin) {
-      alert('Error: NEXT_PUBLIC_APP_URL is not set in Environment Variables. Please set it to your website URL (e.g. https://your-site.com) in Vercel settings.')
+    if (!origin && !process.env.NEXT_PUBLIC_APP_URL) {
+      alert('Error: Application URL is not configured.')
       return
     }
 
@@ -82,7 +84,7 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
     const { data: teacher, error } = await supabase
       .from('teachers')
       .insert({
-        user_id: adminId, // Use the prop instead of fetching
+        user_id: adminId, 
         name: newTeacher.name,
         subject: newTeacher.subject,
         monthly_salary: Number(newTeacher.salary),
@@ -119,7 +121,7 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
       alert('Teacher added and invitation sent successfully! ✅')
     } catch (err: any) {
       console.error('Failed to send invite email:', err)
-      const origin = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+      const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
       const manualLink = `${origin}/teacher-signup?email=${encodeURIComponent(newTeacher.email)}&teacher_id=${teacher.id}`
       
       const proceed = confirm(`Teacher added, but email failed (Resend requires domain verification).\n\nError: ${err.message}\n\nDo you want to copy the invite link manually to send via WhatsApp/Message?`)
@@ -134,6 +136,48 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
     setNewTeacher({ name: '', subject: '', salary: '', email: '' })
     setLoading(false)
     router.refresh()
+  }
+
+  async function handleEditTeacher(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingTeacher) return
+    setLoading(true)
+
+    const { error } = await supabase
+      .from('teachers')
+      .update({
+        name: editingTeacher.name,
+        subject: editingTeacher.subject,
+        monthly_salary: Number(editingTeacher.monthly_salary),
+        email: editingTeacher.email
+      })
+      .eq('id', editingTeacher.id)
+
+    if (error) {
+      alert(error.message)
+    } else {
+      setShowEditModal(false)
+      setEditingTeacher(null)
+      router.refresh()
+    }
+    setLoading(false)
+  }
+
+  async function handleDeleteTeacher(id: string) {
+    if (!confirm('Are you sure you want to delete this teacher? All attendance records for this teacher will also be deleted.')) return
+    
+    setLoading(true)
+    const { error } = await supabase
+      .from('teachers')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      alert(error.message)
+    } else {
+      router.refresh()
+    }
+    setLoading(false)
   }
 
   // Monthly Table Data Preparation
@@ -218,7 +262,7 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
                   const isRegistered = !!teacher.auth_user_id
 
                   return (
-                    <tr key={teacher.id} className="hover:bg-zinc-50 transition">
+                    <tr key={teacher.id} className="hover:bg-zinc-50 transition group">
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-zinc-900">{teacher.name}</p>
@@ -254,20 +298,39 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
                         )}
                       </td>
                       <td className="p-4 text-right">
-                        {!isRegistered && (
+                        <div className="flex items-center justify-end gap-2">
+                          {!isRegistered && (
+                            <button
+                              onClick={() => handleCopyInvite(teacher.id, teacher.email)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm border ${
+                                copiedId === teacher.id 
+                                  ? 'bg-green-50 text-green-600 border-green-200' 
+                                  : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
+                              }`}
+                              title="Copy Invite Link"
+                            >
+                              {copiedId === teacher.id ? <Check size={14} /> : <Copy size={14} />}
+                              {copiedId === teacher.id ? 'Copied' : 'Invite Link'}
+                            </button>
+                          )}
                           <button
-                            onClick={() => handleCopyInvite(teacher.id, teacher.email)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm border ${
-                              copiedId === teacher.id 
-                                ? 'bg-green-50 text-green-600 border-green-200' 
-                                : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
-                            }`}
-                            title="Copy Invite Link"
+                            onClick={() => {
+                              setEditingTeacher(teacher)
+                              setShowEditModal(true)
+                            }}
+                            className="p-2 text-zinc-400 hover:text-violet-600 transition"
+                            title="Edit Teacher"
                           >
-                            {copiedId === teacher.id ? <Check size={14} /> : <Copy size={14} />}
-                            {copiedId === teacher.id ? 'Copied' : 'Invite Link'}
+                            <Pencil size={16} />
                           </button>
-                        )}
+                          <button
+                            onClick={() => handleDeleteTeacher(teacher.id)}
+                            className="p-2 text-zinc-400 hover:text-red-600 transition"
+                            title="Delete Teacher"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -388,6 +451,73 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
                   className="flex-1 h-11 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition disabled:opacity-50 shadow-md"
                 >
                   {loading ? 'Adding...' : 'Add & Send Invite'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Teacher Modal */}
+      {showEditModal && editingTeacher && (
+        <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-zinc-900">Edit Teacher Details</h2>
+              <button onClick={() => { setShowEditModal(false); setEditingTeacher(null); }} className="text-zinc-400 hover:text-zinc-600 transition">
+                <XCircle size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleEditTeacher} className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <Label>Full Name</Label>
+                <Input 
+                  required
+                  value={editingTeacher.name}
+                  onChange={e => setEditingTeacher({ ...editingTeacher, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Subject</Label>
+                <Input 
+                  required
+                  value={editingTeacher.subject}
+                  onChange={e => setEditingTeacher({ ...editingTeacher, subject: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Monthly Salary (₹)</Label>
+                <Input 
+                  required
+                  type="number"
+                  value={editingTeacher.monthly_salary}
+                  onChange={e => setEditingTeacher({ ...editingTeacher, monthly_salary: Number(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Email Address</Label>
+                <Input 
+                  required
+                  type="email"
+                  value={editingTeacher.email}
+                  onChange={e => setEditingTeacher({ ...editingTeacher, email: e.target.value })}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowEditModal(false); setEditingTeacher(null); }}
+                  className="flex-1 h-11 rounded-xl border border-zinc-200 text-sm font-bold text-zinc-600 hover:bg-zinc-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 h-11 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition disabled:opacity-50 shadow-md"
+                >
+                  {loading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>
