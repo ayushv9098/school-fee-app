@@ -372,6 +372,12 @@ export default function ExpensesClient({
                           >
                             <Pencil size={13} />
                           </button>
+                          <button 
+                            onClick={() => handleDeleteTeacher(teacher.id)}
+                            className="p-1 text-zinc-400 hover:text-red-600 transition flex-shrink-0"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         </div>
                         <p className="text-[11px] md:text-xs text-zinc-500">{teacher.subject}</p>
                       </div>
@@ -512,6 +518,12 @@ export default function ExpensesClient({
                             className="p-1 text-zinc-400 hover:text-blue-600 transition flex-shrink-0"
                           >
                             <Pencil size={13} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteVehicle(vehicle.id)}
+                            className="p-1 text-zinc-400 hover:text-red-600 transition flex-shrink-0"
+                          >
+                            <Trash2 size={13} />
                           </button>
                         </div>
                         <p className="text-[11px] md:text-xs text-zinc-500">{vehicle.type}</p>
