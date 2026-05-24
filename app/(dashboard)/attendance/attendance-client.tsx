@@ -307,7 +307,7 @@ export default function AttendanceClient({
             <thead className="bg-zinc-50/30 font-sans">
               <tr className="border-b border-zinc-100 font-sans">
                 <th className="text-left p-3 pl-4 font-bold text-zinc-400 uppercase text-[9px] md:text-xs w-[40%] md:w-auto">Staff</th>
-                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[9px] md:text-xs w-[12%] md:w-auto">St</th>
+                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[9px] md:text-xs w-[12%] md:w-auto">Status</th>
                 <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[9px] md:text-xs w-[25%] md:w-auto">Time</th>
                 <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[9px] md:text-xs w-[15%] md:w-auto">Img</th>
               </tr>
@@ -398,15 +398,10 @@ export default function AttendanceClient({
       {/* Monthly Register Card */}
       <Card className="border-zinc-200 shadow-sm rounded-2xl overflow-hidden mb-10 font-sans">
         <CardHeader className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b border-zinc-100 bg-zinc-50/50 gap-4">
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center text-violet-600 shadow-sm">
-                <Calendar size={18} />
-              </div>
-              <h2 className="text-sm md:text-base font-bold text-zinc-800 tracking-tight whitespace-nowrap">
-                {dayjs().year(selectedYear).month(selectedMonth - 1).format('MMMM YYYY')} Register
-              </h2>
-            </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-sm md:text-base font-bold text-zinc-800 tracking-tight whitespace-nowrap">
+              {dayjs().year(selectedYear).month(selectedMonth - 1).format('MMMM YYYY')} Register
+            </h2>
             
             <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-zinc-200 shadow-sm">
               <button 
@@ -591,14 +586,23 @@ export default function AttendanceClient({
                     <h3 className="text-lg font-bold text-zinc-900">{editingTeacher.name}</h3>
                     <p className="text-sm text-zinc-500 font-medium">{editingTeacher.subject}</p>
                   </div>
-                  {!editingTeacher.auth_user_id && (
-                    <button
-                      onClick={() => handleCopyInvite(editingTeacher.id, editingTeacher.email)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-xs font-bold hover:bg-amber-100 transition border border-amber-200"
+               </div>
+
+               <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Onboarding Invite Link</Label>
+                  <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-xl border border-amber-100 ring-1 ring-amber-200/20">
+                    <p className="text-[10px] md:text-xs font-mono text-amber-700 flex-1 break-all line-clamp-1 opacity-80">
+                      {typeof window !== 'undefined' ? `${window.location.origin}/teacher-signup?email=${encodeURIComponent(editingTeacher.email)}&teacher_id=${editingTeacher.id}` : '...'}
+                    </p>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleCopyInvite(editingTeacher.id, editingTeacher.email); }}
+                      className="p-1.5 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors shadow-sm"
                     >
                       <Copy size={14} />
-                      {copiedId === editingTeacher.id ? 'Copied Link' : 'Copy Invite'}
                     </button>
+                  </div>
+                  {copiedId === editingTeacher.id && (
+                    <p className="text-[10px] text-green-600 font-bold animate-in fade-in slide-in-from-top-1">Link copied to clipboard! 📋</p>
                   )}
                </div>
 
