@@ -182,17 +182,17 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
   const dates = Array.from({ length: daysInMonth }, (_, i) => dayjs().date(i + 1).format('YYYY-MM-DD'))
 
   return (
-    <div className="p-4 md:p-6 space-y-6 pb-20 font-sans">
+    <div className="p-4 md:p-6 space-y-6 pb-20 font-sans max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-zinc-900 tracking-tight leading-tight">Teacher Attendance</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-zinc-900 tracking-tight leading-tight">Teacher Attendance</h1>
           <p className="text-sm text-zinc-500 mt-0.5 font-medium">Control and track staff records</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition shadow-sm"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 md:w-5 md:h-5" />
           Add Teacher
         </button>
       </div>
@@ -205,13 +205,13 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
           { label: 'Total Staff', value: initialTeachers.length, icon: Users, color: 'violet' }
         ].map(stat => (
           <Card key={stat.label} className={`border-${stat.color}-100 bg-${stat.color}-50/30`}>
-            <CardContent className="p-5 flex items-center justify-between">
+            <CardContent className="p-5 md:p-6 flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{stat.label}</p>
-                <p className={`text-3xl font-bold text-${stat.color}-600 tracking-tighter mt-1`}>{stat.value}</p>
+                <p className="text-xs md:text-sm font-bold text-zinc-400 uppercase tracking-widest">{stat.label}</p>
+                <p className={`text-3xl md:text-4xl font-bold text-${stat.color}-600 tracking-tighter mt-1`}>{stat.value}</p>
               </div>
-              <div className={`w-12 h-12 bg-${stat.color}-100 rounded-2xl flex items-center justify-center text-${stat.color}-600`}>
-                <stat.icon size={24} />
+              <div className={`w-12 h-12 md:w-14 md:h-14 bg-${stat.color}-100 rounded-2xl flex items-center justify-center text-${stat.color}-600`}>
+                <stat.icon size={28} />
               </div>
             </CardContent>
           </Card>
@@ -220,20 +220,20 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
 
       {/* List Card */}
       <Card className="border-zinc-200 shadow-sm rounded-2xl overflow-hidden font-sans">
-        <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 p-3">
-          <CardTitle className="text-xs font-bold text-zinc-700 uppercase tracking-widest flex items-center gap-2 font-sans">
-             <Calendar size={14} className="text-violet-600 font-sans" /> Today's Status
+        <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 p-4">
+          <CardTitle className="text-sm font-bold text-zinc-700 uppercase tracking-widest flex items-center gap-2 font-sans text-[11px] md:text-sm">
+             <Calendar size={16} className="text-violet-600 font-sans" /> Today's Status
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0 overflow-hidden font-sans">
-          <table className="w-full table-fixed border-collapse">
+          <table className="w-full table-fixed md:table-auto border-collapse">
             <thead className="bg-zinc-50/30 font-sans">
-              <tr className="border-b border-zinc-100">
-                <th className="text-left p-2 pl-3 font-bold text-zinc-400 uppercase text-[8px] w-[42%]">Staff</th>
-                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[8px] w-[13%]">St</th>
-                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[8px] w-[20%]">Time</th>
-                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[8px] w-[15%]">Img</th>
-                <th className="text-right p-2 pr-3 font-bold text-zinc-400 uppercase text-[8px] w-[10%]"></th>
+              <tr className="border-b border-zinc-100 font-sans">
+                <th className="text-left p-3 pl-4 font-bold text-zinc-400 uppercase text-[10px] md:text-xs w-[38%] md:w-auto">Staff</th>
+                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[10px] md:text-xs w-[12%] md:w-auto">St</th>
+                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[10px] md:text-xs w-[25%] md:w-auto">Time</th>
+                <th className="text-center p-2 font-bold text-zinc-400 uppercase text-[10px] md:text-xs w-[15%] md:w-auto">Img</th>
+                <th className="text-right p-3 pr-4 font-bold text-zinc-400 uppercase text-[10px] md:text-xs w-[10%] md:w-auto"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -241,47 +241,49 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
                 const record = todayAttendance.find(a => a.teacher_id === teacher.id)
                 const isRegistered = !!teacher.auth_user_id
                 return (
-                  <tr key={teacher.id} className="hover:bg-zinc-50/50 transition-colors h-12">
-                    <td className="p-2 pl-3 overflow-hidden">
-                      <p className="font-bold text-zinc-900 text-[10px] truncate leading-tight w-full">{teacher.name}</p>
-                      <p className="text-[8px] text-zinc-400 truncate leading-tight w-full font-medium">{teacher.subject}</p>
+                  <tr key={teacher.id} className="hover:bg-zinc-50/50 transition-colors h-14 md:h-16">
+                    <td className="p-3 pl-4 overflow-hidden align-middle">
+                      <p className="font-bold text-zinc-900 text-[11px] md:text-sm truncate leading-tight w-full">{teacher.name}</p>
+                      <p className="text-[9px] md:text-xs text-zinc-400 truncate leading-tight w-full font-medium mt-0.5">{teacher.subject}</p>
                     </td>
-                    <td className="p-1 text-center">
-                      {record?.status === 'present' ? (
-                        <div className="w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center mx-auto ring-1 ring-green-200 shadow-sm">
-                           <span className="text-[9px] font-bold font-sans">P</span>
-                        </div>
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto ring-1 ring-red-100 shadow-sm">
-                           <span className="text-[9px] font-bold font-sans">A</span>
-                        </div>
-                      )}
+                    <td className="p-1 text-center align-middle">
+                      <div className="flex justify-center">
+                        {record?.status === 'present' ? (
+                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center ring-1 ring-green-200 shadow-sm">
+                             <span className="text-[10px] md:text-xs font-bold font-sans">P</span>
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto ring-1 ring-red-100 shadow-sm">
+                             <span className="text-[10px] md:text-xs font-bold font-sans">A</span>
+                          </div>
+                        )}
+                      </div>
                     </td>
-                    <td className="p-1 text-center text-zinc-600 font-bold text-[9px] font-sans">
+                    <td className="p-1 text-center text-zinc-600 font-bold text-[10px] md:text-sm font-sans align-middle">
                       {record?.check_in_time ? dayjs(record.check_in_time).format('hh:mm A') : '--:--'}
                     </td>
-                    <td className="p-1">
+                    <td className="p-1 text-center align-middle">
                       <div className="flex justify-center">
                         {record?.selfie_url ? (
-                          <div className="w-7 h-7 rounded-lg overflow-hidden border border-zinc-200 shadow-sm">
+                          <div className="w-9 h-9 md:w-11 md:h-11 rounded-lg overflow-hidden border border-zinc-200 shadow-sm ring-2 ring-white">
                             <img 
                               src={supabase.storage.from('attendance-selfies').getPublicUrl(record.selfie_url).data.publicUrl} 
                               alt="S" className="w-full h-full object-cover"
                             />
                           </div>
                         ) : (
-                          <div className="w-7 h-7 rounded-lg bg-zinc-50 flex items-center justify-center text-zinc-200">
-                            <Camera size={10} />
+                          <div className="w-9 h-9 md:w-11 md:h-11 rounded-lg bg-zinc-50 flex items-center justify-center text-zinc-200 border border-zinc-100">
+                            <Camera size={16} />
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="p-1 pr-3 text-right relative">
+                    <td className="p-3 pr-4 text-right relative align-middle">
                       <button
                         onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === teacher.id ? null : teacher.id); }}
-                        className="p-1.5 hover:bg-zinc-100 rounded-md text-zinc-400 transition-colors"
+                        className="p-2 hover:bg-zinc-100 rounded-lg text-zinc-400 transition-colors"
                       >
-                        <MoreVertical size={14} />
+                        <MoreVertical size={20} />
                       </button>
                         
                         {openMenuId === teacher.id && (
