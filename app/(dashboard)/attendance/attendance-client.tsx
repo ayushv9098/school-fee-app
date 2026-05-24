@@ -230,11 +230,11 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
             <table className="w-full text-sm">
               <thead className="bg-zinc-50/30">
                 <tr className="border-b border-zinc-100">
-                  <th className="text-left p-4 font-bold text-zinc-400 uppercase text-[10px]">Staff Member</th>
-                  <th className="text-left p-4 font-bold text-zinc-400 uppercase text-[10px]">Status</th>
-                  <th className="text-left p-4 font-bold text-zinc-400 uppercase text-[10px]">Check-in</th>
-                  <th className="text-left p-4 font-bold text-zinc-400 uppercase text-[10px]">Selfie</th>
-                  <th className="text-right p-4 font-bold text-zinc-400 uppercase text-[10px]">Actions</th>
+                  <th className="text-left p-3 font-bold text-zinc-400 uppercase text-[9px]">Staff</th>
+                  <th className="text-center p-3 font-bold text-zinc-400 uppercase text-[9px]">Status</th>
+                  <th className="text-center p-3 font-bold text-zinc-400 uppercase text-[9px]">Time</th>
+                  <th className="text-center p-3 font-bold text-zinc-400 uppercase text-[9px]">Photo</th>
+                  <th className="text-right p-3 font-bold text-zinc-400 uppercase text-[9px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -243,39 +243,41 @@ export default function AttendanceClient({ initialTeachers, todayAttendance, mon
                   const isRegistered = !!teacher.auth_user_id
                   return (
                     <tr key={teacher.id} className="hover:bg-zinc-50/50 transition-colors">
-                      <td className="p-4">
-                        <p className="font-bold text-zinc-900">{teacher.name}</p>
-                        <p className="text-[11px] text-zinc-400 font-medium">{teacher.subject}</p>
+                      <td className="p-3">
+                        <p className="font-bold text-zinc-900 text-xs truncate max-w-[100px]">{teacher.name}</p>
+                        <p className="text-[10px] text-zinc-400 truncate max-w-[100px]">{teacher.subject}</p>
                       </td>
-                      <td className="p-4">
+                      <td className="p-3 text-center">
                         {record?.status === 'present' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-tight">
-                             <Check size={12} strokeWidth={3} /> Present
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-700 text-[10px] font-bold shadow-sm ring-1 ring-green-200" title="Present">
+                             P
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-500 text-[10px] font-bold uppercase tracking-tight">
-                             <X size={12} strokeWidth={3} /> Absent
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-50 text-red-500 text-[10px] font-bold shadow-sm ring-1 ring-red-100" title="Absent">
+                             A
                           </span>
                         )}
                       </td>
-                      <td className="p-4 text-zinc-600 font-mono font-bold text-xs">
+                      <td className="p-3 text-center text-zinc-600 font-mono font-bold text-[10px] whitespace-nowrap">
                         {record?.check_in_time ? dayjs(record.check_in_time).format('hh:mm A') : '--:--'}
                       </td>
-                      <td className="p-4">
-                        {record?.selfie_url ? (
-                          <div className="w-10 h-10 rounded-xl overflow-hidden border border-zinc-200 shadow-sm ring-2 ring-white">
-                            <img 
-                              src={supabase.storage.from('attendance-selfies').getPublicUrl(record.selfie_url).data.publicUrl} 
-                              alt="Selfie" className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-300">
-                            <Camera size={16} />
-                          </div>
-                        )}
+                      <td className="p-3">
+                        <div className="flex justify-center">
+                          {record?.selfie_url ? (
+                            <div className="w-8 h-8 rounded-lg overflow-hidden border border-zinc-200 shadow-sm ring-1 ring-white">
+                              <img 
+                                src={supabase.storage.from('attendance-selfies').getPublicUrl(record.selfie_url).data.publicUrl} 
+                                alt="Selfie" className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-300">
+                              <Camera size={12} />
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="p-4 text-right relative">
+                      <td className="p-3 text-right relative">
                         <button
                           onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === teacher.id ? null : teacher.id); }}
                           className="p-2 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-400 hover:text-zinc-900"
