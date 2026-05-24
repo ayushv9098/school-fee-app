@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Camera, MapPin, CheckCircle, AlertTriangle, Loader2, Navigation, History, User, Clock, Calendar as CalendarIcon, LogOut, ChevronRight } from 'lucide-react'
+import { Camera, MapPin, CheckCircle, AlertTriangle, Loader2, Navigation, History, User, Clock, Calendar as CalendarIcon, ChevronRight } from 'lucide-react'
 import dayjs from 'dayjs'
 
 interface Props {
@@ -43,7 +43,7 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
       .select('*')
       .eq('teacher_id', teacher.id)
       .order('date', { ascending: false })
-      .limit(20)
+      .limit(15)
     setHistory(data || [])
     setHistoryLoading(false)
   }
@@ -67,7 +67,7 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
     setError('')
 
     if (!navigator.geolocation) {
-      setError('Geolocation not supported')
+      setError('GPS not supported')
       setLoading(false)
       return
     }
@@ -85,13 +85,13 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
         setDistance(dist)
         const radius = schoolSettings.radius || 100
         if (dist > radius) {
-          setError(`You are not in school premises. Distance: ${Math.round(dist)}m (Allowed: ${radius}m)`)
+          setError(`You are not in school premises. Distance: ${Math.round(dist)}m`)
           setLoading(false)
           return
         }
 
         setStep('camera')
-        setTimeout(startCamera, 100)
+        setTimeout(startCamera, 50)
         setLoading(false)
       },
       (err) => {
@@ -141,7 +141,7 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
         .from('attendance-selfies')
         .upload(filePath, blob)
 
-      if (uploadError) throw new Error('Photo Upload Failed: ' + uploadError.message)
+      if (uploadError) throw new Error('Upload Fail: ' + uploadError.message)
 
       const { error: dbError } = await supabase
         .from('attendance')
@@ -155,7 +155,7 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
           status: 'present'
         })
 
-      if (dbError) throw new Error('Database Saving Failed: ' + dbError.message)
+      if (dbError) throw new Error('Database Fail: ' + dbError.message)
       
       setStep('done')
       router.refresh()
@@ -167,101 +167,97 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 pb-24">
+    <div className="flex flex-col min-h-screen bg-zinc-50 pb-20">
       
-      {/* --- HEADER --- */}
-      <div className="bg-white px-4 py-4 flex items-center justify-between border-b border-zinc-100 sticky top-0 z-30 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-200">
-            <User size={20} />
+      {/* --- SLEEK HEADER --- */}
+      <div className="bg-white px-4 py-3 flex items-center justify-between border-b border-zinc-100 sticky top-0 z-30">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-violet-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-violet-100">
+            <User size={16} />
           </div>
           <div>
-            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Teacher Portal</p>
-            <h1 className="text-sm font-bold text-zinc-900">{teacher.name}</h1>
+            <h1 className="text-xs font-bold text-zinc-900 leading-none mb-0.5">{teacher.name}</h1>
+            <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider leading-none">Teacher</p>
           </div>
         </div>
-        <Badge className="bg-green-100 text-green-700 border-none hover:bg-green-100">
+        <Badge className="bg-green-100 text-green-700 text-[10px] px-2 py-0 border-none hover:bg-green-100">
           Online
         </Badge>
       </div>
 
-      <div className="flex-1 p-4 max-w-md mx-auto w-full">
+      <div className="flex-1 p-3 max-w-md mx-auto w-full space-y-4">
         
         {/* --- ATTENDANCE TAB --- */}
         {activeTab === 'attendance' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-4 animate-in fade-in duration-500">
             
-            {/* Status Card */}
-            <Card className="border-none shadow-sm rounded-3xl bg-white overflow-hidden">
-               <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 py-6 text-white text-center">
-                  <p className="text-violet-100 text-xs font-medium uppercase tracking-widest mb-1">
+            <Card className="border-none shadow-sm rounded-2xl bg-white overflow-hidden">
+               <div className="bg-violet-600 p-3 py-4 text-white text-center">
+                  <p className="text-violet-200 text-[10px] font-bold uppercase tracking-widest mb-0.5">
                     {dayjs().format('dddd, DD MMMM')}
                   </p>
-                  <p className="text-4xl font-mono font-black tracking-tighter">
+                  <p className="text-2xl font-mono font-black tracking-tight">
                     {dayjs().format('hh:mm A')}
                   </p>
                </div>
-              <CardContent className="p-6 flex flex-col items-center text-center space-y-6">
+              <CardContent className="p-4 flex flex-col items-center text-center space-y-4">
                 
                 {step === 'init' && (
                   <>
-                    <div className="w-20 h-20 bg-violet-50 rounded-full flex items-center justify-center text-violet-600">
-                      <MapPin size={40} className="animate-bounce" />
+                    <div className="w-14 h-14 bg-violet-50 rounded-full flex items-center justify-center text-violet-600">
+                      <Navigation size={28} />
                     </div>
-                    <div className="space-y-2">
-                      <h2 className="text-xl font-bold text-zinc-900">Good Morning!</h2>
-                      <p className="text-sm text-zinc-500 leading-relaxed">
-                        Ready for work? Tap below to mark your attendance for today.
+                    <div className="space-y-1">
+                      <h2 className="text-base font-bold text-zinc-900">Mark Haazri</h2>
+                      <p className="text-[11px] text-zinc-400 leading-relaxed">
+                        Tap button below to record your arrival.
                       </p>
                     </div>
                     <button
                       onClick={handleMarkAttendance}
                       disabled={loading}
-                      className="w-full h-16 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl text-base font-bold transition flex items-center justify-center gap-3 disabled:opacity-50 shadow-xl shadow-violet-100 active:scale-95"
+                      className="w-full h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-violet-100 active:scale-95"
                     >
-                      {loading ? <Loader2 size={24} className="animate-spin" /> : <Navigation size={22} />}
-                      {loading ? 'Verifying GPS...' : 'Mark Attendance'}
+                      {loading ? <Loader2 size={20} className="animate-spin" /> : <MapPin size={18} />}
+                      {loading ? 'GPS Check...' : 'Mark Attendance'}
                     </button>
                   </>
                 )}
 
                 {step === 'camera' && (
                   <>
-                    <div className="w-full aspect-square bg-zinc-900 rounded-3xl overflow-hidden relative shadow-2xl">
+                    <div className="w-full aspect-video bg-zinc-900 rounded-xl overflow-hidden relative shadow-inner">
                       <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 border-[6px] border-white/20 rounded-3xl pointer-events-none" />
-                      <div className="absolute bottom-4 left-0 right-0 text-white/50 text-[10px] font-medium uppercase tracking-tighter">
-                        Position your face inside the frame
-                      </div>
+                      <div className="absolute inset-0 border-2 border-white/20 rounded-xl pointer-events-none" />
                     </div>
                     <button
                       onClick={captureSelfie}
-                      className="w-20 h-20 bg-white border-8 border-violet-100 rounded-full flex items-center justify-center text-violet-600 shadow-xl active:scale-90 transition-transform"
+                      className="w-14 h-14 bg-white border-4 border-violet-100 rounded-full flex items-center justify-center text-violet-600 shadow-xl active:scale-90 transition-transform"
                     >
-                      <Camera size={32} />
+                      <Camera size={24} />
                     </button>
-                    <p className="text-sm font-bold text-zinc-900">Tap to click photo</p>
+                    <p className="text-xs font-bold text-zinc-400">Position face & tap button</p>
                   </>
                 )}
 
                 {step === 'preview' && (
                   <>
-                    <div className="w-full aspect-square bg-zinc-100 rounded-3xl overflow-hidden border-4 border-white shadow-xl">
+                    <div className="w-full aspect-video bg-zinc-100 rounded-xl overflow-hidden border-2 border-white shadow-md">
                       <img src={selfie!} alt="Preview" className="w-full h-full object-cover" />
                     </div>
-                    <div className="flex gap-4 w-full pt-2">
+                    <div className="flex gap-2 w-full pt-1">
                       <button
-                        onClick={() => { setStep('camera'); setTimeout(startCamera, 100); }}
-                        className="flex-1 h-14 bg-zinc-100 text-zinc-600 rounded-2xl text-sm font-bold transition"
+                        onClick={() => { setStep('camera'); setTimeout(startCamera, 50); }}
+                        className="flex-1 h-11 bg-zinc-100 text-zinc-600 rounded-xl text-xs font-bold transition"
                       >
                         Retake
                       </button>
                       <button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="flex-[2] h-14 bg-green-600 hover:bg-green-700 text-white rounded-2xl text-sm font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-green-100"
+                        className="flex-[2] h-11 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-md shadow-green-100"
                       >
-                        {loading ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle size={20} />}
+                        {loading ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
                         Confirm & Submit
                       </button>
                     </div>
@@ -270,21 +266,21 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
 
                 {step === 'done' && (
                   <>
-                    <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-green-600">
-                      <CheckCircle size={32} />
+                    <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600">
+                      <CheckCircle size={24} />
                     </div>
-                    <div className="space-y-1">
-                      <h2 className="text-xl font-bold text-zinc-900">Attendance Completed</h2>
-                      <p className="text-xs text-zinc-500">
-                        Recorded at: <span className="font-bold text-zinc-900 text-sm italic">{dayjs(todayRecord?.check_in_time).format('hh:mm A')}</span>
+                    <div className="space-y-0.5">
+                      <h2 className="text-sm font-bold text-zinc-900">Attendance Marked!</h2>
+                      <p className="text-[10px] text-zinc-400">
+                        Check-in at: <span className="font-bold text-zinc-800 uppercase">{dayjs(todayRecord?.check_in_time).format('hh:mm A')}</span>
                       </p>
                     </div>
                     {todayRecord?.selfie_url && (
-                      <div className="w-full aspect-square bg-white p-2 rounded-3xl border border-zinc-100 shadow-inner">
+                      <div className="w-full max-w-[200px] aspect-square bg-white p-1 rounded-2xl border border-zinc-100 shadow-sm">
                         <img 
                           src={supabase.storage.from('attendance-selfies').getPublicUrl(todayRecord.selfie_url).data.publicUrl} 
-                          alt="Today's Selfie" 
-                          className="w-full h-full object-cover rounded-2xl"
+                          alt="Selfie" 
+                          className="w-full h-full object-cover rounded-xl"
                         />
                       </div>
                     )}
@@ -292,32 +288,32 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
                 )}
 
                 {error && (
-                  <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs flex items-start gap-3 w-full text-left border border-red-100 shadow-sm animate-pulse">
-                    <AlertTriangle className="flex-shrink-0" size={16} />
-                    <p className="font-medium leading-relaxed">{error}</p>
+                  <div className="bg-red-50 text-red-600 p-3 rounded-xl text-[10px] flex items-start gap-2 w-full text-left border border-red-100">
+                    <AlertTriangle className="flex-shrink-0" size={14} />
+                    <p className="font-medium">{error}</p>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
-                  <Clock size={20} />
+            {/* Compact Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white p-3 rounded-2xl shadow-sm border border-zinc-100 flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 flex-shrink-0">
+                  <Clock size={16} />
                 </div>
-                <div>
-                  <p className="text-[10px] text-zinc-400 font-bold uppercase">Working</p>
-                  <p className="text-sm font-bold text-zinc-900">Active</p>
+                <div className="min-w-0">
+                  <p className="text-[8px] text-zinc-400 font-bold uppercase truncate">Working</p>
+                  <p className="text-xs font-bold text-zinc-900 truncate">Active</p>
                 </div>
               </div>
-              <div className="bg-white p-4 rounded-3xl shadow-sm border border-zinc-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600">
-                  <CalendarIcon size={20} />
+              <div className="bg-white p-3 rounded-2xl shadow-sm border border-zinc-100 flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 flex-shrink-0">
+                  <CalendarIcon size={16} />
                 </div>
-                <div>
-                  <p className="text-[10px] text-zinc-400 font-bold uppercase">Today</p>
-                  <p className="text-sm font-bold text-zinc-900">Present</p>
+                <div className="min-w-0">
+                  <p className="text-[8px] text-zinc-400 font-bold uppercase truncate">Today</p>
+                  <p className="text-xs font-bold text-zinc-900 truncate">Present</p>
                 </div>
               </div>
             </div>
@@ -326,42 +322,37 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
 
         {/* --- HISTORY TAB --- */}
         {activeTab === 'history' && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500 pb-10">
-            <div className="flex items-center justify-between px-2">
-              <h2 className="text-lg font-bold text-zinc-900 tracking-tight">Recent Activity</h2>
-              <button onClick={fetchHistory} className="text-xs font-bold text-violet-600">Refresh</button>
+          <div className="space-y-3 animate-in fade-in duration-500 pb-10">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-sm font-bold text-zinc-900 uppercase tracking-tight">Your Haazri Log</h2>
+              <button onClick={fetchHistory} className="text-[10px] font-bold text-violet-600">Sync</button>
             </div>
             
             {historyLoading ? (
               <div className="flex justify-center py-20">
-                <Loader2 size={32} className="animate-spin text-violet-600 opacity-20" />
+                <Loader2 size={24} className="animate-spin text-violet-600 opacity-30" />
               </div>
             ) : history.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-zinc-200 shadow-inner">
-                <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                   <Clock className="text-zinc-300" size={32} />
-                </div>
-                <p className="text-sm text-zinc-400 font-medium">Your attendance log is empty</p>
+              <div className="text-center py-14 bg-white rounded-2xl border border-dashed border-zinc-200">
+                <Clock className="mx-auto text-zinc-200 mb-2" size={24} />
+                <p className="text-[11px] text-zinc-400">Log is empty</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {history.map(item => (
-                  <div key={item.id} className="bg-white p-4 rounded-3xl border border-zinc-100 flex items-center justify-between shadow-sm active:scale-95 transition-transform">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-400 overflow-hidden border border-zinc-100 shadow-inner">
+                  <div key={item.id} className="bg-white p-2.5 rounded-2xl border border-zinc-100 flex items-center justify-between shadow-sm active:scale-[0.98] transition-transform">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-300 overflow-hidden border border-zinc-100">
                         {item.selfie_url ? (
                           <img src={supabase.storage.from('attendance-selfies').getPublicUrl(item.selfie_url).data.publicUrl} className="w-full h-full object-cover" alt="S" />
-                        ) : <User size={20} />}
+                        ) : <User size={16} />}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-zinc-900">{dayjs(item.date).format('DD MMM YYYY')}</p>
-                        <p className="text-[11px] text-zinc-500 font-medium">{dayjs(item.check_in_time).format('hh:mm A')}</p>
+                        <p className="text-xs font-bold text-zinc-800">{dayjs(item.date).format('DD MMM YYYY')}</p>
+                        <p className="text-[10px] text-zinc-400 font-medium">{dayjs(item.check_in_time).format('hh:mm A')}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full uppercase tracking-tighter">Verified</span>
-                       <ChevronRight size={14} className="text-zinc-300" />
-                    </div>
+                    <Badge className="bg-green-50 text-green-600 text-[8px] font-bold border-none h-5 px-2">P</Badge>
                   </div>
                 ))}
               </div>
@@ -371,32 +362,34 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
 
         {/* --- PROFILE TAB --- */}
         {activeTab === 'profile' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-500 pb-10">
-            <Card className="border-none shadow-sm rounded-[32px] bg-white overflow-hidden text-center">
-              <div className="h-28 bg-gradient-to-br from-violet-600 to-indigo-700" />
-              <div className="-mt-12 mb-4">
-                <div className="w-24 h-24 bg-white rounded-full mx-auto p-1.5 shadow-xl shadow-violet-900/10">
-                  <div className="w-full h-full bg-violet-100 rounded-full flex items-center justify-center text-violet-600">
-                    <User size={48} />
+          <div className="space-y-4 animate-in fade-in duration-500 pb-10">
+            <Card className="border-none shadow-sm rounded-3xl bg-white overflow-hidden text-center">
+              <div className="h-16 bg-gradient-to-r from-violet-600 to-indigo-600" />
+              <div className="-mt-8 mb-3">
+                <div className="w-16 h-16 bg-white rounded-full mx-auto p-1 shadow-md">
+                  <div className="w-full h-full bg-violet-50 rounded-full flex items-center justify-center text-violet-600">
+                    <User size={32} />
                   </div>
                 </div>
               </div>
-              <CardContent className="p-8 pt-0 space-y-2">
-                <h2 className="text-2xl font-black text-zinc-900 tracking-tight">{teacher.name}</h2>
-                <p className="text-sm text-violet-600 font-bold uppercase tracking-widest">{teacher.subject} Specialist</p>
+              <CardContent className="p-5 pt-0 space-y-4">
+                <div>
+                  <h2 className="text-base font-bold text-zinc-900">{teacher.name}</h2>
+                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">{teacher.subject} Dept</p>
+                </div>
                 
-                <div className="pt-8 grid grid-cols-1 gap-3">
-                  <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 flex items-center justify-between">
-                    <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Salary/Month</p>
-                    <p className="text-base font-black text-zinc-900">₹{teacher.monthly_salary.toLocaleString('en-IN')}</p>
+                <div className="space-y-2 text-left">
+                  <div className="p-3 bg-zinc-50 rounded-xl flex items-center justify-between border border-zinc-100">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase">Monthly Salary</p>
+                    <p className="text-xs font-bold text-zinc-900">₹{teacher.monthly_salary.toLocaleString('en-IN')}</p>
                   </div>
-                  <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 flex items-center justify-between">
-                    <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Join Date</p>
-                    <p className="text-sm font-bold text-zinc-700">{dayjs(teacher.created_at).format('MMMM YYYY')}</p>
+                  <div className="p-3 bg-zinc-50 rounded-xl flex items-center justify-between border border-zinc-100">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase">Member Since</p>
+                    <p className="text-xs font-bold text-zinc-800">{dayjs(teacher.created_at).format('MMM YYYY')}</p>
                   </div>
-                  <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 flex items-center justify-between overflow-hidden">
-                    <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex-shrink-0">Email</p>
-                    <p className="text-sm font-medium text-zinc-900 truncate pl-4">{teacher.email}</p>
+                  <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase mb-0.5">Email</p>
+                    <p className="text-xs font-medium text-zinc-600 truncate">{teacher.email}</p>
                   </div>
                 </div>
               </CardContent>
@@ -408,24 +401,24 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
 
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* --- BOTTOM NAVIGATION --- */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-zinc-100 px-6 py-3 pb-8 z-40 flex justify-between items-center shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+      {/* --- MINIMAL BOTTOM NAV --- */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-zinc-100 px-8 py-2 pb-6 z-40 flex justify-between items-center shadow-lg">
         {[
           { id: 'history', label: 'Log', icon: History },
-          { id: 'attendance', label: 'Check-in', icon: Navigation },
+          { id: 'attendance', label: 'Home', icon: Navigation },
           { id: 'profile', label: 'Me', icon: User },
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex flex-col items-center gap-1.5 transition-all relative ${
-              activeTab === tab.id ? 'text-violet-600' : 'text-zinc-300'
+            className={`flex flex-col items-center gap-1 transition-all ${
+              activeTab === tab.id ? 'text-violet-600 scale-110' : 'text-zinc-300'
             }`}
           >
-            <div className={`p-2 rounded-2xl transition-all ${activeTab === tab.id ? 'bg-violet-100 text-violet-600' : ''}`}>
-              <tab.icon size={tab.id === 'attendance' ? 24 : 20} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
+            <div className={`p-1.5 rounded-xl transition-all ${activeTab === tab.id ? 'bg-violet-50' : ''}`}>
+              <tab.icon size={18} strokeWidth={activeTab === tab.id ? 3 : 2} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-tighter">{tab.label}</span>
+            <span className="text-[8px] font-bold uppercase tracking-tighter">{tab.label}</span>
           </button>
         ))}
       </div>
