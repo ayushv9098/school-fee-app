@@ -72,7 +72,7 @@ const StudentsReportPDF = ({ students, schoolName, reportTitle, date, count }: a
             <Text style={[pdfStyles.tableCell, pdfStyles.tableColClass]}>{s.class}</Text>
             <Text style={[pdfStyles.tableCell, pdfStyles.tableColMobile]}>{s.mobile || '-'}</Text>
             <Text style={[pdfStyles.tableCell, pdfStyles.tableColFee]}>{s.total_fee.toLocaleString('en-IN')}</Text>
-            <Text style={[pdfStyles.tableCell, pdfStyles.totalPaid]}>{s.total_paid.toLocaleString('en-IN')}</Text>
+            <Text style={[pdfStyles.tableCell, pdfStyles.tableColPaid]}>{s.total_paid.toLocaleString('en-IN')}</Text>
             <Text style={[pdfStyles.tableCell, pdfStyles.tableColRemaining]}>{s.remaining_fee.toLocaleString('en-IN')}</Text>
             <Text style={[
               pdfStyles.tableCell, 
@@ -95,114 +95,56 @@ const StudentsReportPDF = ({ students, schoolName, reportTitle, date, count }: a
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([])
-  const [search, setSearch] = useState(() => (typeof window !== 'undefined' ? sessionStorage.getItem('st_search') || '' : ''))
-  const [selectedClass, setSelectedClass] = useState(() => (typeof window !== 'undefined' ? sessionStorage.getItem('st_class') || '' : ''))
-  const [selectedStatus, setSelectedStatus] = useState(() => (typeof window !== 'undefined' ? sessionStorage.getItem('st_status') || '' : ''))
+  const [search, setSearch] = useState('')
+  const [selectedClass, setSelectedClass] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [schoolName, setSchoolName] = useState('School Fee Report')
-  
-  const isFirstMount = useRef(true)
-  const isRestoring = useRef(false)
 
-  // DEBUG LOGS
+  // --- DEBUGGING START ---
   useEffect(() => {
-    console.log('[DEBUG] StudentsPage Mounted');
-    const findScrollContainer = () => {
-      const main = document.querySelector('main');
-      const layout = document.querySelector('.flex.h-screen');
-      console.log('[DEBUG] Container Metrics:', {
-        windowScroll: window.scrollY,
-        main: main ? { scrollTop: main.scrollTop, scrollHeight: main.scrollHeight, clientHeight: main.clientHeight } : 'not found',
-        layout: layout ? { scrollTop: layout.scrollTop, scrollHeight: layout.scrollHeight, clientHeight: layout.clientHeight } : 'not found'
-      });
-    };
-
-    window.addEventListener('scroll', () => console.log('[DEBUG] Window Scroll:', window.scrollY));
-    document.addEventListener('scroll', (e) => {
-      const target = e.target as HTMLElement;
-      console.log('[DEBUG] Captured Scroll Event on:', target.tagName, target.className, {
-        scrollTop: target.scrollTop,
-        scrollHeight: target.scrollHeight
-      });
-    }, true);
-
-    findScrollContainer();
-    return () => console.log('[DEBUG] StudentsPage Unmounted');
-  }, []);
-
-  // 1. Sync State with SessionStorage
-  useEffect(() => {
-    sessionStorage.setItem('st_search', search)
-    sessionStorage.setItem('st_class', selectedClass)
-    sessionStorage.setItem('st_status', selectedStatus)
+    console.log('[DEBUG] StudentsPage MOUNTED')
     
-    // Clear scroll position if user manually changes filters
-    if (!isFirstMount.current) {
-      sessionStorage.removeItem('st_last_id')
-      sessionStorage.removeItem('st_scroll_y')
+    const logScrollContainers = () => {
+      const main = document.querySelector('main')
+      const body = document.body
+      const html = document.documentElement
+      
+      console.log('[DEBUG] Current Scroll State:', {
+        window: { scrollY: window.scrollY },
+        main: main ? { 
+          scrollTop: main.scrollTop, 
+          scrollHeight: main.scrollHeight, 
+          clientHeight: main.clientHeight,
+          overflow: window.getComputedStyle(main).overflowY
+        } : 'missing',
+        body: { scrollTop: body.scrollTop, overflow: window.getComputedStyle(body).overflowY },
+        html: { scrollTop: html.scrollTop, overflow: window.getComputedStyle(html).overflowY }
+      })
     }
-    isFirstMount.current = false
-  }, [search, selectedClass, selectedStatus])
 
-  // 2. Identify Scroll Container and Track Scroll
-  useEffect(() => {
-    const main = document.querySelector('main')
-    if (!main) return
-
-    const handleScroll = () => {
-      if (!isRestoring.current) {
-        sessionStorage.setItem('st_scroll_y', main.scrollTop.toString())
-      }
+    const handleGlobalScroll = (e: any) => {
+      const target = e.target === document ? (document.scrollingElement || document.documentElement) : e.target
+      console.log('[DEBUG] SCROLL EVENT on:', target.tagName || 'document', {
+        className: target.className,
+        scrollTop: target.scrollTop
+      })
     }
 
-    main.addEventListener('scroll', handleScroll, { passive: true })
-    return () => main.removeEventListener('scroll', handleScroll)
+    logScrollContainers()
+    window.addEventListener('scroll', handleGlobalScroll, true)
+    
+    return () => {
+      console.log('[DEBUG] StudentsPage UNMOUNTED')
+      window.removeEventListener('scroll', handleGlobalScroll, true)
+    }
   }, [])
 
-  // 3. Robust Restoration Loop
   useEffect(() => {
-    if (!loading && students.length > 0) {
-      const savedId = sessionStorage.getItem('st_last_id')
-      const savedY = sessionStorage.getItem('st_scroll_y')
-      const main = document.querySelector('main')
-
-      if ((savedId || savedY) && main) {
-        isRestoring.current = true
-        let attempts = 0
-        const maxAttempts = 15
-        
-        const restore = () => {
-          const element = savedId ? document.getElementById(`student-${savedId}`) : null
-          
-          if (element) {
-            // First: Bring into view
-            element.scrollIntoView({ block: 'center', behavior: 'instant' as any })
-          }
-          
-          // Second: Apply precise scrollTop
-          if (savedY) {
-            main.scrollTo({ top: parseInt(savedY), behavior: 'instant' as any })
-          }
-
-          attempts++
-          
-          // Stop if we've successfully restored or reached max attempts
-          if (attempts >= maxAttempts || (savedY && Math.abs(main.scrollTop - parseInt(savedY)) < 2)) {
-            clearInterval(timer)
-            // Small delay before enabling tracking to avoid jumpy overwrites
-            setTimeout(() => { isRestoring.current = false }, 100)
-          }
-        }
-
-        const timer = setInterval(restore, 60)
-        return () => {
-          clearInterval(timer)
-          isRestoring.current = false
-        }
-      }
-    }
-  }, [loading, students.length])
+    console.log('[DEBUG] Data Loading State Changed:', { loading, studentsCount: students.length })
+  }, [loading, students])
+  // --- DEBUGGING END ---
 
   useEffect(() => {
     const supabase = createClient()
@@ -379,17 +321,9 @@ export default function StudentsPage() {
                     </tr>
                   )}
                   {students.map(s => (
-                    <tr 
-                      key={s.id} 
-                      id={`student-${s.id}`}
-                      className="border-b border-zinc-50 hover:bg-zinc-50 transition"
-                    >
+                    <tr key={s.id} className="border-b border-zinc-50 hover:bg-zinc-50 transition">
                       <td className="p-4">
-                        <Link 
-                          href={`/students/${s.id}`} 
-                          onClick={() => sessionStorage.setItem('st_last_id', s.id)}
-                          className="font-medium text-zinc-900 hover:text-violet-600"
-                        >
+                        <Link href={`/students/${s.id}`} className="font-medium text-zinc-900 hover:text-violet-600">
                           {s.name}
                         </Link>
                       </td>
@@ -428,13 +362,8 @@ export default function StudentsPage() {
             </Card>
           )}
           {students.map(s => (
-            <Link 
-              key={s.id} 
-              id={`student-${s.id}`}
-              href={`/students/${s.id}`}
-              onClick={() => sessionStorage.setItem('st_last_id', s.id)}
-            >
-              <Card className="hover:shadow-md transition mb-3">
+            <Link key={s.id} href={`/students/${s.id}`}>
+              <Card className="hover:shadow-md transition">
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="font-semibold text-zinc-900">{s.name}</p>
