@@ -129,6 +129,7 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
 
   async function handleSubmit() {
     setLoading(true)
+    setError('')
     try {
       if (!selfie) return
       const res = await fetch(selfie)
@@ -136,24 +137,34 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
       const fileName = `${teacher.id}_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.jpg`
       const filePath = `selfies/${fileName}`
 
+      console.log('📤 Uploading photo to storage...')
       const { error: uploadError } = await supabase.storage
         .from('attendance-selfies')
         .upload(filePath, blob)
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('❌ Upload Error:', uploadError)
+        throw new Error('Photo Upload Failed: ' + uploadError.message)
+      }
 
+      console.log('📝 Inserting record into database...')
       const { error: dbError } = await supabase
         .from('attendance')
         .insert({
           teacher_id: teacher.id,
-          admin_user_id: teacher.user_id, // Updated column name
+          admin_user_id: teacher.user_id, 
+          admin_id: teacher.user_id, // Populating both just in case
           date: dayjs().format('YYYY-MM-DD'),
-          check_in_time: new Date().toISOString(), // Updated column name
+          check_in_time: new Date().toISOString(),
           selfie_url: filePath,
           status: 'present'
         })
 
-      if (dbError) throw dbError
+      if (dbError) {
+        console.error('❌ Database Error:', dbError)
+        throw new Error('Database Saving Failed: ' + dbError.message)
+      }
+      
       setStep('done')
       router.refresh()
     } catch (err: any) {
