@@ -146,9 +146,9 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
         .from('attendance')
         .insert({
           teacher_id: teacher.id,
-          admin_id: teacher.user_id,
+          admin_user_id: teacher.user_id, // Updated column name
           date: dayjs().format('YYYY-MM-DD'),
-          check_in: new Date().toISOString(),
+          check_in_time: new Date().toISOString(), // Updated column name
           selfie_url: filePath,
           status: 'present'
         })
@@ -176,7 +176,7 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors ${
+            className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors relative ${
               activeTab === tab.id ? 'text-violet-600' : 'text-zinc-400'
             }`}
           >
@@ -268,7 +268,7 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
                     <div className="space-y-1">
                       <h2 className="text-lg font-bold text-zinc-900">Attendance Marked!</h2>
                       <p className="text-xs text-zinc-500">
-                        Check-in at: <span className="font-bold text-zinc-900">{dayjs(todayRecord?.check_in).format('hh:mm A')}</span>
+                        Check-in at: <span className="font-bold text-zinc-900">{dayjs(todayRecord?.check_in_time).format('hh:mm A')}</span>
                       </p>
                     </div>
                     {todayRecord?.selfie_url && (
