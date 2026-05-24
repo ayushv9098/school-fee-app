@@ -9,7 +9,7 @@ import {
   Camera, MapPin, CheckCircle, AlertTriangle, 
   Loader2, Navigation, History as HistoryIcon, 
   User, Clock, Calendar as CalendarIcon, 
-  ChevronRight, Sparkles, Check, X, ArrowRight
+  ChevronRight, Sparkles, Check, X, ArrowRight, Mail
 } from 'lucide-react'
 import dayjs from 'dayjs'
 
