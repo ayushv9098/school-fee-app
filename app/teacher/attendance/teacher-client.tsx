@@ -9,7 +9,7 @@ import {
   Camera, MapPin, CheckCircle, AlertTriangle, 
   Loader2, Navigation, History as HistoryIcon, 
   User, Clock, Calendar as CalendarIcon, 
-  ChevronRight, Sparkles, Check, X, ArrowRight, Mail, Home, Download, Plus
+  ChevronRight, Sparkles, Check, X, ArrowRight, Mail, Home, Download, Plus, LogOut
 } from 'lucide-react'
 import dayjs from 'dayjs'
 
@@ -31,6 +31,7 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
   const [selfie, setSelfie] = useState<string | null>(null)
   const [history, setHistory] = useState<any[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [showInstallBtn, setShowInstallBtn] = useState(false)
@@ -62,6 +63,14 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
       setShowInstallBtn(false)
     }
     setDeferredPrompt(null)
+  }
+
+  async function handleLogout() {
+    if (!confirm('Are you sure you want to logout?')) return
+    setIsLoggingOut(true)
+    await supabase.auth.signOut()
+    router.push('/teacher-login')
+    router.refresh()
   }
 
   useEffect(() => {
@@ -203,6 +212,7 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
                   onClick={handleInstall}
                   className="w-full bg-white border border-violet-100 p-4 rounded-3xl flex items-center gap-4 shadow-sm hover:shadow-md transition-all active:scale-95 group relative overflow-hidden"
                 >
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-violet-500/5 to-violet-500/0 animate-shimmer" />
                   <div className="w-12 h-12 bg-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-200 shrink-0 group-hover:scale-110 transition-transform">
                     <Download size={22} strokeWidth={2.5} />
                   </div>
@@ -403,6 +413,17 @@ export default function TeacherAttendanceClient({ teacher, schoolSettings, today
                         <p className="text-[10px] font-bold text-zinc-900 truncate max-w-[150px]">{row.value}</p>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-zinc-100">
+                    <button 
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="w-full h-12 rounded-2xl border border-red-100 bg-red-50 text-red-600 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
+                      {isLoggingOut ? 'Logging out...' : 'Sign Out Account'}
+                    </button>
                   </div>
                 </CardContent>
               </Card>

@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GraduationCap, Loader2, Download, Plus } from 'lucide-react'
+import { GraduationCap, Loader2, Download, Plus, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 function TeacherSignupForm() {
   const router = useRouter()
@@ -165,6 +166,15 @@ function TeacherSignupForm() {
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {loading ? 'Creating Account...' : 'Create Account'}
           </button>
+
+          <div className="text-center pt-2">
+            <p className="text-xs text-zinc-400 font-medium">
+              Already have an account?{' '}
+              <Link href="/teacher-login" className="text-violet-600 font-bold hover:underline">
+                Login Here
+              </Link>
+            </p>
+          </div>
         </form>
       </CardContent>
     </Card>

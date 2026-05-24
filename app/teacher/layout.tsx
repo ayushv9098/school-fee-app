@@ -1,26 +1,12 @@
 'use client'
 
-import { GraduationCap, LogOut, User as UserIcon } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { GraduationCap } from 'lucide-react'
 
 export default function TeacherLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const router = useRouter()
-  const supabase = createClient()
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
-
-  async function handleLogout() {
-    setIsLoggingOut(true)
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
-  }
-
   return (
     <div className="min-h-[100dvh] bg-zinc-50 flex flex-col">
       {/* Simple Header */}
@@ -33,15 +19,6 @@ export default function TeacherLayout({
             Ayushman Educational Academy
           </h1>
         </div>
-
-        <button 
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition border border-transparent hover:border-red-100 disabled:opacity-50"
-        >
-          <LogOut size={14} />
-          <span className="hidden xs:inline">{isLoggingOut ? '...' : 'Logout'}</span>
-        </button>
       </header>
       
       {/* Content */}
