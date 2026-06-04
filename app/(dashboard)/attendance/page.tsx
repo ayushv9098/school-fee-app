@@ -38,11 +38,26 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
     .gte('date', startOfMonth)
     .lte('date', endOfMonth)
 
+  // Fetch leave requests (all statuses)
+  const { data: pendingLeaves, error: leaveError } = await supabase
+    .from('leaves')
+    .select('*, teachers(name, subject)')
+    .eq('admin_id', user?.id)
+    .order('created_at', { ascending: false })
+
+  if (leaveError) {
+    console.error('Error fetching leaves:', leaveError)
+  }
+
+  console.log('Admin ID:', user?.id)
+  console.log('Pending Leaves:', pendingLeaves)
+
   return (
     <AttendanceClient 
       initialTeachers={teachers || []} 
       todayAttendance={todayAttendance || []}
       monthlyAttendance={monthlyAttendance || []}
+      pendingLeaves={pendingLeaves || []}
       adminEmail={user?.email || ''}
       adminId={user?.id || ''}
       selectedDate={selectedDate}

@@ -98,7 +98,7 @@ export default function ImportStudents() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-blue-50 rounded-xl gap-4">
         <div>
           <p className="font-medium text-zinc-900">Import from Student Management</p>
           <p className="text-sm text-zinc-500">Import your students from the other system</p>
@@ -106,7 +106,7 @@ export default function ImportStudents() {
         <button
           onClick={handleImport}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition disabled:opacity-50"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition disabled:opacity-50 w-full sm:w-auto"
         >
           {loading
             ? 'Importing...'

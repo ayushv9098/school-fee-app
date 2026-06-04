@@ -2,9 +2,10 @@
 
 import { DesktopSidebar, MobileSidebar } from '@/components/layout/sidebar'
 import Link from 'next/link'
-import { User, ArrowLeft } from 'lucide-react'
+import { User, ArrowLeft, Bell } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import FloatingAIButton from '@/components/floating-ai-button'
+import NotificationsDropdown from '@/components/layout/notifications'
 
 export default function DashboardLayout({
   children,
@@ -42,11 +43,14 @@ function Header() {
               <ArrowLeft className="w-4 h-4 text-zinc-600" />
             </Link>
           )}
-          <p className="text-sm font-semibold text-zinc-900">Ayushman Educational Academy</p>
+          <p className="text-sm font-semibold text-zinc-900">Ayushman Academy</p>
         </div>
-        <Link href="/profile" className="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center">
-          <User className="w-4 h-4 text-violet-600" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <NotificationsDropdown />
+          <Link href="/profile" className="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center">
+            <User className="w-4 h-4 text-violet-600" />
+          </Link>
+        </div>
       </header>
 
       {/* Desktop Header */}
@@ -60,12 +64,8 @@ function Header() {
           <p className="text-sm font-semibold text-zinc-900">Ayushman Educational Academy</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-4 text-sm text-zinc-500">
-            <Link href="/dashboard" className="hover:text-violet-600 transition">Dashboard</Link>
-            <Link href="/students" className="hover:text-violet-600 transition">Students</Link>
-            <Link href="/payments" className="hover:text-violet-600 transition">Payments</Link>
-            <Link href="/classes" className="hover:text-violet-600 transition">Classes</Link>
-          </div>
+          <NotificationsDropdown />
+          
           <Link href="/profile" className="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center">
             <User className="w-4 h-4 text-violet-600" />
           </Link>
