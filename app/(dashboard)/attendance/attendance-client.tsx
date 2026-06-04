@@ -120,7 +120,7 @@ export default function AttendanceClient({
       body: tableData,
       startY: 30,
       styles: { fontSize: 7, cellPadding: 1 },
-      headStyles: { fillStyle: 'f0f0f0', textColor: 0, fontStyle: 'bold' },
+      headStyles: { fillColor: '#f0f0f0', textColor: 0, fontStyle: 'bold' },
       columnStyles: { 0: { cellWidth: 30, fontStyle: 'bold' } }
     })
 
