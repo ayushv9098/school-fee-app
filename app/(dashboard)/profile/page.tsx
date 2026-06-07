@@ -64,13 +64,20 @@ export default function ProfilePage() {
     setSaving(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    await supabase.from('school_settings').upsert({
+    
+    const { error } = await supabase.from('school_settings').upsert({
       user_id: user?.id,
       ...school,
     }, { onConflict: 'user_id' })
+
+    if (error) {
+      alert('Error saving settings: ' + error.message)
+    } else {
+      alert('Settings saved successfully! ✅')
+      setEditing(false)
+      setLocationEditing(false)
+    }
     setSaving(false)
-    setEditing(false)
-    setLocationEditing(false)
   }
 
   async function handleSetLocation() {
