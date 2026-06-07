@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [locationEditing, setLocationEditing] = useState(false)
   const [locationLoading, setLocationLoading] = useState(false)
   const [school, setSchool] = useState({
     school_name: '',
@@ -69,6 +70,7 @@ export default function ProfilePage() {
     }, { onConflict: 'user_id' })
     setSaving(false)
     setEditing(false)
+    setLocationEditing(false)
   }
 
   async function handleSetLocation() {
@@ -87,13 +89,17 @@ export default function ProfilePage() {
           lng: position.coords.longitude
         }))
         setLocationLoading(false)
-        setEditing(true) // Open editing mode to save
+        setLocationEditing(true)
       },
       (error) => {
-        alert('Error getting location: ' + error.message)
+        let msg = 'Error getting location'
+        if (error.code === 1) msg = 'Location permission denied. Please enable GPS and allow access.'
+        else if (error.code === 2) msg = 'Location unavailable. Try again or enter manually.'
+        else if (error.code === 3) msg = 'Location request timed out. Try again or enter manually.'
+        alert(msg)
         setLocationLoading(false)
       },
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
   }
 
@@ -236,12 +242,23 @@ export default function ProfilePage() {
               <MapPin className="w-4 h-4 text-violet-600" />
               School Location (Attendance)
             </CardTitle>
-            {school.lat && (
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-100 text-[10px] font-bold text-green-700 uppercase tracking-wider">
-                <div className="w-1 h-1 rounded-full bg-green-600 animate-pulse" />
-                Active
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {school.lat && (
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-100 text-[10px] font-bold text-green-700 uppercase tracking-wider">
+                  <div className="w-1 h-1 rounded-full bg-green-600 animate-pulse" />
+                  Active
+                </div>
+              )}
+              {!locationEditing && (
+                <button
+                  onClick={() => setLocationEditing(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-violet-600 hover:bg-violet-50 transition"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Edit
+                </button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-5 pt-0 space-y-5">
@@ -251,65 +268,108 @@ export default function ProfilePage() {
               <div className="space-y-1">
                 <p className="text-xs font-bold text-amber-800">Attendance Not Active</p>
                 <p className="text-[10px] text-amber-700 leading-relaxed font-medium">
-                  You must set the school location before teachers can mark attendance. 
-                  Please go to the school premises and click <strong>"Set Current GPS"</strong>.
+                  Set school location so teachers can mark attendance. You can detect it automatically or type it manually.
                 </p>
               </div>
             </div>
           )}
+          
           <div className="space-y-2">
-            <p className="text-sm font-medium text-zinc-800">How to set your school location:</p>
-            <ul className="text-xs text-zinc-500 space-y-2 list-disc pl-4">
-              <li>Open this page while you are <strong>physically present</strong> at the school.</li>
-              <li>Click <strong>"Set Current GPS"</strong> to save your current location.</li>
-              <li>Teachers will only be able to mark attendance when they are inside this area.</li>
-            </ul>
+            <p className="text-sm font-medium text-zinc-800">Attendance Location Setup:</p>
+            <p className="text-[11px] text-zinc-500 leading-relaxed">
+              Click <b>"Auto-Detect"</b> while you are at school, or <b>enter coordinates</b> manually from Google Maps.
+            </p>
           </div>
 
           <div className="bg-white rounded-xl p-4 border border-zinc-200 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${school.lat ? 'bg-violet-100 text-violet-600' : 'bg-zinc-100 text-zinc-400'}`}>
+                <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${school.lat ? 'bg-violet-100 text-violet-600' : 'bg-zinc-100 text-zinc-400'}`}>
                   <Navigation className={`w-5 h-5 ${locationLoading ? 'animate-spin' : ''}`} />
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-zinc-900">Current GPS Center</p>
-                  <p className="text-[11px] font-mono text-zinc-500">
-                    {school.lat ? `${school.lat.toFixed(6)}, ${school.lng?.toFixed(6)}` : 'Not set yet'}
-                  </p>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-zinc-900 mb-2">GPS Coordinates</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-[9px] text-zinc-400 font-bold uppercase">Latitude</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="e.g. 28.1234"
+                        value={school.lat ?? ''}
+                        onChange={e => setSchool(prev => ({ ...prev, lat: e.target.value === '' ? null : parseFloat(e.target.value) }))}
+                        className="h-9 text-[11px] font-mono"
+                        disabled={!locationEditing}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[9px] text-zinc-400 font-bold uppercase">Longitude</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="e.g. 77.1234"
+                        value={school.lng ?? ''}
+                        onChange={e => setSchool(prev => ({ ...prev, lng: e.target.value === '' ? null : parseFloat(e.target.value) }))}
+                        className="h-9 text-[11px] font-mono"
+                        disabled={!locationEditing}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
+
               <button
                 onClick={handleSetLocation}
-                disabled={locationLoading}
-                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition shadow-sm w-full sm:w-auto ${
-                  !school.lat 
-                    ? 'bg-violet-600 text-white hover:bg-violet-700' 
-                    : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50'
-                }`}
+                disabled={locationLoading || !locationEditing}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-violet-600 text-white hover:bg-violet-700 transition shadow-sm disabled:opacity-50"
               >
-                {locationLoading ? 'Getting Location...' : (school.lat ? 'Update GPS Location' : 'Set Current GPS')}
+                {locationLoading ? 'Detecting...' : (school.lat ? 'Detect My Location Again' : 'Auto-Detect My Location')}
               </button>
             </div>
 
             <div className="pt-2 border-t border-zinc-100 space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-bold text-zinc-900">Allowed Attendance Range</Label>
+                <div>
+                  <Label className="text-xs font-bold text-zinc-900">Allowed Attendance Range</Label>
+                  <p className="text-[10px] text-zinc-500">How far can teachers be from school?</p>
+                </div>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
                     placeholder="100"
                     value={school.radius}
-                    onChange={e => setSchool(prev => ({ ...prev, radius: Number(e.target.value) }))}
-                    className="h-9 text-xs w-24 text-center font-bold"
-                    disabled={!editing}
+                    onChange={e => {
+                      setSchool(prev => ({ ...prev, radius: Number(e.target.value) }));
+                    }}
+                    className="h-9 text-xs w-20 text-center font-bold"
+                    disabled={!locationEditing}
                   />
                   <span className="text-xs font-medium text-zinc-500">meters</span>
                 </div>
               </div>
+
+              <div className="flex flex-wrap gap-2">
+                {[100, 200, 500, 1000].map((m) => (
+                  <button
+                    key={m}
+                    disabled={!locationEditing}
+                    onClick={() => {
+                      setSchool(prev => ({ ...prev, radius: m }));
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition border ${
+                      school.radius === m 
+                        ? 'bg-violet-600 text-white border-violet-600' 
+                        : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {m === 1000 ? '1 KM' : `${m} Meters`}
+                  </button>
+                ))}
+              </div>
+
               <p className="text-[11px] leading-relaxed text-zinc-500 bg-zinc-50 p-2 rounded-lg border border-dashed border-zinc-200">
                 Teachers must be within <strong>{school.radius} meters</strong> from the GPS center to mark attendance. 
-                If your school building is large, increase this to 200 or 300 meters.
+                If your school building is large, select <strong>200</strong> or <strong>500</strong>.
               </p>
             </div>
           </div>
@@ -348,14 +408,25 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {editing && (
-            <button
-              onClick={handleSaveSchool}
-              disabled={saving}
-              className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition shadow-md"
-            >
-              {saving ? 'Saving...' : <><Save className="w-4 h-4" />Save All Settings</>}
-            </button>
+          {(editing || locationEditing) && (
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setEditing(false)
+                  setLocationEditing(false)
+                }}
+                className="flex-1 h-12 flex items-center justify-center rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSchool}
+                disabled={saving || locationLoading}
+                className="flex-[2] h-12 flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition shadow-md disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : <><Save className="w-4 h-4" />Save All Settings</>}
+              </button>
+            </div>
           )}
         </CardContent>
       </Card>
