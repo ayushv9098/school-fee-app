@@ -376,11 +376,11 @@ export default function ProfilePage() {
 
           {school.lat && (
             <div className="space-y-2">
-              <p className="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
-                <MapIcon className="w-3.5 h-3.5 text-violet-600" />
-                Location Preview (approx center)
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-tight flex items-center gap-1.5">
+                <MapIcon className="w-3 h-3 text-violet-600" />
+                Map Preview
               </p>
-              <div className="aspect-video w-full bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 relative group">
+              <div className="h-32 w-full bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 relative group">
                 <iframe
                   width="100%"
                   height="100%"
@@ -390,16 +390,17 @@ export default function ProfilePage() {
                   allowFullScreen
                 ></iframe>
                 {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-100/80 backdrop-blur-[1px]">
-                    <div className="text-center p-4">
-                      <MapIcon className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-                      <p className="text-[10px] text-zinc-500">Tap below to see your school boundary on Map</p>
+                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-100/60 backdrop-blur-[1px]">
+                    <div className="text-center p-2">
                       <a 
                         href={`https://www.google.com/maps/search/?api=1&query=${school.lat},${school.lng}`} 
                         target="_blank" 
-                        className="mt-3 px-4 py-2 bg-white border border-zinc-200 rounded-lg text-[10px] font-bold text-violet-600 hover:bg-violet-50 transition shadow-sm inline-block"
+                        className="px-3 py-1.5 bg-white border border-zinc-200 rounded-lg text-[10px] font-bold text-violet-600 hover:bg-violet-50 transition shadow-sm inline-block"
                       >
-                        Open in Google Maps
+                        <div className="flex items-center gap-1.5">
+                          <MapIcon className="w-3 h-3" />
+                          View on Google Maps
+                        </div>
                       </a>
                     </div>
                   </div>
