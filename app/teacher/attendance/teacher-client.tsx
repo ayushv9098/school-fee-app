@@ -25,7 +25,7 @@ interface Props {
 export default function TeacherAttendanceClient({ 
   teacher, 
   schoolSettings, 
-  todayRecord,
+  todayRecord: initialTodayRecord,
   monthlyAttendance: initialMonthlyAttendance,
   leaves: initialLeaves
 }: Props) {
@@ -33,7 +33,8 @@ export default function TeacherAttendanceClient({
   const supabase = createClient()
   
   const [activeTab, setActiveTab] = useState<'attendance' | 'history' | 'profile'>('attendance')
-  const [step, setStep] = useState(todayRecord ? 'done' : 'init')
+  const [todayRecord, setTodayRecord] = useState(initialTodayRecord)
+  const [step, setStep] = useState(initialTodayRecord ? 'done' : 'init')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [distance, setDistance] = useState<number | null>(null)
@@ -123,15 +124,22 @@ export default function TeacherAttendanceClient({
     setLoading(true)
     setError('')
     if (!navigator.geolocation) {
-      setError('GPS not available.')
+      setError('GPS not available in this browser.')
       setLoading(false)
       return
     }
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords
         if (!schoolSettings?.lat || !schoolSettings?.lng) {
-          setError('School location missing.')
+          setError('School location missing. Please contact admin.')
           setLoading(false)
           return
         }
@@ -149,10 +157,14 @@ export default function TeacherAttendanceClient({
         setLoading(false)
       },
       (err) => {
-        setError('Enable GPS and try again.')
+        let msg = 'Could not get location.'
+        if (err.code === 1) msg = 'Location permission denied. Please allow it.'
+        else if (err.code === 2) msg = 'GPS signal weak or unavailable.'
+        else if (err.code === 3) msg = 'GPS request timed out. Try again.'
+        setError(msg)
         setLoading(false)
       },
-      { enableHighAccuracy: true }
+      options
     )
   }
 
@@ -199,7 +211,7 @@ export default function TeacherAttendanceClient({
       const startTime = dayjs(`${now.format('YYYY-MM-DD')} ${startTimeStr}`)
       const isLate = now.isAfter(startTime)
 
-      const { error: dbError } = await supabase.from('attendance').insert({
+      const { data: newRecord, error: dbError } = await supabase.from('attendance').insert({
         teacher_id: teacher.id,
         admin_user_id: teacher.user_id, 
         admin_id: teacher.user_id, 
@@ -210,7 +222,8 @@ export default function TeacherAttendanceClient({
         selfie_url: filePath,
         status: isLate ? 'late' : 'present',
         late_entry: isLate
-      })
+      }).select().single()
+
       if (dbError) throw new Error(`Database Fail: ${dbError.message}`)
 
       if (isLate) {
@@ -222,6 +235,7 @@ export default function TeacherAttendanceClient({
         })
       }
 
+      setTodayRecord(newRecord)
       setStep('done')
       router.refresh()
     } catch (err: any) {
@@ -257,7 +271,7 @@ export default function TeacherAttendanceClient({
         const endTime = dayjs(`${now.format('YYYY-MM-DD')} ${endTimeStr}`)
         const isEarlyExit = now.isBefore(endTime)
 
-        const { error: dbError } = await supabase
+        const { data: updatedRecord, error: dbError } = await supabase
           .from('attendance')
           .update({
             check_out_time: now.toISOString(),
@@ -266,6 +280,8 @@ export default function TeacherAttendanceClient({
             early_exit: isEarlyExit
           })
           .eq('id', todayRecord.id)
+          .select()
+          .single()
 
         if (dbError) throw new Error(`Database Fail: ${dbError.message}`)
 
@@ -278,6 +294,7 @@ export default function TeacherAttendanceClient({
           })
         }
 
+        setTodayRecord(updatedRecord)
         router.refresh()
         setLoading(false)
       }, (err) => {

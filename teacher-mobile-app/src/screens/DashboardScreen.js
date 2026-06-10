@@ -143,6 +143,7 @@ export default function DashboardScreen({ navigation }) {
   // Camera & Step State
   const [step, setStep] = useState('init'); // init, camera, preview, done
   const [selfie, setSelfie] = useState(null);
+  const [coords, setCoords] = useState(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const cameraRef = useRef(null);
 
@@ -269,19 +270,76 @@ export default function DashboardScreen({ navigation }) {
     setActionLoading(true);
     setError('');
     
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      setError('Location permission denied');
-      setActionLoading(false);
-      return;
-    }
-
     try {
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      // 1. Check if location services are enabled
+      const enabled = await Location.hasServicesEnabledAsync();
+      if (!enabled) {
+        setError('Please enable GPS/Location in settings');
+        setActionLoading(false);
+        return;
+      }
+
+      // 2. Request permissions
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError('Location permission denied. Please allow in settings.');
+        setActionLoading(false);
+        return;
+      }
+
+      // 3. Get current position with [V4] Retry Logic
+      let position;
+      const getLocation = async (retryCount = 0) => {
+        try {
+          console.log(`Attempting to get location [v4] (Try: ${retryCount + 1})...`);
+          
+          // Try last known first (if very fresh < 2 mins)
+          if (retryCount === 0) {
+            const lastKnown = await Location.getLastKnownPositionAsync({ maxAge: 120000 });
+            if (lastKnown) return lastKnown;
+          }
+
+          // Fresh fetch with timeout
+          return await Promise.race([
+            Location.getCurrentPositionAsync({ 
+              accuracy: Location.Accuracy.Balanced,
+              mayShowUserSettingsDialog: true 
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('GPS Timeout')), 15000))
+          ]);
+        } catch (err) {
+          if (retryCount < 1) { // Retry once
+            console.log('Retry 1 starting...');
+            await new Promise(r => setTimeout(r, 2000));
+            return getLocation(retryCount + 1);
+          }
+          throw err;
+        }
+      };
+
+      try {
+        position = await getLocation();
+      } catch (finalErr) {
+        console.log('Final location fetch failed:', finalErr);
+        const providerStatus = await Location.getProviderStatusAsync();
+        const msg = `GPS ERROR [V4]: ${finalErr.message}\n\n` +
+                    `Status: GPS(${providerStatus.gpsEnabled ? 'ON' : 'OFF'}) ` +
+                    `Net(${providerStatus.networkEnabled ? 'ON' : 'OFF'})\n\n` +
+                    `FIX: 1. Set Location to 'PRECISE' in Phone Settings.\n` +
+                    `2. Turn OFF Power Saver.\n` +
+                    `3. Open Google Maps for 5 sec, then try here.`;
+        setError(msg);
+        Alert.alert('Location Signal Weak', msg);
+        setActionLoading(false);
+        return;
+      }
+
       const { latitude, longitude } = position.coords;
 
       if (!schoolSettings?.lat || !schoolSettings?.lng) {
-        setError('School location missing');
+        const msg = 'School location missing in database. Please ask admin to set school location.';
+        setError(msg);
+        Alert.alert('Settings Error', msg);
         setActionLoading(false);
         return;
       }
@@ -290,14 +348,18 @@ export default function DashboardScreen({ navigation }) {
       const radius = schoolSettings.radius || 100;
 
       if (dist > radius) {
-        setError(`Too far from school (${Math.round(dist)}m)`);
+        const msg = `Too far from school (${Math.round(dist)}m). You must be within ${radius}m.`;
+        setError(msg);
+        Alert.alert('Geofence Error', msg);
         setActionLoading(false);
         return;
       }
 
+      setCoords({ latitude, longitude });
       setStep('camera');
     } catch (err) {
-      setError('Failed to get location');
+      console.error(err);
+      setError('GPS Error. Please restart the app.');
     } finally {
       setActionLoading(false);
     }
@@ -318,67 +380,122 @@ export default function DashboardScreen({ navigation }) {
 
   const handleSubmitAttendance = async () => {
     setActionLoading(true);
+    setError('');
+    console.log('--- Starting Attendance Submission [V5] ---');
+    
     try {
-      if (!selfie) return;
+      if (!selfie) {
+        Alert.alert('Error [V5]', 'Selfie not found. Please retake.');
+        return;
+      }
       
-      // Upload to Storage
+      // 1. Prepare File for Upload (Native RN Way)
+      console.log('Step 1: Preparing file object...');
       const fileName = `${teacher.id}_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.jpg`;
       const filePath = `selfies/${fileName}`;
       
-      const response = await fetch(selfie);
-      const blob = await response.blob();
+      // In React Native, we don't need a real Blob, we use this object structure
+      const fileBody = {
+        uri: selfie,
+        name: fileName,
+        type: 'image/jpeg',
+      };
       
-      const { error: uploadError } = await supabase.storage
+      // 2. Upload to Storage
+      console.log('Step 2: Uploading to Supabase Storage [V5]...');
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('attendance-selfies')
-        .upload(filePath, blob, { contentType: 'image/jpeg' });
+        .upload(filePath, fileBody, { 
+          contentType: 'image/jpeg',
+          upsert: true 
+        });
       
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw new Error(`Upload Failed [V5]: ${uploadError.message}`);
+      }
+      console.log('Upload successful:', uploadData);
 
+      // 3. Database Insert
+      console.log('Step 3: Inserting attendance record...');
       const now = dayjs();
       const startTimeStr = schoolSettings?.school_start_time || '09:30:00';
       const startTime = dayjs(`${now.format('YYYY-MM-DD')} ${startTimeStr}`);
       const isLate = now.isAfter(startTime);
 
-      const pos = await Location.getCurrentPositionAsync({});
-
-      const { data: record, error: dbError } = await supabase.from('attendance').insert({
+      const attendanceData = {
         teacher_id: teacher.id,
         admin_id: teacher.user_id,
+        admin_user_id: teacher.user_id,
         date: now.format('YYYY-MM-DD'),
         check_in_time: now.toISOString(),
-        check_in_lat: pos.coords.latitude,
-        check_in_lng: pos.coords.longitude,
+        check_in_lat: coords.latitude,
+        check_in_lng: coords.longitude,
         selfie_url: filePath,
         status: isLate ? 'late' : 'present',
         late_entry: isLate
-      }).select().single();
+      };
 
-      if (dbError) throw dbError;
+      const { data: record, error: dbError } = await supabase
+        .from('attendance')
+        .insert(attendanceData)
+        .select()
+        .maybeSingle();
 
-      if (isLate) {
-        await supabase.from('notifications').insert({
-          user_id: teacher.user_id,
-          type: 'late_attendance',
-          title: 'Late Attendance',
-          message: `${teacher.name} checked in late at ${now.format('hh:mm A')}.`
-        });
+      if (dbError) {
+        console.error('Database insert error:', dbError);
+        throw new Error(`Database Fail [V5]: ${dbError.message}`);
+      }
+      console.log('Attendance record created:', record);
+
+      // 4. Notification (Optional)
+      try {
+        if (isLate) {
+          await supabase.from('notifications').insert({
+            user_id: teacher.user_id,
+            type: 'late_attendance',
+            title: 'Late Attendance',
+            message: `${teacher.name} checked in late at ${now.format('hh:mm A')}.`
+          });
+        }
+      } catch (notifErr) {
+        console.warn('Notification failed but attendance was marked:', notifErr);
       }
 
       setTodayRecord(record);
       setStep('done');
       startBackgroundTracking();
-      fetchInitialData(); // Refresh history
+      fetchInitialData(); 
+      Alert.alert('Success [V5]', 'Attendance marked successfully!');
+
     } catch (err) {
-      Alert.alert('Submission Error', err.message);
+      console.error('Submission Catch-All [V5]:', err);
+      const errorMsg = err.message || 'Unknown network error';
+      setError(errorMsg);
+      Alert.alert('Submission Error [V5]', errorMsg);
     } finally {
       setActionLoading(false);
+      console.log('--- Submission Process Finished [V5] ---');
     }
   };
 
   const handleCheckOut = async () => {
     setActionLoading(true);
     try {
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      let position;
+      try {
+        position = await Promise.race([
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+        ]);
+      } catch (locErr) {
+        position = await Location.getLastKnownPositionAsync({ maxAge: 600000 });
+        if (!position) {
+          Alert.alert('GPS Error', 'Could not get location for check-out. Try moving to an open area.');
+          return;
+        }
+      }
+
       const { latitude, longitude } = position.coords;
       const dist = calculateDistance(latitude, longitude, schoolSettings.lat, schoolSettings.lng);
       const radius = schoolSettings.radius || 100;
