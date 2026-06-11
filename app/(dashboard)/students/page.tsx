@@ -77,10 +77,10 @@ const StudentsReportPDF = ({ students, schoolName, reportTitle, date, count }: a
             <Text style={[
               pdfStyles.tableCell, 
               pdfStyles.tableColStatus,
-              s.status === 'paid' ? pdfStyles.statusPaid : 
-              s.status === 'partial' ? pdfStyles.statusPartial : 
+              s.payment_status === 'paid' ? pdfStyles.statusPaid : 
+              s.payment_status === 'partial' ? pdfStyles.statusPartial : 
               pdfStyles.statusUnpaid
-            ]}>{s.status.toUpperCase()}</Text>
+            ]}>{s.payment_status ? s.payment_status.toUpperCase() : 'UNPAID'}</Text>
           </View>
         ))}
       </View>
@@ -93,58 +93,25 @@ const StudentsReportPDF = ({ students, schoolName, reportTitle, date, count }: a
   </Document>
 )
 
+import { useSession } from '@/lib/session-context'
+
 export default function StudentsPage() {
+  const { academicYear: sessionYear } = useSession()
   const [students, setStudents] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
+  const [selectedStudentStatus, setSelectedStudentStatus] = useState('')
+  const [selectedYear, setSelectedYear] = useState('')
   const [loading, setLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [schoolName, setSchoolName] = useState('School Fee Report')
 
-  // --- DEBUGGING START ---
-  useEffect(() => {
-    console.log('[DEBUG] StudentsPage MOUNTED')
-    
-    const logScrollContainers = () => {
-      const main = document.querySelector('main')
-      const body = document.body
-      const html = document.documentElement
-      
-      console.log('[DEBUG] Current Scroll State:', {
-        window: { scrollY: window.scrollY },
-        main: main ? { 
-          scrollTop: main.scrollTop, 
-          scrollHeight: main.scrollHeight, 
-          clientHeight: main.clientHeight,
-          overflow: window.getComputedStyle(main).overflowY
-        } : 'missing',
-        body: { scrollTop: body.scrollTop, overflow: window.getComputedStyle(body).overflowY },
-        html: { scrollTop: html.scrollTop, overflow: window.getComputedStyle(html).overflowY }
-      })
-    }
+  // Use session year as default if selectedYear is not manually set
+  const currentYearFilter = selectedYear || sessionYear
 
-    const handleGlobalScroll = (e: any) => {
-      const target = e.target === document ? (document.scrollingElement || document.documentElement) : e.target
-      console.log('[DEBUG] SCROLL EVENT on:', target.tagName || 'document', {
-        className: target.className,
-        scrollTop: target.scrollTop
-      })
-    }
-
-    logScrollContainers()
-    window.addEventListener('scroll', handleGlobalScroll, true)
-    
-    return () => {
-      console.log('[DEBUG] StudentsPage UNMOUNTED')
-      window.removeEventListener('scroll', handleGlobalScroll, true)
-    }
-  }, [])
-
-  useEffect(() => {
-    console.log('[DEBUG] Data Loading State Changed:', { loading, studentsCount: students.length })
-  }, [loading, students])
-  // --- DEBUGGING END ---
+  // Available academic years (we could fetch this dynamically, but for now let's list common ones)
+  const ACADEMIC_YEARS = ['2024-25', '2025-26', '2026-27']
 
   useEffect(() => {
     const supabase = createClient()
@@ -163,17 +130,22 @@ export default function StudentsPage() {
     let query = supabase.from('student_fee_summary').select('*')
 
     if (selectedClass) query = query.eq('class', selectedClass)
-    if (selectedStatus) query = query.eq('status', selectedStatus)
+    if (selectedStatus) query = query.eq('payment_status', selectedStatus)
+    if (selectedStudentStatus) query = query.eq('status', selectedStudentStatus)
+    
+    // Use the combined year filter
+    if (currentYearFilter) query = query.eq('academic_year', currentYearFilter)
+    
     if (search.trim()) {
       query = query.or(
         `name.ilike.%${search}%,mobile.ilike.%${search}%,guardian_name.ilike.%${search}%,class.ilike.%${search}%,email.ilike.%${search}%,diary_page_number.ilike.%${search}%`
       )
     }
 
-    const { data } = await query.order('name')
+    const { data } = await query.order('remaining_fee', { ascending: false }).order('name')
     setStudents(data || [])
     setLoading(false)
-  }, [search, selectedClass, selectedStatus])
+  }, [search, selectedClass, selectedStatus, selectedStudentStatus, currentYearFilter])
 
   useEffect(() => {
     fetchStudents()
@@ -219,19 +191,33 @@ export default function StudentsPage() {
     <div className="p-4 md:p-6 space-y-5">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-900">Students</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold text-zinc-900">Students</h1>
+            <span className="inline-flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs font-bold border border-emerald-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              SESSION: {currentYearFilter}
+            </span>
+          </div>
           <p className="text-sm text-zinc-500">{students.length} total students</p>
         </div>
-        <Link
-          href="/students/add"
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:block">Add Student</span>
-          <span className="sm:hidden">Add</span>
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/students/promote"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-sm font-medium px-4 py-2.5 rounded-xl transition whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Promote</span>
+          </Link>
+          <Link
+            href="/students/add"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Student</span>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
@@ -253,35 +239,56 @@ export default function StudentsPage() {
             </button>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex gap-3 flex-1">
-            <select
-              value={selectedClass}
-              onChange={e => setSelectedClass(e.target.value)}
-              className="flex-1 h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-            >
-              <option value="">All Classes</option>
-              {CLASSES.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <select
-              value={selectedStatus}
-              onChange={e => setSelectedStatus(e.target.value)}
-              className="flex-1 h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-            >
-              <option value="">All Status</option>
-              <option value="paid">Paid</option>
-              <option value="partial">Partial</option>
-              <option value="unpaid">Unpaid</option>
-            </select>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+          <select
+            value={selectedClass}
+            onChange={e => setSelectedClass(e.target.value)}
+            className="h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          >
+            <option value="">All Classes</option>
+            {CLASSES.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          
+          <select
+            value={selectedYear}
+            onChange={e => setSelectedYear(e.target.value)}
+            className="h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          >
+            <option value="">All Years</option>
+            {ACADEMIC_YEARS.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+
+          <select
+            value={selectedStudentStatus}
+            onChange={e => setSelectedStudentStatus(e.target.value)}
+            className="h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          >
+            <option value="">All Status</option>
+            <option value="active">Active Students</option>
+            <option value="inactive">Inactive</option>
+            <option value="alumni">Alumni</option>
+          </select>
+
+          <select
+            value={selectedStatus}
+            onChange={e => setSelectedStatus(e.target.value)}
+            className="h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          >
+            <option value="">Payment: All</option>
+            <option value="paid">Paid</option>
+            <option value="partial">Partial</option>
+            <option value="unpaid">Unpaid</option>
+          </select>
 
           {students.length > 0 && (
             <button
               onClick={downloadPDF}
               disabled={pdfLoading}
-              className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl h-11 px-4 transition whitespace-nowrap disabled:opacity-50"
+              className="col-span-2 sm:col-span-1 lg:col-span-2 flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl h-11 px-4 transition whitespace-nowrap disabled:opacity-50"
             >
               {pdfLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -304,11 +311,11 @@ export default function StudentsPage() {
                   <tr className="border-b border-zinc-100">
                     <th className="text-left p-4 text-zinc-500 font-medium">Name</th>
                     <th className="text-left p-4 text-zinc-500 font-medium">Class</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium">Mobile</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium">Total Fee</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium">Paid</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium">Remaining</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium">Status</th>
+                    <th className="text-left p-4 text-zinc-500 font-medium text-right">Current Fee</th>
+                    <th className="text-left p-4 text-zinc-500 font-medium text-right">Old Dues</th>
+                    <th className="text-left p-4 text-zinc-500 font-medium text-right">Paid</th>
+                    <th className="text-left p-4 text-zinc-500 font-medium text-right">Remaining</th>
+                    <th className="text-left p-4 text-zinc-500 font-medium text-center">Status</th>
                     <th className="text-left p-4 text-zinc-500 font-medium">Progress</th>
                   </tr>
                 </thead>
@@ -320,30 +327,49 @@ export default function StudentsPage() {
                       </td>
                     </tr>
                   )}
-                  {students.map(s => (
-                    <tr key={s.id} className="border-b border-zinc-50 hover:bg-zinc-50 transition">
-                      <td className="p-4">
-                        <Link href={`/students/${s.id}`} className="font-medium text-zinc-900 hover:text-violet-600">
-                          {s.name}
-                        </Link>
-                      </td>
-                      <td className="p-4 text-zinc-600 whitespace-nowrap">{s.class}</td>
-                      <td className="p-4 text-zinc-600 whitespace-nowrap">{s.mobile || '-'}</td>
-                      <td className="p-4 text-zinc-600 whitespace-nowrap">{formatCurrency(s.total_fee)}</td>
-                      <td className="p-4 text-green-600 font-medium whitespace-nowrap">{formatCurrency(s.total_paid)}</td>
-                      <td className="p-4 whitespace-nowrap">
-                        <span className={s.remaining_fee > 0 ? 'text-red-500 font-medium' : 'text-zinc-400'}>
-                          {formatCurrency(s.remaining_fee)}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <Badge variant={s.status}>{s.status}</Badge>
-                      </td>
-                      <td className="p-4 min-w-24">
-                        <Progress value={Math.round((s.total_paid / s.total_fee) * 100)} />
-                      </td>
-                    </tr>
-                  ))}
+                  {students.map(s => {
+                    const totalPayable = s.total_fee + s.previous_dues;
+                    const progress = totalPayable > 0 ? Math.round((s.total_paid / totalPayable) * 100) : 0;
+                    
+                    const getProgressColor = (val: number) => {
+                      if (val >= 100) return 'bg-emerald-500'
+                      if (val <= 0) return 'bg-rose-500'
+                      if (val < 50) return 'bg-amber-500'
+                      return 'bg-indigo-500'
+                    }
+
+                    return (
+                      <tr key={s.id} className="border-b border-zinc-50 hover:bg-zinc-50 transition">
+                        <td className="p-4">
+                          <Link href={`/students/${s.id}`} className="font-medium text-zinc-900 hover:text-violet-600">
+                            {s.name}
+                          </Link>
+                        </td>
+                        <td className="p-4 text-zinc-600 whitespace-nowrap">{s.class}</td>
+                        <td className="p-4 text-zinc-600 whitespace-nowrap text-right">{formatCurrency(s.total_fee)}</td>
+                        <td className="p-4 text-amber-600 whitespace-nowrap text-right">{formatCurrency(s.previous_dues)}</td>
+                        <td className="p-4 text-green-600 font-medium whitespace-nowrap text-right">{formatCurrency(s.total_paid)}</td>
+                        <td className="p-4 whitespace-nowrap text-right">
+                          <span className={s.remaining_fee > 0 ? 'text-red-500 font-medium' : 'text-zinc-400'}>
+                            {formatCurrency(s.remaining_fee)}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          {(() => {
+                            const status = s.remaining_fee <= 0 ? 'paid' : s.total_paid > 0 ? 'partial' : 'unpaid';
+                            return (
+                              <Badge variant={status}>
+                                {status.toUpperCase()}
+                              </Badge>
+                            );
+                          })()}
+                        </td>
+                        <td className="p-4 min-w-24">
+                          <Progress value={progress} indicatorClassName={getProgressColor(progress)} />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -361,27 +387,50 @@ export default function StudentsPage() {
               </CardContent>
             </Card>
           )}
-          {students.map(s => (
-            <Link key={s.id} href={`/students/${s.id}`}>
-              <Card className="hover:shadow-md transition">
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold text-zinc-900">{s.name}</p>
-                    <Badge variant={s.status}>{s.status}</Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-zinc-500">
-                    <span>{s.class}</span>
-                    <span>{s.mobile || '-'}</span>
-                  </div>
-                  <Progress value={Math.round((s.total_paid / s.total_fee) * 100)} />
-                  <div className="flex justify-between text-xs font-medium">
-                    <span className="text-green-600">Paid: {formatCurrency(s.total_paid)}</span>
-                    <span className="text-red-500">Due: {formatCurrency(s.remaining_fee)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+          {students.map(s => {
+            const totalPayable = s.total_fee + s.previous_dues;
+            const progress = totalPayable > 0 ? Math.round((s.total_paid / totalPayable) * 100) : 0;
+            const paymentStatus = s.remaining_fee <= 0 ? 'paid' : s.total_paid > 0 ? 'partial' : 'unpaid';
+
+            const getProgressColor = (val: number) => {
+              if (val >= 100) return 'bg-emerald-500'
+              if (val <= 0) return 'bg-rose-500'
+              if (val < 50) return 'bg-amber-500'
+              return 'bg-indigo-500'
+            }
+
+            return (
+              <Link key={s.id} href={`/students/${s.id}`}>
+                <Card className="hover:shadow-md transition">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold text-zinc-900">{s.name}</p>
+                      <Badge variant={paymentStatus}>{paymentStatus}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-zinc-500">
+                      <span>{s.class} ({s.academic_year})</span>
+                      <span>{s.mobile || '-'}</span>
+                    </div>
+                    <Progress value={progress} indicatorClassName={getProgressColor(progress)} />
+                    <div className="grid grid-cols-2 gap-2 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                      <div>
+                        Fee: <span className="text-zinc-900">{formatCurrency(s.total_fee)}</span>
+                      </div>
+                      <div className="text-right">
+                        Old: <span className="text-amber-600">{formatCurrency(s.previous_dues)}</span>
+                      </div>
+                      <div className="text-green-600">
+                        Paid: <span>{formatCurrency(s.total_paid)}</span>
+                      </div>
+                      <div className="text-red-500 text-right">
+                        Due: <span>{formatCurrency(s.remaining_fee)}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
 

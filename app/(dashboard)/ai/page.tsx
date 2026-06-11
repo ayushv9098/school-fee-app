@@ -1,77 +1,88 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, getProgressPercent } from '@/lib/calculations'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { TrendingUp, TrendingDown, Users, IndianRupee, AlertCircle, CheckCircle, BarChart3, AlertTriangle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Users, IndianRupee, AlertCircle, CheckCircle, BarChart3, AlertTriangle, Loader2 } from 'lucide-react'
 import AIChat from './ai-chat'
 import DefaulterRow from './defaulter-row'
 import CollapsibleSection from '@/components/ui/collapsible-section'
+import { useSession } from '@/lib/session-context'
 
-export default async function AIPage() {
-  const supabase = await createClient()
-  const { data: students } = await supabase.from('student_fee_summary').select('*')
-  const { data: payments } = await supabase.from('payments').select('*').order('paid_at', { ascending: false })
+export default function AIPage() {
+  const { academicYear } = useSession()
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  const { data: { user } } = await supabase.auth.getUser()
-const { data: subscription } = await supabase
-  .from('subscriptions')
-  .select('*')
-  .eq('user_id', user?.id)
-  .eq('status', 'active')
-  .gte('expires_at', new Date().toISOString())
-  .maybeSingle()
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true)
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
-const isSubscribed = !!subscription
+      const [studentsRes, paymentsRes, subscriptionRes, schoolSettingsRes, studentsWithEmailRes] = await Promise.all([
+        supabase.from('student_fee_summary').select('*').eq('academic_year', academicYear),
+        supabase.from('payments').select('*, student:students!inner(academic_year)').eq('students.academic_year', academicYear).order('paid_at', { ascending: false }),
+        supabase.from('subscriptions').select('*').eq('user_id', user?.id).eq('status', 'active').gte('expires_at', new Date().toISOString()).maybeSingle(),
+        supabase.from('school_settings').select('*').eq('user_id', user?.id).maybeSingle(),
+        supabase.from('students').select('id, name, email').eq('user_id', user?.id).eq('academic_year', academicYear)
+      ])
 
-const { data: schoolSettings } = await supabase
-  .from('school_settings')
-  .select('*')
-  .eq('user_id', user?.id)
-  .maybeSingle()
+      setData({
+        students: studentsRes.data || [],
+        payments: paymentsRes.data || [],
+        isSubscribed: !!subscriptionRes.data,
+        schoolSettings: schoolSettingsRes.data,
+        studentsWithEmail: studentsWithEmailRes.data || []
+      })
+      setLoading(false)
+    }
 
-  // ============================================
-  // ✅ NEW: FETCH EMAILS FROM STUDENTS TABLE
-  // ============================================
-  
-  const { data: studentsWithEmail } = await supabase
-    .from('students')
-    .select('id, name, email')
-    .eq('user_id', user?.id)
+    fetchData()
+  }, [academicYear])
 
-  // Create lookup map: name → email
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+      </div>
+    )
+  }
+
+  const { students, payments, isSubscribed, schoolSettings, studentsWithEmail } = data
+
   const emailMapByName = new Map(
     (studentsWithEmail || [])
-      .filter(s => s.email)
-      .map(s => [s.name?.toLowerCase()?.trim(), s.email])
+      .filter((s: any) => s.email)
+      .map((s: any) => [s.name?.toLowerCase()?.trim(), s.email])
   )
 
-  // ============================================
-
   const totalStudents = students?.length || 0
-  const totalFees = students?.reduce((a, s) => a + s.total_fee, 0) || 0
-  const totalCollected = students?.reduce((a, s) => a + s.total_paid, 0) || 0
-  const totalPending = students?.reduce((a, s) => a + s.remaining_fee, 0) || 0
+  const totalFees = students?.reduce((a: number, s: any) => a + s.total_fee, 0) || 0
+  const totalCollected = students?.reduce((a: number, s: any) => a + s.total_paid, 0) || 0
+  const totalPending = students?.reduce((a: number, s: any) => a + s.remaining_fee, 0) || 0
   const collectionRate = totalFees > 0 ? Math.round((totalCollected / totalFees) * 100) : 0
-  const paidStudents = students?.filter(s => s.status === 'paid').length || 0
-  const unpaidStudents = students?.filter(s => s.status === 'unpaid').length || 0
-  const partialStudents = students?.filter(s => s.status === 'partial').length || 0
+  const paidStudents = students?.filter((s: any) => s.remaining_fee <= 0).length || 0
+  const unpaidStudents = students?.filter((s: any) => s.total_paid === 0).length || 0
+  const partialStudents = students?.filter((s: any) => s.total_paid > 0 && s.remaining_fee > 0).length || 0
 
-  // ✅ UPDATED: Defaulters with emails
   const defaultersRaw = students
-    ?.filter(s => s.remaining_fee > 0)
-    ?.sort((a, b) => b.remaining_fee - a.remaining_fee)
+    ?.filter((s: any) => s.remaining_fee > 0)
+    ?.sort((a: any, b: any) => b.remaining_fee - a.remaining_fee)
     ?.slice(0, 5) || []
 
-  const defaulters = defaultersRaw.map(defaulter => ({
+  const defaulters = defaultersRaw.map((defaulter: any) => ({
     ...defaulter,
     email: emailMapByName.get(defaulter.name?.toLowerCase()?.trim()) || null
   }))
 
-  const classes = [...new Set(students?.map(s => s.class) || [])]
-  const classStats = classes.map(cls => {
-    const cl = students?.filter(s => s.class === cls) || []
-    const fee = cl.reduce((a, s) => a + s.total_fee, 0)
-    const paid = cl.reduce((a, s) => a + s.total_paid, 0)
+  const classes = [...new Set(students?.map((s: any) => s.class) || [])]
+  const classStats = classes.map((cls: any) => {
+    const cl = students?.filter((s: any) => s.class === cls) || []
+    const fee = cl.reduce((a: number, s: any) => a + s.total_fee, 0)
+    const paid = cl.reduce((a: number, s: any) => a + s.total_paid, 0)
     return {
       name: cls,
       count: cl.length,
@@ -81,20 +92,19 @@ const { data: schoolSettings } = await supabase
     }
   }).sort((a, b) => b.percent - a.percent)
 
-  const monthlyData: Record<string, number> = {}
-  payments?.forEach(p => {
-    const month = new Date(p.paid_at).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
-    monthlyData[month] = (monthlyData[month] || 0) + p.amount
-  })
-
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold text-zinc-900">AI Insights</h1>
-        <p className="text-sm text-zinc-500">Smart analysis of your fee collection</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-zinc-900">AI Insights</h1>
+          <p className="text-sm text-zinc-500">Smart analysis for {academicYear}</p>
+        </div>
+        <div className="inline-flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs font-bold border border-emerald-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          SESSION: {academicYear}
+        </div>
       </div>
 
-      {/* Top Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -111,7 +121,7 @@ const { data: schoolSettings } = await supabase
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-zinc-500">Total Collected</span>
-              <IndianRupee className="w-4 h-4 text-violet-500" />
+              <IndianRupee className="w-4 h-4 text-indigo-500" />
             </div>
             <p className="text-2xl font-bold text-green-600">{formatCurrency(totalCollected)}</p>
           </CardContent>
@@ -138,7 +148,6 @@ const { data: schoolSettings } = await supabase
         </Card>
       </div>
 
-      {/* Student Status */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-green-100">
           <CardContent className="p-4 flex items-center gap-4">
@@ -177,65 +186,62 @@ const { data: schoolSettings } = await supabase
         </Card>
       </div>
 
-      {/* Class wise - COLLAPSIBLE */}
-   {/* Class wise - COLLAPSIBLE */}
-<CollapsibleSection 
-  title="Class-wise Collection"
-  icon={<BarChart3 size={20} />}
-  defaultOpen={true}
->
-  <div className="space-y-4">
-    {classStats.length === 0 && (
-      <p className="text-sm text-zinc-400 text-center py-4">No data available</p>
-    )}
-    {classStats.map(cls => (
-      <div key={cls.name} className="space-y-1.5">
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-zinc-900">{cls.name}</span>
-          <span className="text-zinc-500">{cls.percent}% • {cls.count} students</span>
+      <CollapsibleSection 
+        title="Class-wise Collection"
+        icon={<BarChart3 size={20} />}
+        defaultOpen={true}
+      >
+        <div className="space-y-4">
+          {classStats.length === 0 && (
+            <p className="text-sm text-zinc-400 text-center py-4">No data available for {academicYear}</p>
+          )}
+          {classStats.map(cls => (
+            <div key={cls.name} className="space-y-1.5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-zinc-900">{cls.name}</span>
+                <span className="text-zinc-500">{cls.percent}% • {cls.count} students</span>
+              </div>
+              <Progress value={cls.percent} />
+              <div className="flex justify-between text-xs">
+                <span className="text-green-600">{formatCurrency(cls.collected)}</span>
+                <span className="text-red-500">{formatCurrency(cls.totalFee - cls.collected)}</span>
+              </div>
+            </div>
+          ))}
         </div>
-        <Progress value={cls.percent} />
-        <div className="flex justify-between text-xs">
-          <span className="text-green-600">{formatCurrency(cls.collected)}</span>
-          <span className="text-red-500">{formatCurrency(cls.totalFee - cls.collected)}</span>
-        </div>
-      </div>
-    ))}
-  </div>
-</CollapsibleSection>
+      </CollapsibleSection>
 
-      {/* Top Defaulters - COLLAPSIBLE */}
-<CollapsibleSection 
-  title="Top Defaulters"
-  icon={<AlertTriangle size={20} />}
-  defaultOpen={true}
->
-  {defaulters.length === 0 && (
-    <p className="text-sm text-zinc-400 text-center py-4">No pending fees!</p>
-  )}
-  <div className="space-y-3">
-    {defaulters.map((s, i) => (
-      <DefaulterRow key={s.id} student={s} index={i} />
-    ))}
-  </div>
-</CollapsibleSection>
+      <CollapsibleSection 
+        title="Top Defaulters"
+        icon={<AlertTriangle size={20} />}
+        defaultOpen={true}
+      >
+        {defaulters.length === 0 && (
+          <p className="text-sm text-zinc-400 text-center py-4">No pending fees!</p>
+        )}
+        <div className="space-y-3">
+          {defaulters.map((s: any, i: number) => (
+            <DefaulterRow key={s.id} student={s} index={i} />
+          ))}
+        </div>
+      </CollapsibleSection>
 
       <AIChat
-  totalStudents={totalStudents}
-  totalFees={totalFees}
-  totalCollected={totalCollected}
-  totalPending={totalPending}
-  collectionRate={collectionRate}
-  paidStudents={paidStudents}
-  unpaidStudents={unpaidStudents}
-  partialStudents={partialStudents}
-  classStats={classStats}
-  defaulters={defaulters}
-  isSubscribed={isSubscribed}
-  schoolName={schoolSettings?.school_name || 'My School'}
-  schoolAddress={schoolSettings?.address || ''}
-  schoolMobile={schoolSettings?.mobile || ''}
-/>
+        totalStudents={totalStudents}
+        totalFees={totalFees}
+        totalCollected={totalCollected}
+        totalPending={totalPending}
+        collectionRate={collectionRate}
+        paidStudents={paidStudents}
+        unpaidStudents={unpaidStudents}
+        partialStudents={partialStudents}
+        classStats={classStats}
+        defaulters={defaulters}
+        isSubscribed={isSubscribed}
+        schoolName={schoolSettings?.school_name || 'My School'}
+        schoolAddress={schoolSettings?.address || ''}
+        schoolMobile={schoolSettings?.mobile || ''}
+      />
     </div>
   )
 }

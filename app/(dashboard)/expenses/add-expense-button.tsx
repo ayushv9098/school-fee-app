@@ -7,10 +7,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, X } from 'lucide-react'
 
+import { useSession } from '@/lib/session-context'
+
 const CATEGORIES = ['Salary', 'Fuel', 'Electricity', 'Rent', 'Maintenance', 'Gas', 'Other']
 
 export default function AddExpenseButton() {
   const router = useRouter()
+  const { academicYear } = useSession()
 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -55,6 +58,7 @@ export default function AddExpenseButton() {
       amount: amt,
       category,
       date,
+      academic_year: academicYear,
       note: note.trim() || null,
     })
 

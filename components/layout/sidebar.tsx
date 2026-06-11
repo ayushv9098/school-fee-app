@@ -19,14 +19,27 @@ const navItems = [
   { href: '/profile', label: 'Profile', icon: User },
 ]
 
+import { useSession } from '@/lib/session-context'
+import { toast } from 'sonner'
+
 function SidebarContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { academicYear, setAcademicYear, availableYears } = useSession()
 
   async function handleLogout() {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
+  }
+
+  const onYearChange = (year: string) => {
+    setAcademicYear(year)
+    toast.success(`Session switched to ${year}`, {
+      description: 'The app data has been updated.',
+      duration: 3000
+    })
+    if (onClose) onClose()
   }
 
   return (
@@ -46,6 +59,19 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
             <X className="w-4 h-4 text-zinc-500" />
           </button>
         )}
+      </div>
+
+      <div className="p-4 border-b border-zinc-50">
+        <label className="text-[10px] uppercase font-bold text-zinc-400 mb-1 block px-1">Session / Year</label>
+        <select 
+          value={academicYear}
+          onChange={(e) => onYearChange(e.target.value)}
+          className="w-full h-9 bg-zinc-50 border border-zinc-200 rounded-lg px-2 text-sm font-medium text-zinc-700 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all active:scale-95"
+        >
+          {availableYears.map(year => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </select>
       </div>
 
       <nav className="flex-1 p-4 space-y-1">

@@ -9,6 +9,7 @@ import AddPaymentButton from '../[id]/add-payment-button'
 import dayjs from 'dayjs'
 import ReceiptPDF from '@/components/receipt-pdf'
 import EditStudentButton from './edit-student-button'
+import DeleteStudentButton from './delete-student-button'
 import PaidCard from './paid-card'
 
 export default async function StudentDetailPage({
@@ -37,47 +38,63 @@ export default async function StudentDetailPage({
     )
   }
 
-  const percent = getProgressPercent(student.total_fee, student.total_paid)
+  const totalPayable = (student.total_fee || 0) + (student.previous_dues || 0)
+  const percent = totalPayable > 0 ? Math.round(((student.total_paid || 0) / totalPayable) * 100) : 0
+  const paymentStatus = student.remaining_fee <= 0 ? 'paid' : student.total_paid > 0 ? 'partial' : 'unpaid'
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
+    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-5 pb-24 md:pb-6">
 
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link href="/students" className="p-2 rounded-xl hover:bg-zinc-100 transition">
-          <ArrowLeft className="w-5 h-5 text-zinc-600" />
-        </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-lg font-semibold text-zinc-900">{student.name}</h1>
-            <Badge variant={student.status}>{student.status}</Badge>
+      {/* Header & Main Actions */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/students" className="p-2 rounded-xl hover:bg-zinc-100 transition">
+            <ArrowLeft className="w-5 h-5 text-zinc-600" />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-lg font-bold text-zinc-900">{student.name}</h1>
+              <Badge variant={paymentStatus}>{paymentStatus}</Badge>
+              {student.status !== 'active' && (
+                <Badge variant="outline" className="capitalize">{student.status}</Badge>
+              )}
+            </div>
+            <p className="text-sm text-zinc-500 font-medium">{student.class} • {student.mobile || 'No mobile'}</p>
           </div>
-          <p className="text-sm text-zinc-500">{student.class} • {student.mobile || 'No mobile'}</p>
         </div>
-        <AddPaymentButton
-          studentId={student.id}
-          remainingFee={student.remaining_fee}
-          isPaid={student.status === 'paid'}
-        />
+        
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex-1 md:flex-none">
+            <AddPaymentButton
+              studentId={student.id}
+              remainingFee={student.remaining_fee}
+              isPaid={student.remaining_fee <= 0}
+            />
+          </div>
+          <EditStudentButton student={student} />
+          <DeleteStudentButton studentId={student.id} studentName={student.name} />
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-  <EditStudentButton student={student} />
-  
-</div>
 
       {/* Fee Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-5">
-            <p className="text-sm text-zinc-500 mb-1">Total Fee</p>
-            <p className="text-2xl font-bold text-zinc-900">{formatCurrency(student.total_fee)}</p>
+            <p className="text-sm text-zinc-500 mb-1">Current Fee</p>
+            <p className="text-xl font-bold text-zinc-900">{formatCurrency(student.total_fee)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <p className="text-sm text-zinc-500 mb-1">Previous Dues</p>
+            <p className="text-xl font-bold text-amber-600">{formatCurrency(student.previous_dues)}</p>
           </CardContent>
         </Card>
         <PaidCard totalPaid={student.total_paid} remainingFee={student.remaining_fee} />
         <Card>
           <CardContent className="p-5">
             <p className="text-sm text-zinc-500 mb-1">Remaining</p>
-            <p className={`text-2xl font-bold ${student.remaining_fee > 0 ? 'text-red-500' : 'text-zinc-400'}`}>
+            <p className={`text-xl font-bold ${student.remaining_fee > 0 ? 'text-red-500' : 'text-zinc-400'}`}>
               {formatCurrency(student.remaining_fee)}
             </p>
           </CardContent>
@@ -88,7 +105,7 @@ export default async function StudentDetailPage({
       <Card>
         <CardContent className="p-5 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-zinc-500">Payment Progress</span>
+            <span className="text-zinc-500">Overall Payment Progress (Total: {formatCurrency(totalPayable)})</span>
             <span className="font-medium text-zinc-900">{percent}%</span>
           </div>
           <Progress value={percent} />
@@ -128,6 +145,7 @@ export default async function StudentDetailPage({
       className={student.class}
       amountPaid={student.total_paid}
       totalFees={student.total_fee}
+      previousDues={student.previous_dues}
       remainingFees={student.remaining_fee}
       parentMobile={student.mobile}
       payments={payments || []}

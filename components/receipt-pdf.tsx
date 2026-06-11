@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import html2canvas from 'html2canvas'
 import { Download, X, FileText } from 'lucide-react'
@@ -115,6 +115,7 @@ interface Props {
   className: string
   amountPaid: number
   totalFees: number
+  previousDues?: number
   remainingFees: number
   schoolName: string
   schoolAddress?: string
@@ -127,12 +128,13 @@ interface Props {
     mode: string
   }[]
   lang?: 'en' | 'hi'
+  receiptId?: string
 }
 
-function ReceiptDocument({ studentName, fatherName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'hi' }: Props) {
+function ReceiptDocument({ studentName, fatherName, className, amountPaid, totalFees, previousDues = 0, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'hi', receiptId }: Props) {
   const t = translations[lang]
-  const receiptId = `REC-${Date.now()}`
   const date = new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+  const totalPayable = totalFees + previousDues
 
   return (
     <Document>
@@ -171,11 +173,23 @@ function ReceiptDocument({ studentName, fatherName, className, amountPaid, total
 
           <Text style={styles.sectionTitle}>{t.paymentBreakdown}</Text>
           <View style={styles.row}>
-            <Text style={styles.label}>{t.totalFee}</Text>
+            <Text style={styles.label}>{t.totalFee} (Current)</Text>
             <Text style={styles.value}>₹{totalFees.toLocaleString('en-IN')}</Text>
           </View>
           
-          {payments?.map((p) => (
+          {previousDues > 0 && (
+            <View style={styles.row}>
+              <Text style={styles.label}>{lang === 'hi' ? 'पिछला बकाया (Arrears)' : 'Previous Dues'}</Text>
+              <Text style={styles.valueRed}>₹{previousDues.toLocaleString('en-IN')}</Text>
+            </View>
+          )}
+
+          <View style={[styles.row, { backgroundColor: '#F9FAFB' }]}>
+            <Text style={[styles.label, { fontWeight: 'bold' }]}>{lang === 'hi' ? 'कुल देय (Total Payable)' : 'Total Payable'}</Text>
+            <Text style={[styles.value, { fontWeight: 'bold' }]}>₹{totalPayable.toLocaleString('en-IN')}</Text>
+          </View>
+          
+          {payments?.slice(0, 5).map((p) => (
             <View key={p.id} style={styles.row}>
               <View>
                 <Text style={{ fontSize: 11, fontWeight: 'bold', color: '#18181B' }}>{t.installmentPaid}</Text>
@@ -225,10 +239,10 @@ function ReceiptDocument({ studentName, fatherName, className, amountPaid, total
 }
 
 // Hidden receipt for image capture
-function ReceiptHTML({ studentName, fatherName, className, amountPaid, totalFees, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'hi' }: Props) {
+function ReceiptHTML({ studentName, fatherName, className, amountPaid, totalFees, previousDues = 0, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'hi', receiptId }: Props) {
   const t = translations[lang]
-  const receiptId = `REC-${Date.now()}`
   const date = new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+  const totalPayable = totalFees + previousDues
 
   return (
     <div style={{
@@ -238,7 +252,6 @@ function ReceiptHTML({ studentName, fatherName, className, amountPaid, totalFees
       fontFamily: 'system-ui, -apple-system, sans-serif',
       color: '#18181b',
     }}>
-      {/* Receipt Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
         <div>
           <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a', margin: '0 0 4px' }}>{t.receiptId}</p>
@@ -280,12 +293,24 @@ function ReceiptHTML({ studentName, fatherName, className, amountPaid, totalFees
       <div style={{ marginBottom: '24px' }}>
         <p style={{ fontSize: '11px', fontWeight: '800', color: '#7c3aed', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.paymentBreakdown}</p>
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f4f4f5' }}>
-          <span style={{ fontSize: '13px', color: '#71717a' }}>{t.totalFee}</span>
+          <span style={{ fontSize: '13px', color: '#71717a' }}>{t.totalFee} (Current)</span>
           <span style={{ fontSize: '13px', fontWeight: '700' }}>₹{totalFees.toLocaleString('en-IN')}</span>
+        </div>
+        
+        {previousDues > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f4f4f5' }}>
+            <span style={{ fontSize: '13px', color: '#71717a' }}>{lang === 'hi' ? 'पिछला बकाया' : 'Previous Dues'}</span>
+            <span style={{ fontSize: '13px', fontWeight: '700', color: '#dc2626' }}>₹{previousDues.toLocaleString('en-IN')}</span>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', backgroundColor: '#f9fafb' }}>
+          <span style={{ fontSize: '13px', fontWeight: '700' }}>{lang === 'hi' ? 'कुल देय' : 'Total Payable'}</span>
+          <span style={{ fontSize: '13px', fontWeight: '800' }}>₹{totalPayable.toLocaleString('en-IN')}</span>
         </div>
 
         {payments && payments.length > 0 ? (
-          payments.map((p) => (
+          payments.slice(0, 5).map((p) => (
             <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f4f4f5' }}>
               <div>
                 <p style={{ fontSize: '12px', fontWeight: '700', margin: 0 }}>{t.installmentPaid}</p>
@@ -308,7 +333,7 @@ function ReceiptHTML({ studentName, fatherName, className, amountPaid, totalFees
         </div>
       </div>
 
-      {/* Total Box - More compact and balanced */}
+      {/* Total Box */}
       <div style={{ 
         backgroundColor: '#f5f3ff', 
         borderRadius: '12px', 
@@ -349,8 +374,14 @@ export default function ReceiptPDF(props: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [lang, setLang] = useState<'en' | 'hi'>('hi')
   const [whatsappError, setWhatsappError] = useState<string | null>(null)
+  const [receiptId, setReceiptId] = useState<string>('')
   const receiptRef = useRef<HTMLDivElement>(null)
   const t = translations[lang]
+
+  useEffect(() => {
+    // Generate stable ID on mount to avoid hydration mismatch
+    setReceiptId(`REC-${Date.now()}`)
+  }, [])
 
   async function handlePreview() {
     setLoading(true)
@@ -459,7 +490,7 @@ export default function ReceiptPDF(props: Props) {
       window.open(fallbackURL, '_blank')
 
       // Background PDF Upload (Silent)
-      pdf(<ReceiptDocument {...props} lang={lang} />).toBlob().then(async (pdfBlob) => {
+      pdf(<ReceiptDocument {...props} lang={lang} receiptId={receiptId} />).toBlob().then(async (pdfBlob) => {
         if (pdfBlob) {
           await supabase.storage.from('receipts').upload(`${baseFileName}.pdf`, pdfBlob, { contentType: 'application/pdf', upsert: false })
         }
@@ -510,7 +541,7 @@ export default function ReceiptPDF(props: Props) {
       {/* Hidden receipt for image capture */}
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
         <div ref={receiptRef} style={{ display: 'none' }}>
-          <ReceiptHTML {...props} lang={lang} />
+          <ReceiptHTML {...props} lang={lang} receiptId={receiptId} />
         </div>
       </div>
 

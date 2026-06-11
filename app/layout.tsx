@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
 import './globals.css'
 import { Agentation } from 'agentation'
+import { SessionProvider } from '@/lib/session-context'
+import { Toaster } from 'sonner'
 
 const geist = Geist({ subsets: ['latin'] })
 
@@ -24,11 +26,21 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className={geist.className}>
-        <div className="fade-in-page">{children}</div>
+        <SessionProvider>
+          <Toaster position="top-center" expand={false} richColors />
+          <div className="fade-in-page">{children}</div>
+        </SessionProvider>
         {process.env.NODE_ENV === 'development' && <Agentation />}
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Disable mouse wheel scroll on number inputs globally
+              document.addEventListener('wheel', function(e) {
+                if (document.activeElement && document.activeElement.type === 'number') {
+                  document.activeElement.blur();
+                }
+              }, { passive: true });
+
               if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js').then(

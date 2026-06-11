@@ -1,52 +1,60 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useSession } from '@/lib/session-context'
 import ExpensesClient from './expenses-client'
+import { Loader2 } from 'lucide-react'
 
-export default async function ExpensesPage() {
-  const supabase = await createClient()
+export default function ExpensesPage() {
+  const { academicYear } = useSession()
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  // 1. Fetch Teachers
-  const { data: teachers } = await supabase
-    .from('teachers')
-    .select('*')
-    .order('name')
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true)
+      const supabase = createClient()
 
-  // 2. Fetch Teacher Payments (All for history)
-  const { data: teacherPayments } = await supabase
-    .from('teacher_payments')
-    .select('*')
-    .order('paid_at', { ascending: false })
+      const [teachers, teacherPayments, vehicles, vehicleExpenses, buildingExpenses, students] = await Promise.all([
+        supabase.from('teachers').select('*').order('name'),
+        supabase.from('teacher_payments').select('*').eq('academic_year', academicYear).order('paid_at', { ascending: false }),
+        supabase.from('vehicles').select('*').order('name'),
+        supabase.from('vehicle_expenses').select('*').eq('academic_year', academicYear).order('date', { ascending: false }),
+        supabase.from('building_expenses').select('*').eq('academic_year', academicYear).order('date', { ascending: false }),
+        supabase.from('student_fee_summary').select('*').eq('academic_year', academicYear)
+      ])
 
-  // 3. Fetch Vehicles
-  const { data: vehicles } = await supabase
-    .from('vehicles')
-    .select('*')
-    .order('name')
+      setData({
+        teachers: teachers.data || [],
+        teacherPayments: teacherPayments.data || [],
+        vehicles: vehicles.data || [],
+        vehicleExpenses: vehicleExpenses.data || [],
+        buildingExpenses: buildingExpenses.data || [],
+        students: students.data || []
+      })
+      setLoading(false)
+    }
 
-  // 4. Fetch Vehicle Expenses (All for history)
-  const { data: vehicleExpenses } = await supabase
-    .from('vehicle_expenses')
-    .select('*')
-    .order('date', { ascending: false })
+    fetchData()
+  }, [academicYear])
 
-  // 5. Fetch Building Expenses (All for history)
-  const { data: buildingExpenses } = await supabase
-    .from('building_expenses')
-    .select('*')
-    .order('date', { ascending: false })
-
-  // 6. Fetch Students (for Net Profit calculation)
-  const { data: students } = await supabase
-    .from('student_fee_summary')
-    .select('*')
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+      </div>
+    )
+  }
 
   return (
     <ExpensesClient
-      initialTeachers={teachers || []}
-      initialTeacherPayments={teacherPayments || []}
-      initialVehicles={vehicles || []}
-      initialVehicleExpenses={vehicleExpenses || []}
-      initialBuildingExpenses={buildingExpenses || []}
-      students={students || []}
+      initialTeachers={data.teachers}
+      initialTeacherPayments={data.teacherPayments}
+      initialVehicles={data.vehicles}
+      initialVehicleExpenses={data.vehicleExpenses}
+      initialBuildingExpenses={data.buildingExpenses}
+      students={data.students}
     />
   )
 }

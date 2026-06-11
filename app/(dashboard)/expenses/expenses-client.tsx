@@ -14,6 +14,8 @@ import {
   Pencil, Trash2, History, ChevronDown, ChevronUp
 } from 'lucide-react'
 
+import { useSession } from '@/lib/session-context'
+
 interface Teacher {
   id: string
   name: string
@@ -75,6 +77,7 @@ export default function ExpensesClient({
   students: Student[]
 }) {
   const router = useRouter()
+  const { academicYear } = useSession()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -160,6 +163,7 @@ export default function ExpensesClient({
       month: month,
       year: year,
       paid_at: modalData.date,
+      academic_year: academicYear,
       note: modalData.note
     })
     if (error) {
@@ -229,6 +233,7 @@ export default function ExpensesClient({
       expense_type: modalData.expenseType,
       amount: Number(modalData.amount),
       date: modalData.date,
+      academic_year: academicYear,
       note: modalData.note
     })
     if (error) {
@@ -258,6 +263,7 @@ export default function ExpensesClient({
       category: modalData.category,
       amount: Number(modalData.amount),
       date: modalData.date,
+      academic_year: academicYear,
       note: modalData.note
     })
     if (error) {

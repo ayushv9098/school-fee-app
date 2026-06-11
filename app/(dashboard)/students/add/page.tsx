@@ -11,8 +11,11 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { ContactPicker } from '@/components/contact-picker'
 
+import { useSession } from '@/lib/session-context'
+
 export default function AddStudentPage() {
   const router = useRouter()
+  const { academicYear: sessionYear } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -24,7 +27,8 @@ export default function AddStudentPage() {
     guardian_name: '',
     address: '',
     total_fee: '',
-    academic_year: '2025-26',
+    previous_dues: '0',
+    academic_year: sessionYear || '2025-26',
     diary_page_number: '',
     is_free: false,
   })
@@ -70,6 +74,7 @@ export default function AddStudentPage() {
       guardian_name: form.guardian_name.trim(),
       address: form.address.trim(),
       total_fee: form.is_free ? 0 : Number(form.total_fee),
+      previous_dues: Number(form.previous_dues) || 0,
       academic_year: form.academic_year,
       diary_page_number: form.diary_page_number.trim(),
       user_id: user?.id,
@@ -199,37 +204,50 @@ export default function AddStudentPage() {
                 />
               </div>
 
-              {/* Total Fee + Academic Year */}
-              <div className="space-y-1.5">
-  <Label htmlFor="total_fee">Total Fee *</Label>
-  <div className="space-y-2">
-    <div className="flex items-center gap-2">
-      <input
-        type="checkbox"
-        id="is_free"
-        checked={form.is_free}
-        onChange={e => setForm(prev => ({ 
-          ...prev, 
-          is_free: e.target.checked,
-          total_fee: e.target.checked ? '0' : prev.total_fee
-        }))}
-        className="w-4 h-4 accent-violet-600"
-      />
-      <label htmlFor="is_free" className="text-sm text-zinc-600">Free (no fees)</label>
-    </div>
-    <input
-      id="total_fee"
-      name="total_fee"
-      type="number"
-      placeholder="Total fee amount"
-      value={form.total_fee}
-      onChange={handleChange}
-      disabled={form.is_free}
-      onWheel={e => e.currentTarget.blur()}
-      className="flex h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
-    />
-  </div>
-</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="total_fee">Total Fee (Current Year) *</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="is_free"
+                        checked={form.is_free}
+                        onChange={e => setForm(prev => ({ 
+                          ...prev, 
+                          is_free: e.target.checked,
+                          total_fee: e.target.checked ? '0' : prev.total_fee
+                        }))}
+                        className="w-4 h-4 accent-violet-600"
+                      />
+                      <label htmlFor="is_free" className="text-sm text-zinc-600">Free (no fees)</label>
+                    </div>
+                    <Input
+                      id="total_fee"
+                      name="total_fee"
+                      type="number"
+                      placeholder="Total fee amount"
+                      value={form.total_fee}
+                      onChange={handleChange}
+                      disabled={form.is_free}
+                      className="h-11"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="previous_dues">Previous Dues (Arrears)</Label>
+                  <Input
+                    id="previous_dues"
+                    name="previous_dues"
+                    type="number"
+                    placeholder="Old balance (if any)"
+                    value={form.previous_dues}
+                    onChange={handleChange}
+                    className="h-11 mt-[26px]"
+                  />
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">

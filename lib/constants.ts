@@ -3,6 +3,8 @@ export const CLASSES = [
     'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
     'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'
   ]
+
+  export const ACADEMIC_YEARS = ['2024-25', '2025-26', '2026-27', '2027-28']
   
   export const PAYMENT_MODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque']
   

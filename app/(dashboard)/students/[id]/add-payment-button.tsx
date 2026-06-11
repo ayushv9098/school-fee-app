@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, X } from 'lucide-react'
 
+import { useSession } from '@/lib/session-context'
+
 interface Props {
   studentId: string
   remainingFee: number
@@ -21,6 +23,7 @@ export default function AddPaymentButton({
   isPaid,
 }: Props) {
   const router = useRouter()
+  const { academicYear } = useSession()
 
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -54,10 +57,16 @@ export default function AddPaymentButton({
     }
 
     setLoading(true)
-
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    const { error } = await supabase.from('payments').insert({
+    if (!user) {
+      setError('Session expired — please login again')
+      setLoading(false)
+      return
+    }
+
+    const { error: insertError } = await supabase.from('payments').insert({
       student_id: studentId,
       amount: amt,
       mode,
@@ -67,11 +76,12 @@ export default function AddPaymentButton({
       fee_for: feeFor,
       receipt_number: receiptNumber.trim() || null,
       payment_date: paymentDate,
+      academic_year: academicYear, 
     })
 
-    if (error) {
-      console.error(error)
-      setError('Something went wrong — please try again')
+    if (insertError) {
+      console.error(insertError)
+      setError(`Error: ${insertError.message || 'Saving failed'}`)
       setLoading(false)
       return
     }

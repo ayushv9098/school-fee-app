@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Pencil, X } from 'lucide-react'
 import { ContactPicker } from '@/components/contact-picker'
+import { toast } from 'sonner'
 
 interface Props {
   student: {
@@ -19,6 +20,8 @@ interface Props {
     guardian_name: string
     address: string
     total_fee: number
+    previous_dues: number
+    status: string
     academic_year: string
     diary_page_number: string
   }
@@ -37,6 +40,8 @@ export default function EditStudentButton({ student }: Props) {
     guardian_name: student.guardian_name || '',
     address: student.address || '',
     total_fee: String(student.total_fee || ''),
+    previous_dues: String(student.previous_dues || '0'),
+    status: student.status || 'active',
     academic_year: student.academic_year || '',
     diary_page_number: student.diary_page_number || '',
   })
@@ -54,7 +59,7 @@ export default function EditStudentButton({ student }: Props) {
     setLoading(true)
     const supabase = createClient()
 
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from('students')
       .update({
         name: form.name.trim(),
@@ -64,17 +69,24 @@ export default function EditStudentButton({ student }: Props) {
         guardian_name: form.guardian_name.trim(),
         address: form.address.trim(),
         total_fee: Number(form.total_fee) || 0,
+        previous_dues: Number(form.previous_dues) || 0,
+        status: form.status,
         academic_year: form.academic_year.trim(),
         diary_page_number: form.diary_page_number.trim(),
       })
       .eq('id', student.id)
 
-    if (error) {
-      setError('Kuch galat hua — dobara try karo')
+    if (updateError) {
+      console.error('Update Student Error:', updateError)
+      setError(`Database Error: ${updateError.message}`)
+      toast.error('Student update nahi ho paaya', {
+        description: updateError.message
+      })
       setLoading(false)
       return
     }
 
+    toast.success('Student data update ho gaya!')
     setOpen(false)
     setLoading(false)
     router.refresh()
@@ -177,7 +189,7 @@ export default function EditStudentButton({ student }: Props) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label>Total Fee</Label>
+                  <Label>Total Fee (Current Year)</Label>
                   <Input
                     name="total_fee"
                     type="number"
@@ -188,6 +200,20 @@ export default function EditStudentButton({ student }: Props) {
                   />
                 </div>
                 <div className="space-y-1.5">
+                  <Label>Previous Dues (Arrears)</Label>
+                  <Input
+                    name="previous_dues"
+                    type="number"
+                    placeholder="Previous balance"
+                    value={form.previous_dues}
+                    onChange={handleChange}
+                    className="h-11 text-amber-600 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
                   <Label>Academic Year</Label>
                   <Input
                     name="academic_year"
@@ -196,6 +222,19 @@ export default function EditStudentButton({ student }: Props) {
                     onChange={handleChange}
                     className="h-11"
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Student Status</Label>
+                  <select
+                    name="status"
+                    value={form.status}
+                    onChange={handleChange}
+                    className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="alumni">Alumni / Pass-out</option>
+                  </select>
                 </div>
               </div>
 
