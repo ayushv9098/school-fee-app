@@ -16,7 +16,20 @@ function TeacherOnboardingBridge() {
   
   // Custom deep link for the app
   const appSetupLink = `teacherapae://signup?email=${encodeURIComponent(emailParam)}&teacher_id=${teacherId}`
-  const apkDownloadUrl = '/apps/teacher-portal.apk' // Update this with your real APK path
+  const apkDownloadUrl = 'https://expo.dev/accounts/ayushv9098/projects/teacher-mobile-app/builds/e6d5fdd0-4d92-4cc7-bf01-765f46f41f69'
+
+  function handleOpenApp(e: React.MouseEvent) {
+    // Smart Fallback Logic
+    // If the app is NOT installed, teacherapae:// link won't do anything.
+    // We set a timer to see if the user is still on this page after 2 seconds.
+    const start = Date.now();
+    setTimeout(() => {
+      if (Date.now() - start < 3000) {
+        // User is still here! Likely app not installed.
+        alert('App not detected. Please make sure you have downloaded and installed the Teacher App (Step 1) before clicking this button. ✅');
+      }
+    }, 2000);
+  }
 
   return (
     <div className="space-y-6">
@@ -41,6 +54,8 @@ function TeacherOnboardingBridge() {
              </div>
              <a 
                href={apkDownloadUrl}
+               target="_blank"
+               rel="noopener noreferrer"
                className="inline-flex items-center gap-2 bg-zinc-900 text-white px-6 py-3 rounded-2xl text-sm font-bold hover:bg-black transition-all shadow-lg active:scale-95"
              >
                <Download size={18} />
@@ -57,6 +72,7 @@ function TeacherOnboardingBridge() {
              </div>
              <a 
                href={appSetupLink}
+               onClick={handleOpenApp}
                className="inline-flex items-center gap-2 bg-violet-600 text-white px-6 py-3 rounded-2xl text-sm font-bold hover:bg-violet-700 transition-all shadow-lg shadow-violet-100 active:scale-95"
              >
                <Plus size={18} />
