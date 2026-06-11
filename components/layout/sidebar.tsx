@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { LayoutDashboard, Users, CreditCard, BookOpen, LogOut, GraduationCap, X, Menu, User, Bot, HelpCircle, Wallet } from 'lucide-react'

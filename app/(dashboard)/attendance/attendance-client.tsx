@@ -295,17 +295,20 @@ export default function AttendanceClient({
         throw new Error(inviteData.error || 'Failed to send invitation email')
       }
       
-      alert('Teacher added and invitation sent successfully! ✅')
+      const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
+      const webLink = `${origin}/teacher-signup?email=${encodeURIComponent(newTeacher.email)}&teacher_id=${teacher.id}`
+      const appLink = `teacherapae://signup?email=${encodeURIComponent(newTeacher.email)}&teacher_id=${teacher.id}`
+      
+      const proceed = confirm(`Teacher added! ✅\n\nInvitation Email Status: ${inviteRes.ok ? 'Sent' : 'Failed'}\n\nDo you want to copy the WhatsApp Invite Message now?`)
+      
+      if (proceed) {
+        const message = `Welcome to Ayushman Academy!\n\nPlease join our Teacher Portal using this link:\n\n📱 App (Recommended): ${appLink}\n\n🌐 Web: ${webLink}`
+        await navigator.clipboard.writeText(message)
+        alert('WhatsApp Invite Message copied to clipboard! 📋')
+      }
     } catch (err: any) {
       console.error('Failed to send invite email:', err)
-      const origin = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')
-      const manualLink = `${origin}/teacher-signup?email=${encodeURIComponent(newTeacher.email)}&teacher_id=${teacher.id}`
-      
-      const proceed = confirm(`Teacher added, but email failed.\n\nDo you want to copy the invite link manually?`)
-      if (proceed) {
-        await navigator.clipboard.writeText(manualLink)
-        alert('Invite link copied! 📋')
-      }
+      alert('Teacher added, but invite email failed.')
     }
 
     setShowAddModal(false)

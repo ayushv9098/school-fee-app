@@ -6,6 +6,8 @@ import { User, ArrowLeft, Bell } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import FloatingAIButton from '@/components/floating-ai-button'
 import NotificationsDropdown from '@/components/layout/notifications'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function DashboardLayout({
   children,
@@ -61,7 +63,7 @@ function Header() {
               <ArrowLeft className="w-4 h-4 text-zinc-600" />
             </Link>
           )}
-          <p className="text-sm font-semibold text-zinc-900">Ayushman Educational Academy</p>
+          <p className="text-sm font-semibold text-zinc-900">Ayushman Academy</p>
         </div>
         <div className="flex items-center gap-4">
           <NotificationsDropdown />

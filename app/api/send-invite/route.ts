@@ -19,25 +19,43 @@ export async function POST(req: Request) {
     const origin = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : new URL(req.url).origin)
     
     const inviteLink = `${origin}/teacher-signup?email=${encodeURIComponent(to)}&teacher_id=${teacherId}`
+    const appInviteLink = `teacherapae://signup?email=${encodeURIComponent(to)}&teacher_id=${teacherId}`
     
     console.log(`📧 Attempting to send invite to ${to}. Link: ${inviteLink}`)
 
     try {
       const { data, error } = await resend.emails.send({
-        from: 'School Fee Manager <onboarding@resend.dev>',
+        from: 'Ayushman Academy <onboarding@resend.dev>',
         to,
-        subject: 'Invitation to Join School Attendance System',
+        subject: 'Join Ayushman Educational Academy - Teacher Portal',
         html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-            <h2 style="color: #7c3aed;">Welcome, ${teacherName}!</h2>
-            <p>You have been invited by <strong>${adminEmail}</strong> to join the <strong>Ayushman Educational Academy</strong> as a teacher.</p>
-            <p>Please click the button below to create your account and start marking your attendance.</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${inviteLink}" style="background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Create Account</a>
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 24px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <div style="display: inline-block; background-color: #7c3aed; padding: 15px; border-radius: 16px;">
+                <img src="https://img.icons8.com/ios-filled/50/ffffff/graduation-cap.png" width="30" height="30" alt="logo" />
+              </div>
             </div>
-            <p style="color: #64748b; font-size: 14px;">If the button doesn't work, copy and paste this link: ${inviteLink}</p>
-            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-            <p style="color: #94a3b8; font-size: 12px;">© 2026 Ayushman Educational Academy. Fee Management System.</p>
+            
+            <h2 style="color: #18181b; text-align: center; margin-top: 0;">Welcome, ${teacherName}!</h2>
+            <p style="color: #52525b; line-height: 1.6; text-align: center;">You have been invited to join the <strong>Ayushman Educational Academy</strong> as a teacher.</p>
+            
+            <div style="background-color: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 16px; padding: 20px; margin: 25px 0;">
+              <h3 style="color: #7c3aed; margin-top: 0; font-size: 16px;">How to set up your account:</h3>
+              <ol style="color: #52525b; padding-left: 20px; margin-bottom: 0;">
+                <li>Download the official Android App.</li>
+                <li>Click the <strong>"Open in App"</strong> button below.</li>
+                <li>Set your password and start marking attendance!</li>
+              </ol>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${appInviteLink}" style="display: block; background-color: #7c3aed; color: white; padding: 14px 24px; text-decoration: none; border-radius: 12px; font-weight: bold; margin-bottom: 12px;">Open in App (Recommended)</a>
+              <a href="${inviteLink}" style="display: block; color: #7c3aed; font-size: 14px; text-decoration: underline;">Or use Web Portal instead</a>
+            </div>
+
+            <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 40px;">
+              © 2026 Ayushman Educational Academy. All rights reserved.
+            </p>
           </div>
         `,
       })

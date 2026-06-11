@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
 );
 
 -- 15. Student Fee Summary (View)
-CREATE OR REPLACE VIEW public.student_fee_summary AS
+CREATE OR REPLACE VIEW public.student_fee_summary WITH (security_invoker = true) AS
 SELECT 
     s.id,
     s.user_id,
@@ -245,7 +245,22 @@ ALTER TABLE public.staff_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leaves ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+
 -- student_fee_summary inherits RLS from students and payments tables.
 
+-- RLS Policies
 
--- (Policies would follow here, keeping current ones as they are relevant)
+CREATE POLICY "Users can only access their own students" ON public.students FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only access their own payments" ON public.payments FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only access their own expenses" ON public.expenses FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only access their own teachers or if they are the teacher" ON public.teachers FOR ALL USING (auth.uid() = user_id OR auth.uid() = auth_user_id);
+CREATE POLICY "Users can only access their own teacher payments" ON public.teacher_payments FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only access their own vehicles" ON public.vehicles FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only access their own vehicle expenses" ON public.vehicle_expenses FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only access their own building expenses" ON public.building_expenses FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only access their own attendance records" ON public.attendance FOR ALL USING (auth.uid() = admin_id OR auth.uid() = admin_user_id OR auth.uid() IN (SELECT auth_user_id FROM public.teachers WHERE id = teacher_id));
+CREATE POLICY "Users can only access their own staff movements" ON public.staff_movements FOR ALL USING (auth.uid() IN (SELECT admin_id FROM public.attendance WHERE id = attendance_id) OR auth.uid() IN (SELECT admin_user_id FROM public.attendance WHERE id = attendance_id) OR auth.uid() IN (SELECT auth_user_id FROM public.teachers WHERE id = teacher_id));
+CREATE POLICY "Users can only access their own school settings" ON public.school_settings FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only access their own leaves" ON public.leaves FOR ALL USING (auth.uid() = admin_id OR auth.uid() IN (SELECT auth_user_id FROM public.teachers WHERE id = teacher_id));
+CREATE POLICY "Users can only access their own notifications" ON public.notifications FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only access their own subscriptions" ON public.subscriptions FOR ALL USING (auth.uid() = user_id);

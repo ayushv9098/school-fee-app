@@ -16,28 +16,40 @@ export default function DashboardPage() {
   const { academicYear } = useSession()
   const [students, setStudents] = useState<any[]>([])
   const [expenses, setExpenses] = useState<any[]>([])
+  const [schoolName, setSchoolName] = useState('Ayushman Educational Academy')
   const [hidden, setHidden] = useState(true)
 
   useEffect(() => {
-    const supabase = createClient()
-    
-    // Fetch students for the selected academic year
-    supabase.from('student_fee_summary')
-      .select('*')
-      .eq('academic_year', academicYear)
-      .then(({ data }) => {
-        setStudents(data || [])
-      })
+    const fetchDashboardData = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
-    // Fetch all types of expenses
-    const fetchExpenses = async () => {
-      // For expenses, we might want to filter by date range of the academic year
-      // but for now let's keep all or add a year filter if available in those tables.
+      // Fetch School Name
+      if (user) {
+        const { data: settings } = await supabase
+          .from('school_settings')
+          .select('school_name')
+          .eq('user_id', user.id)
+          .maybeSingle()
+        if (settings?.school_name) {
+          setSchoolName(settings.school_name)
+        }
+      }
+
+      // Fetch students for the selected academic year
+      const { data: studentsData } = await supabase
+        .from('student_fee_summary')
+        .select('*')
+        .eq('academic_year', academicYear)
+      
+      setStudents(studentsData || [])
+
+      // Fetch all types of expenses
       const [legacy, teachers, vehicles, building] = await Promise.all([
         supabase.from('expenses').select('amount'),
-        supabase.from('teacher_payments').select('amount'),
-        supabase.from('vehicle_expenses').select('amount'),
-        supabase.from('building_expenses').select('amount')
+        supabase.from('teacher_payments').select('amount').eq('academic_year', academicYear),
+        supabase.from('vehicle_expenses').select('amount').eq('academic_year', academicYear),
+        supabase.from('building_expenses').select('amount').eq('academic_year', academicYear)
       ])
 
       const allExpenses = [
@@ -49,7 +61,7 @@ export default function DashboardPage() {
       setExpenses(allExpenses)
     }
 
-    fetchExpenses()
+    fetchDashboardData()
   }, [academicYear])
 
   const totalStudents = students.length
@@ -91,12 +103,12 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
             Dashboard 
-            <span className="inline-flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs font-bold border border-emerald-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              SESSION: {academicYear}
+            <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px] font-bold border border-emerald-100 uppercase tracking-wider">
+              <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+              {academicYear}
             </span>
           </h1>
-          <p className="text-sm text-zinc-500">Ayushman Educational Academy</p>
+          <p className="text-sm text-zinc-500">{schoolName}</p>
         </div>
         <button
           onClick={() => setHidden(!hidden)}

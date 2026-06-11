@@ -195,9 +195,9 @@ export default function StudentsPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold text-zinc-900">Students</h1>
-            <span className="inline-flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg text-xs font-bold border border-emerald-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              SESSION: {currentYearFilter}
+            <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px] font-bold border border-emerald-100 uppercase tracking-wider">
+              <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+              {currentYearFilter}
             </span>
           </div>
           <p className="text-sm text-zinc-500">{students.length} total students</p>

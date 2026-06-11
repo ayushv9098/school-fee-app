@@ -2,6 +2,7 @@
   "expo": {
     "name": "teacher-mobile-app",
     "slug": "teacher-mobile-app",
+    "scheme": "teacherapae",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
