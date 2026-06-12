@@ -4,6 +4,7 @@ import './globals.css'
 import { Agentation } from 'agentation'
 import { SessionProvider } from '@/lib/session-context'
 import { Toaster } from 'sonner'
+import Script from 'next/script'
 
 const geist = Geist({ subsets: ['latin'] })
 
@@ -31,7 +32,9 @@ export default function RootLayout({
           <div className="fade-in-page">{children}</div>
         </SessionProvider>
         {process.env.NODE_ENV === 'development' && <Agentation />}
-        <script
+        <Script
+          id="global-logic"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               // Disable mouse wheel scroll on number inputs globally

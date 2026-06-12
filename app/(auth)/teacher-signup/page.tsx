@@ -16,7 +16,7 @@ function TeacherOnboardingBridge() {
   
   // Custom deep link for the app
   const appSetupLink = `teacherapae://signup?email=${encodeURIComponent(emailParam)}&teacher_id=${teacherId}`
-  const apkDownloadUrl = 'https://expo.dev/accounts/ayushv9098/projects/teacher-mobile-app/builds/e6d5fdd0-4d92-4cc7-bf01-765f46f41f69'
+  const apkDownloadUrl = 'https://expo.dev/accounts/ayushv9098/projects/teacher-mobile-app/builds/2f2645de-6593-4b23-837d-d6c1c6bd4057'
 
   function handleOpenApp(e: React.MouseEvent) {
     // Smart Fallback Logic

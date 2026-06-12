@@ -11,6 +11,7 @@ import { ArrowLeft, Check, Users, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/calculations'
 import { useSession } from '@/lib/session-context'
+import { cn } from '@/lib/utils'
 
 // Helper function to calculate next year (e.g. "2025-26" -> "2026-27")
 function getNextAcademicYear(currentYear: string) {
@@ -68,7 +69,7 @@ export default function PromoteStudentsPage() {
       .eq('academic_year', sessionYear) // ONLY fetch from current session
       .order('name')
     
-    setStudents(data || [])
+    setStudents((data || []).map(s => ({ ...s, selected: true })))
     setFetching(false)
   }, [fromClass, sessionYear])
 
@@ -80,17 +81,36 @@ export default function PromoteStudentsPage() {
     setStudents(prev => prev.map(s => s.id === studentId ? { ...s, nextFee: fee } : s))
   }
 
-  function applyBulkFee() {
-    if (!bulkFee) return
-    setStudents(prev => prev.map(s => ({ ...s, nextFee: bulkFee })))
+  function toggleStudent(studentId: string) {
+    setStudents(prev => prev.map(s => s.id === studentId ? { ...s, selected: !s.selected } : s))
   }
 
+  function toggleAll() {
+    const allSelected = students.every(s => s.selected)
+    setStudents(prev => prev.map(s => ({ ...s, selected: !allSelected })))
+  }
+
+  function applyBulkFee() {
+    if (!bulkFee) return
+    setStudents(prev => prev.map(s => s.selected ? { ...s, nextFee: bulkFee } : s))
+  }
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        router.push('/students')
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [success, router])
+
   async function handlePromote() {
+    const selectedStudents = students.filter(s => s.selected)
     if (!toClass) return setError('Class select karein jaha bhejna hai')
     if (!nextYear) return setError('Naya session year likhein')
-    if (students.length === 0) return setError('Promote karne ke liye bache nahi hain')
+    if (selectedStudents.length === 0) return setError('Promote karne ke liye bache select karein')
 
-    const confirm = window.confirm(`Kya aap pakka in ${students.length} bacho ko ${toClass} (${nextYear}) me bhejna chahte hain?`)
+    const confirm = window.confirm(`Kya aap pakka in ${selectedStudents.length} bacho ko ${toClass} (${nextYear}) me bhejna chahte hain?`)
     if (!confirm) return
 
     setLoading(true)
@@ -98,7 +118,7 @@ export default function PromoteStudentsPage() {
     const supabase = createClient()
 
     try {
-      for (const student of students) {
+      for (const student of selectedStudents) {
         const nFee = Number(student.nextFee || 0)
 
         // 1. Check if the student is already promoted/exists in the target year
@@ -140,10 +160,6 @@ export default function PromoteStudentsPage() {
       }
 
       setSuccess(true)
-      setTimeout(() => {
-        router.push('/students')
-        router.refresh()
-      }, 2000)
     } catch (err: any) {
       console.error(err)
       setError(err.message || 'Kuch galat hua, dobara try karein.')
@@ -166,7 +182,7 @@ export default function PromoteStudentsPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 pb-24 md:pb-8">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 pb-32 md:pb-12">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link href="/students" className="p-2 rounded-xl hover:bg-zinc-100 transition">
@@ -232,19 +248,19 @@ export default function PromoteStudentsPage() {
 
       {fromClass && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="text-base font-semibold text-zinc-900 flex items-center gap-2">
               <Users className="w-5 h-5 text-violet-600" />
               {fromClass} ke Bache ({students.length})
             </h2>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Input 
-                    placeholder="Naye Saal Ki Fees" 
+                    placeholder="Sabki Fees" 
                     type="number" 
                     value={bulkFee}
                     onChange={e => setBulkFee(e.target.value)}
-                    className="h-10 w-32"
+                    className="h-10 flex-1 sm:w-32 sm:flex-none"
                 />
                 <button 
                     onClick={applyBulkFee}
@@ -255,54 +271,138 @@ export default function PromoteStudentsPage() {
             </div>
           </div>
 
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-100 bg-zinc-50">
-                    <th className="text-left p-4 text-zinc-500 font-medium whitespace-nowrap">Bache ka Naam</th>
-                    <th className="text-right p-4 text-zinc-500 font-medium whitespace-nowrap">Pichla Baki</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium w-40 whitespace-nowrap">Naye Saal Ki Fees</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fetching ? (
-                    <tr>
-                        <td colSpan={3} className="p-8 text-center">
-                            <Loader2 className="w-6 h-6 animate-spin mx-auto text-violet-600" />
-                        </td>
+          {/* Desktop View Table */}
+          <div className="hidden md:block">
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-zinc-100 bg-zinc-50">
+                      <th className="p-4 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          checked={students.length > 0 && students.every(s => s.selected)}
+                          onChange={toggleAll}
+                          className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                        />
+                      </th>
+                      <th className="text-left p-4 text-zinc-500 font-medium whitespace-nowrap">Bache ka Naam</th>
+                      <th className="text-right p-4 text-zinc-500 font-medium whitespace-nowrap">Pichla Baki</th>
+                      <th className="text-left p-4 text-zinc-500 font-medium w-40 whitespace-nowrap">Naye Saal Ki Fees</th>
                     </tr>
-                  ) : students.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="p-8 text-center text-zinc-400">
-                        Is class me {sessionYear} session ke koi bache nahi mile
-                      </td>
-                    </tr>
-                  ) : (
-                    students.map(s => (
-                      <tr key={s.id} className="border-b border-zinc-50">
-                        <td className="p-4 font-medium text-zinc-900 whitespace-nowrap">{s.name}</td>
-                        <td className="p-4 text-right whitespace-nowrap">
-                          <span className={s.remaining_fee > 0 ? 'text-red-500 font-medium' : 'text-zinc-400'}>
-                            {formatCurrency(s.remaining_fee)}
-                          </span>
-                        </td>
-                        <td className="p-4 min-w-32">
-                          <Input
-                            type="number"
-                            placeholder="Fees likhein"
-                            value={s.nextFee || ''}
-                            onChange={e => handleFeeChange(s.id, e.target.value)}
-                            className="h-9"
-                          />
+                  </thead>
+                  <tbody>
+                    {fetching ? (
+                      <tr>
+                          <td colSpan={4} className="p-8 text-center">
+                              <Loader2 className="w-6 h-6 animate-spin mx-auto text-violet-600" />
+                          </td>
+                      </tr>
+                    ) : students.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-zinc-400">
+                          Is class me {sessionYear} session ke koi bache nahi mile
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      students.map(s => (
+                        <tr key={s.id} className={cn("border-b border-zinc-50 transition-colors", !s.selected && "opacity-60 bg-zinc-50/50")}>
+                          <td className="p-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={s.selected}
+                              onChange={() => toggleStudent(s.id)}
+                              className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                            />
+                          </td>
+                          <td className="p-4 font-medium text-zinc-900 whitespace-nowrap">{s.name}</td>
+                          <td className="p-4 text-right whitespace-nowrap">
+                            <span className={s.remaining_fee > 0 ? 'text-red-500 font-medium' : 'text-zinc-400'}>
+                              {formatCurrency(s.remaining_fee)}
+                            </span>
+                          </td>
+                          <td className="p-4 min-w-32">
+                            <Input
+                              type="number"
+                              placeholder="Fees likhein"
+                              value={s.nextFee || ''}
+                              onChange={e => handleFeeChange(s.id, e.target.value)}
+                              disabled={!s.selected}
+                              className="h-9"
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+
+          {/* Mobile View Cards */}
+          <div className="md:hidden space-y-3">
+            <div className="flex items-center gap-2 px-1 pb-1">
+              <input
+                type="checkbox"
+                id="select-all-mobile"
+                checked={students.length > 0 && students.every(s => s.selected)}
+                onChange={toggleAll}
+                className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+              />
+              <label htmlFor="select-all-mobile" className="text-xs font-semibold text-zinc-500 uppercase tracking-wider cursor-pointer">
+                Sabko Select Karein
+              </label>
             </div>
-          </Card>
+
+            {fetching ? (
+              <div className="p-12 flex justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-violet-600" />
+              </div>
+            ) : students.length === 0 ? (
+              <p className="p-8 text-center text-zinc-400 text-sm bg-white rounded-2xl border border-zinc-100">
+                Bache nahi mile.
+              </p>
+            ) : (
+              students.map(s => (
+                <Card key={s.id} className={cn("overflow-hidden border-zinc-200 transition-all", !s.selected && "opacity-60 border-zinc-100 bg-zinc-50/30")}>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex gap-3 items-start">
+                        <div className="pt-0.5">
+                          <input
+                            type="checkbox"
+                            checked={s.selected}
+                            onChange={() => toggleStudent(s.id)}
+                            className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                          />
+                        </div>
+                        <p className="font-semibold text-zinc-900 leading-tight">{s.name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] uppercase font-bold text-zinc-400">Pichla Baki</p>
+                        <p className={cn("text-xs font-bold", s.remaining_fee > 0 ? "text-red-500" : "text-zinc-400")}>
+                          {formatCurrency(s.remaining_fee)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-2 border-t border-zinc-50">
+                      <Label className="text-[10px] uppercase font-bold text-zinc-500 mb-1.5 block">Naye Saal Ki Fees</Label>
+                      <Input
+                        type="number"
+                        placeholder="Fees likhein"
+                        value={s.nextFee || ''}
+                        onChange={e => handleFeeChange(s.id, e.target.value)}
+                        disabled={!s.selected}
+                        className="h-10 bg-zinc-50/50 border-zinc-200 focus:bg-white transition-all disabled:opacity-50"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
 
           {error && (
             <p className="text-sm text-red-500 bg-red-50 px-4 py-3 rounded-xl">

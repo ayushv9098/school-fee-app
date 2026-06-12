@@ -16,10 +16,11 @@ interface Props {
   partialStudents: number
   classStats: any[]
   defaulters: any[]
+  students: any[]
   isSubscribed: boolean
   schoolName: string
-schoolAddress: string
-schoolMobile: string
+  schoolAddress: string
+  schoolMobile: string
 }
 
 interface Message {
@@ -31,7 +32,7 @@ export default function AIChat(props: Props) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Namaste! Main aapka software expert aur consultant hoon. Main aapki fee collection badhane aur software use karne mein help kar sakta hoon. Poochiye, main kaise help karu?`
+      content: `Namaste! Main aapka school assistant hoon. Main aapki fee collection track karne aur students ki detail batane mein help kar sakta hoon. Poochiye, kis student ki detail chahiye?`
     }
   ])
   const [input, setInput] = useState('')
@@ -46,16 +47,10 @@ export default function AIChat(props: Props) {
 
   const context = `
     School: ${props.schoolName || 'Ayushman Educational Academy'}
-    Total Students: ${props.totalStudents}
-    Total Fees: ₹${props.totalFees}
-    Total Collected: ₹${props.totalCollected}
-    Total Pending: ₹${props.totalPending}
-    Collection Rate: ${props.collectionRate}%
-    Fully Paid Students: ${props.paidStudents}
-    Partial Payment Students: ${props.partialStudents}
-    Unpaid Students: ${props.unpaidStudents}
-    Class Stats: ${JSON.stringify(props.classStats)}
-    Top Defaulters: ${JSON.stringify(props.defaulters)}
+    Stats: Students:${props.totalStudents}, Total:₹${props.totalFees}, Collected:₹${props.totalCollected}, Pending:₹${props.totalPending}, Rate:${props.collectionRate}%
+    
+    Student List (Name|Class|Total|Paid|Due):
+    ${props.students.map(s => `${s.name}|${s.class}|${s.total_fee}|${s.total_paid}|${s.remaining_fee}`).join('\n')}
   `
 
   async function handleSend() {
@@ -63,7 +58,8 @@ export default function AIChat(props: Props) {
     const userMessage = input.trim()
     setInput('')
     setShowQuickQuestions(false)
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    const newMessages: Message[] = [...messages, { role: 'user', content: userMessage }]
+    setMessages(newMessages)
     setLoading(true)
     
     try {
@@ -71,7 +67,7 @@ export default function AIChat(props: Props) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          message: userMessage, 
+          messages: newMessages, 
           context,
           schoolName: props.schoolName,
           schoolAddress: props.schoolAddress,
@@ -83,10 +79,10 @@ export default function AIChat(props: Props) {
         role: 'assistant',
         content: data.reply || 'Sorry, I could not process your request.'
       }])
-    } catch (err) {
+    } catch (err: any) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Sorry, AI service is not available right now. Please check your connection.'
+        content: `Error: ${err.message || 'AI service is not available right now. Please check your connection.'}`
       }])
     }
     setLoading(false)

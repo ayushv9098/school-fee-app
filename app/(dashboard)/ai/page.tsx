@@ -237,6 +237,7 @@ export default function AIPage() {
         partialStudents={partialStudents}
         classStats={classStats}
         defaulters={defaulters}
+        students={students}
         isSubscribed={isSubscribed}
         schoolName={schoolSettings?.school_name || 'My School'}
         schoolAddress={schoolSettings?.address || ''}
