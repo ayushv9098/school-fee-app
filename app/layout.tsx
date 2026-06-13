@@ -9,9 +9,30 @@ import Script from 'next/script'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Ayushman Educational Academy',
-  description: 'Fee Management System',
+  title: {
+    default: 'Ayushman Educational Academy | Smart School Management',
+    template: '%s | Ayushman Educational Academy'
+  },
+  description: 'Welcome to Ayushman Educational Academy. Comprehensive Fee Management and Student Attendance System. Manage school fees, track students, and simplify administration.',
+  keywords: [
+    'Ayushman Educational Academy', 
+    'Ayushman Education', 
+    'Ayushman Academy',
+    'Ayushman Educatiolna Academy', 
+    'School Management', 
+    'Fee Management System', 
+    'Student Attendance', 
+    'School ERP'
+  ],
+  authors: [{ name: 'Ayushman Educational Academy' }],
   manifest: '/manifest.json',
+  openGraph: {
+    title: 'Ayushman Educational Academy',
+    description: 'Smart Fee Management and Student Attendance System for modern schools.',
+    type: 'website',
+    locale: 'en_IN',
+    siteName: 'Ayushman Educational Academy',
+  },
 }
 
 export default function RootLayout({

@@ -8,7 +8,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { User, Mail, LogOut, School, Download, Save, Pencil, MapPin, Map as MapIcon, Navigation, AlertTriangle } from 'lucide-react'
 import ImportStudents from './import-students'
+import dynamic from 'next/dynamic'
 import { ContactPicker } from '@/components/contact-picker'
+
+const LiveMap = dynamic(() => import('@/components/live-map'), { 
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-zinc-100 animate-pulse flex items-center justify-center text-xs text-zinc-400">Initializing Map...</div>
+})
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -381,37 +387,18 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {school.lat && (
+          {school.lat && school.lng && (
             <div className="space-y-2">
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-tight flex items-center gap-1.5">
                 <MapIcon className="w-3 h-3 text-violet-600" />
-                Map Preview
+                Live School Map & Teacher Tracking
               </p>
-              <div className="h-32 w-full bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 relative group">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  frameBorder="0"
-                  style={{ border: 0 }}
-                  src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}&q=${school.lat},${school.lng}&zoom=18`}
-                  allowFullScreen
-                ></iframe>
-                {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-zinc-100/60 backdrop-blur-[1px]">
-                    <div className="text-center p-2">
-                      <a 
-                        href={`https://www.google.com/maps/search/?api=1&query=${school.lat},${school.lng}`} 
-                        target="_blank" 
-                        className="px-3 py-1.5 bg-white border border-zinc-200 rounded-lg text-[10px] font-bold text-violet-600 hover:bg-violet-50 transition shadow-sm inline-block"
-                      >
-                        <div className="flex items-center gap-1.5">
-                          <MapIcon className="w-3 h-3" />
-                          View on Google Maps
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-                )}
+              <div className="h-80 w-full bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 relative group shadow-inner">
+                <LiveMap 
+                  schoolLat={school.lat} 
+                  schoolLng={school.lng} 
+                  radius={school.radius} 
+                />
               </div>
             </div>
           )}
