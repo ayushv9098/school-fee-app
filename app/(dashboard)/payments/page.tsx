@@ -15,17 +15,21 @@ export default function PaymentsPage() {
     async function fetchData() {
       setLoading(true)
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
       const [paymentsRes, studentsRes] = await Promise.all([
         supabase
           .from('payments')
-          .select('*, students!inner(name, class, total_fee, academic_year)')
+          .select('*, students!inner(name, class, total_fee, academic_year, user_id)')
           .eq('students.academic_year', academicYear)
+          .eq('students.user_id', user?.id)
           .order('paid_at', { ascending: false }),
         supabase
           .from('student_fee_summary')
           .select('*')
           .eq('academic_year', academicYear)
+          .eq('status', 'active')
+          .eq('user_id', user?.id)
       ])
 
       setData({
@@ -50,8 +54,8 @@ export default function PaymentsPage() {
     <div className="space-y-6">
       <div className="px-4 pt-6 md:px-6 flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-900">Payments</h1>
-          <p className="text-sm text-zinc-500">Transaction history for {academicYear}</p>
+          <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Payments</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Transaction history for {academicYear}</p>
         </div>
         <div className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px] font-bold border border-emerald-100 uppercase tracking-wider">
           <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />

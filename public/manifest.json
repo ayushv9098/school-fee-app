@@ -1,17 +1,24 @@
 {
-  "name": "Ayushman Educational Academy",
+  "name": "Ayushman Educational Academy - Fee Management System",
   "short_name": "AEA Portal",
-  "description": "School Management & Teacher Attendance Portal",
+  "description": "Smart School Fee Management & Student Attendance System for Ayushman Educational Academy, Semli Bari. Track fees, manage students, and simplify administration.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#7c3aed",
+  "categories": ["education", "productivity"],
+  "lang": "en-IN",
   "icons": [
     {
       "src": "/icon.svg",
-      "sizes": "192x192 512x512",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }

@@ -1,5 +1,4 @@
 import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export default async function middleware(request: NextRequest) {
@@ -36,7 +35,7 @@ export default async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   const pathname = request.nextUrl.pathname
-  const isPublicPage = pathname === '/login' || pathname === '/teacher-signup'
+  const isPublicPage = pathname === '/' || pathname === '/login' || pathname === '/teacher-signup' || pathname === '/teacher-login' || pathname === '/sitemap.xml' || pathname === '/robots.txt'
 
   if (!user && !isPublicPage) {
     if (!pathname.startsWith('/api')) {
@@ -45,17 +44,20 @@ export default async function middleware(request: NextRequest) {
   }
 
   if (user) {
-    // Use an Admin client to bypass RLS for role checking in middleware
-    // This is safer and more reliable for routing logic
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey!)
-    
-    const { data: teacher } = await supabaseAdmin
-      .from('teachers')
-      .select('role')
-      .eq('auth_user_id', user.id)
-      .maybeSingle()
-
-    const isTeacher = teacher?.role === 'teacher'
+    // Use native fetch to bypass RLS with Service Key without breaking Edge runtime in Turbopack
+    let isTeacher = false;
+    try {
+      const res = await fetch(`${supabaseUrl}/rest/v1/teachers?select=role&auth_user_id=eq.${user.id}`, {
+        headers: {
+          'apikey': supabaseServiceKey!,
+          'Authorization': `Bearer ${supabaseServiceKey!}`
+        }
+      });
+      const data = await res.json();
+      isTeacher = data?.[0]?.role === 'teacher';
+    } catch (err) {
+      console.error('Error fetching teacher role in middleware:', err);
+    }
 
     if (isPublicPage) {
       return NextResponse.redirect(new URL(isTeacher ? '/teacher/attendance' : '/dashboard', request.url))
@@ -80,5 +82,5 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|json)$).*)'],
 }

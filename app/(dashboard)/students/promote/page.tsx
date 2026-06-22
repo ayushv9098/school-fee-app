@@ -61,12 +61,14 @@ export default function PromoteStudentsPage() {
     }
     setFetching(true)
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     const { data } = await supabase
       .from('student_fee_summary')
       .select('*')
       .eq('class', fromClass)
       .eq('status', 'active')
       .eq('academic_year', sessionYear) // ONLY fetch from current session
+      .eq('user_id', user?.id)
       .order('name')
     
     setStudents((data || []).map(s => ({ ...s, selected: true })))
@@ -174,8 +176,8 @@ export default function PromoteStudentsPage() {
         <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
           <Check className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-bold text-zinc-900">Promotion Successful!</h1>
-        <p className="text-zinc-500">Bache safaltapurvak {toClass} ({nextYear}) me bhej diye gaye hain.</p>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Promotion Successful!</h1>
+        <p className="text-zinc-500 dark:text-zinc-400">Bache safaltapurvak {toClass} ({nextYear}) me bhej diye gaye hain.</p>
         <p className="text-sm text-zinc-400">Wapas list me jaa rahe hain...</p>
       </div>
     )
@@ -185,12 +187,12 @@ export default function PromoteStudentsPage() {
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 pb-32 md:pb-12">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/students" className="p-2 rounded-xl hover:bg-zinc-100 transition">
-          <ArrowLeft className="w-5 h-5 text-zinc-600" />
+        <Link href="/students" className="p-2 rounded-xl hover:bg-zinc-100 dark:bg-zinc-800 transition">
+          <ArrowLeft className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">Agli Class Me Bhejein (Promote)</h1>
-          <p className="text-sm text-zinc-500">Bacho ko nayi class aur naye session me transfer karein</p>
+          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Agli Class Me Bhejein (Promote)</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Bacho ko nayi class aur naye session me transfer karein</p>
         </div>
       </div>
 
@@ -202,7 +204,7 @@ export default function PromoteStudentsPage() {
               <select
                 value={fromClass}
                 onChange={e => setFromClass(e.target.value)}
-                className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
               >
                 <option value="">Select Class</option>
                 {CLASSES.map(c => (
@@ -220,7 +222,7 @@ export default function PromoteStudentsPage() {
               <select
                 value={toClass}
                 onChange={e => setToClass(e.target.value)}
-                className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
               >
                 <option value="">Select Class</option>
                 {CLASSES.map(c => (
@@ -234,7 +236,7 @@ export default function PromoteStudentsPage() {
               <select
                 value={nextYear}
                 onChange={e => setNextYear(e.target.value)}
-                className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
               >
                 <option value="">Select Year</option>
                 {ACADEMIC_YEARS.map(y => (
@@ -249,7 +251,7 @@ export default function PromoteStudentsPage() {
       {fromClass && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-base font-semibold text-zinc-900 flex items-center gap-2">
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Users className="w-5 h-5 text-violet-600" />
               {fromClass} ke Bache ({students.length})
             </h2>
@@ -277,18 +279,18 @@ export default function PromoteStudentsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-zinc-100 bg-zinc-50">
+                    <tr className="border-b border-zinc-100 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-950">
                       <th className="p-4 w-10 text-center">
                         <input
                           type="checkbox"
                           checked={students.length > 0 && students.every(s => s.selected)}
                           onChange={toggleAll}
-                          className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-500 cursor-pointer"
                         />
                       </th>
-                      <th className="text-left p-4 text-zinc-500 font-medium whitespace-nowrap">Bache ka Naam</th>
-                      <th className="text-right p-4 text-zinc-500 font-medium whitespace-nowrap">Pichla Baki</th>
-                      <th className="text-left p-4 text-zinc-500 font-medium w-40 whitespace-nowrap">Naye Saal Ki Fees</th>
+                      <th className="text-left p-4 text-zinc-500 dark:text-zinc-400 font-medium whitespace-nowrap">Bache ka Naam</th>
+                      <th className="text-right p-4 text-zinc-500 dark:text-zinc-400 font-medium whitespace-nowrap">Pichla Baki</th>
+                      <th className="text-left p-4 text-zinc-500 dark:text-zinc-400 font-medium w-40 whitespace-nowrap">Naye Saal Ki Fees</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -306,16 +308,16 @@ export default function PromoteStudentsPage() {
                       </tr>
                     ) : (
                       students.map(s => (
-                        <tr key={s.id} className={cn("border-b border-zinc-50 transition-colors", !s.selected && "opacity-60 bg-zinc-50/50")}>
+                        <tr key={s.id} className={cn("border-b border-zinc-50 transition-colors", !s.selected && "opacity-60 bg-zinc-50 dark:bg-zinc-950/50")}>
                           <td className="p-4 text-center">
                             <input
                               type="checkbox"
                               checked={s.selected}
                               onChange={() => toggleStudent(s.id)}
-                              className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                              className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-500 cursor-pointer"
                             />
                           </td>
-                          <td className="p-4 font-medium text-zinc-900 whitespace-nowrap">{s.name}</td>
+                          <td className="p-4 font-medium text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{s.name}</td>
                           <td className="p-4 text-right whitespace-nowrap">
                             <span className={s.remaining_fee > 0 ? 'text-red-500 font-medium' : 'text-zinc-400'}>
                               {formatCurrency(s.remaining_fee)}
@@ -348,9 +350,9 @@ export default function PromoteStudentsPage() {
                 id="select-all-mobile"
                 checked={students.length > 0 && students.every(s => s.selected)}
                 onChange={toggleAll}
-                className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-500 cursor-pointer"
               />
-              <label htmlFor="select-all-mobile" className="text-xs font-semibold text-zinc-500 uppercase tracking-wider cursor-pointer">
+              <label htmlFor="select-all-mobile" className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider cursor-pointer">
                 Sabko Select Karein
               </label>
             </div>
@@ -360,12 +362,12 @@ export default function PromoteStudentsPage() {
                 <Loader2 className="w-6 h-6 animate-spin text-violet-600" />
               </div>
             ) : students.length === 0 ? (
-              <p className="p-8 text-center text-zinc-400 text-sm bg-white rounded-2xl border border-zinc-100">
+              <p className="p-8 text-center text-zinc-400 text-sm bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800/50">
                 Bache nahi mile.
               </p>
             ) : (
               students.map(s => (
-                <Card key={s.id} className={cn("overflow-hidden border-zinc-200 transition-all", !s.selected && "opacity-60 border-zinc-100 bg-zinc-50/30")}>
+                <Card key={s.id} className={cn("overflow-hidden border-zinc-200 dark:border-zinc-800 transition-all", !s.selected && "opacity-60 border-zinc-100 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-950/30")}>
                   <CardContent className="p-4 space-y-3">
                     <div className="flex justify-between items-start gap-3">
                       <div className="flex gap-3 items-start">
@@ -374,10 +376,10 @@ export default function PromoteStudentsPage() {
                             type="checkbox"
                             checked={s.selected}
                             onChange={() => toggleStudent(s.id)}
-                            className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
+                            className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 text-violet-600 focus:ring-violet-500 cursor-pointer"
                           />
                         </div>
-                        <p className="font-semibold text-zinc-900 leading-tight">{s.name}</p>
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">{s.name}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-[10px] uppercase font-bold text-zinc-400">Pichla Baki</p>
@@ -388,14 +390,14 @@ export default function PromoteStudentsPage() {
                     </div>
                     
                     <div className="pt-2 border-t border-zinc-50">
-                      <Label className="text-[10px] uppercase font-bold text-zinc-500 mb-1.5 block">Naye Saal Ki Fees</Label>
+                      <Label className="text-[10px] uppercase font-bold text-zinc-500 dark:text-zinc-400 mb-1.5 block">Naye Saal Ki Fees</Label>
                       <Input
                         type="number"
                         placeholder="Fees likhein"
                         value={s.nextFee || ''}
                         onChange={e => handleFeeChange(s.id, e.target.value)}
                         disabled={!s.selected}
-                        className="h-10 bg-zinc-50/50 border-zinc-200 focus:bg-white transition-all disabled:opacity-50"
+                        className="h-10 bg-zinc-50 dark:bg-zinc-950/50 border-zinc-200 dark:border-zinc-800 focus:bg-white dark:bg-zinc-900 transition-all disabled:opacity-50"
                       />
                     </div>
                   </CardContent>
@@ -413,7 +415,7 @@ export default function PromoteStudentsPage() {
           <div className="flex justify-end gap-3 pt-4">
             <Link
               href="/students"
-              className="h-12 px-6 flex items-center justify-center rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
+              className="h-12 px-6 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-950 transition"
             >
               Wapas Jao
             </Link>

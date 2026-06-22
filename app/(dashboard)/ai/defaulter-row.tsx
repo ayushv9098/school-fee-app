@@ -130,7 +130,7 @@ export default function DefaulterRow({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-zinc-50 rounded-xl hover:bg-zinc-100 transition-colors duration-200 gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl hover:bg-zinc-100 dark:bg-zinc-800 transition-colors duration-200 gap-3">
         
         {/* Left Side */}
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -139,10 +139,10 @@ export default function DefaulterRow({
           </div>
           
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-zinc-900 truncate">
+            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
               {student.name}
             </p>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Class {student.class}
             </p>
           </div>
@@ -164,7 +164,7 @@ export default function DefaulterRow({
               disabled={sending}
               className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-medium transition-all border ${
                 parentEmail 
-                  ? 'border-violet-200 bg-white text-violet-700 hover:bg-violet-50 hover:border-violet-400 shadow-sm' 
+                  ? 'border-violet-200 bg-white dark:bg-zinc-900 text-violet-700 hover:bg-violet-50 hover:border-violet-400 shadow-sm' 
                   : 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100'
               } ${sending ? 'opacity-50 cursor-not-allowed' : ''}`}
               title={sending ? 'Sending...' : parentEmail ? 'Send email reminder' : 'No email'}
@@ -181,7 +181,7 @@ export default function DefaulterRow({
               className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-medium transition-all border ${
                 copied 
                   ? 'border-green-300 bg-green-50 text-green-700' 
-                  : 'border-violet-200 bg-white text-violet-700 hover:bg-violet-50 hover:border-violet-400 shadow-sm'
+                  : 'border-violet-200 bg-white dark:bg-zinc-900 text-violet-700 hover:bg-violet-50 hover:border-violet-400 shadow-sm'
               }`}
               title={
                 copied 

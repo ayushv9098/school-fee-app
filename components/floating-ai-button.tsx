@@ -92,7 +92,7 @@ useEffect(() => {
 
       {/* Chat Modal */}
       {open && isSubscribed && (
-        <div className="fixed bottom-20 md:bottom-24 right-4 md:right-6 z-50 w-[calc(100vw-32px)] sm:w-80 bg-white rounded-2xl shadow-2xl border border-zinc-200 flex flex-col overflow-hidden"
+        <div className="fixed bottom-20 md:bottom-24 right-4 md:right-6 z-50 w-[calc(100vw-32px)] sm:w-80 bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col overflow-hidden"
           style={{ height: '420px', maxHeight: 'calc(100vh - 120px)' }}>
 
           {/* Header */}
@@ -122,11 +122,11 @@ useEffect(() => {
             {messages.map((msg, i) => (
               <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  msg.role === 'assistant' ? 'bg-violet-100' : 'bg-zinc-100'
+                  msg.role === 'assistant' ? 'bg-violet-100' : 'bg-zinc-100 dark:bg-zinc-800'
                 }`}>
                   {msg.role === 'assistant'
                     ? <Bot className="w-3 h-3 text-violet-600" />
-                    : <User className="w-3 h-3 text-zinc-600" />
+                    : <User className="w-3 h-3 text-zinc-600 dark:text-zinc-400" />
                   }
                 </div>
                 <div
@@ -159,13 +159,13 @@ useEffect(() => {
           </div>
 
           {/* Input */}
-          <div className="p-3 border-t border-zinc-100 flex gap-2">
+          <div className="p-3 border-t border-zinc-100 dark:border-zinc-800/50 flex gap-2">
             <input
               placeholder="Ask something..."
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
-              className="flex-1 h-9 px-3 rounded-lg border border-zinc-200 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="flex-1 h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
             <button
               onClick={handleSend}

@@ -56,15 +56,15 @@ export default function DeleteStudentButton({ studentId, studentName }: Props) {
 
       {open && (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="p-6 text-center space-y-4">
               <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
                 <AlertTriangle className="w-6 h-6" />
               </div>
               
               <div className="space-y-1">
-                <h2 className="text-lg font-bold text-zinc-900">Confirm Delete?</h2>
-                <p className="text-sm text-zinc-500">
+                <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Confirm Delete?</h2>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   Kya aap pakka <b>{studentName}</b> ko delete karna chahte hain? Inke saare payments aur records hamesha ke liye mit jayenge.
                 </p>
               </div>
@@ -84,7 +84,7 @@ export default function DeleteStudentButton({ studentId, studentName }: Props) {
                 <button
                   onClick={() => setOpen(false)}
                   disabled={loading}
-                  className="h-11 w-full bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl text-sm font-medium transition disabled:opacity-50"
+                  className="h-11 w-full bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300 rounded-xl text-sm font-medium transition disabled:opacity-50"
                 >
                   Nahi, Wapas Jao
                 </button>

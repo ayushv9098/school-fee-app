@@ -94,8 +94,8 @@ export default function SubscribeButton() {
         <Zap className="w-6 h-6 text-violet-600" />
       </div>
       <div>
-        <p className="font-semibold text-zinc-900">Unlock the AI Assistant.</p>
-        <p className="text-sm text-zinc-500 mt-1">Unlimited AI chat for just ₹29 per month.</p>
+        <p className="font-semibold text-zinc-900 dark:text-zinc-100">Unlock the AI Assistant.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Unlimited AI chat for just ₹29 per month.</p>
       </div>
       <button
         onClick={handleSubscribe}

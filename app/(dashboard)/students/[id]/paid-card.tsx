@@ -14,7 +14,7 @@ export default function PaidCard({ totalPaid, remainingFee }: Props) {
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm text-zinc-500 mb-1">Paid</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">Paid</p>
             <p className="text-2xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
           </div>
           {remainingFee > 0 && (

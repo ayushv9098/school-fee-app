@@ -32,7 +32,7 @@ export default function AIChat(props: Props) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Namaste! Main aapka school assistant hoon. Main aapki fee collection track karne aur students ki detail batane mein help kar sakta hoon. Poochiye, kis student ki detail chahiye?`
+      content: `Namaste! Main aapka smart assistant hoon. Aap kisi bhi student ki detail, fees, ya is website ke features ke baare mein pooch sakte hain.`
     }
   ])
   const [input, setInput] = useState('')
@@ -49,8 +49,8 @@ export default function AIChat(props: Props) {
     School: ${props.schoolName || 'Ayushman Educational Academy'}
     Stats: Students:${props.totalStudents}, Total:₹${props.totalFees}, Collected:₹${props.totalCollected}, Pending:₹${props.totalPending}, Rate:${props.collectionRate}%
     
-    Student List (Name|Class|Total|Paid|Due):
-    ${props.students.map(s => `${s.name}|${s.class}|${s.total_fee}|${s.total_paid}|${s.remaining_fee}`).join('\n')}
+    Student List (Name|Class|Total|Paid|Due|Mobile|Guardian):
+    ${props.students.map(s => `${s.name}|${s.class}|${s.total_fee}|${s.total_paid}|${s.remaining_fee}|${s.mobile || 'N/A'}|${s.guardian_name || 'N/A'}`).join('\n')}
   `
 
   async function handleSend() {
@@ -119,11 +119,11 @@ export default function AIChat(props: Props) {
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
               <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                msg.role === 'assistant' ? 'bg-violet-100' : 'bg-zinc-100'
+                msg.role === 'assistant' ? 'bg-violet-100' : 'bg-zinc-100 dark:bg-zinc-800'
               }`}>
                 {msg.role === 'assistant'
                   ? <Bot className="w-4 h-4 text-violet-600" />
-                  : <User className="w-4 h-4 text-zinc-600" />
+                  : <User className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
                 }
               </div>
               <div className={`max-w-xs px-3 py-2 rounded-xl text-sm ${
@@ -165,8 +165,8 @@ export default function AIChat(props: Props) {
         {showQuickQuestions && (
           <div className="flex flex-wrap gap-2">
             {[
+              'Software ke kya kya features hain?',
               'Add payment kaise karein?',
-              'Pending fee recovery strategies kya hain?',
               'Staff salary manage kaise karein?',
               'Defaulters list check karni hai.',
             ].map(q => (
@@ -187,7 +187,7 @@ export default function AIChat(props: Props) {
         {/* Input */}
         <div className="flex gap-2">
           <Input
-            placeholder="Ask about your fee data..."
+            placeholder="Ask about students, fees or features..."
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}

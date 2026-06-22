@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { CLASSES } from '@/lib/constants'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Plus, Search, X, FileDown } from 'lucide-react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
@@ -96,6 +97,7 @@ const StudentsReportPDF = ({ students, schoolName, reportTitle, date, count }: a
 import { useSession } from '@/lib/session-context'
 
 export default function StudentsPage() {
+  const router = useRouter()
   const { academicYear: sessionYear } = useSession()
   const [students, setStudents] = useState<any[]>([])
   const [search, setSearch] = useState('')
@@ -127,7 +129,9 @@ export default function StudentsPage() {
   const fetchStudents = useCallback(async () => {
     setLoading(true)
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     let query = supabase.from('student_fee_summary').select('*')
+    if (user) query = query.eq('user_id', user.id)
 
     if (selectedClass) query = query.eq('class', selectedClass)
     if (selectedStatus) query = query.eq('payment_status', selectedStatus)
@@ -194,18 +198,18 @@ export default function StudentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold text-zinc-900">Students</h1>
+            <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Students</h1>
             <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px] font-bold border border-emerald-100 uppercase tracking-wider">
               <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
               {currentYearFilter}
             </span>
           </div>
-          <p className="text-sm text-zinc-500">{students.length} total students</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">{students.length} total students</p>
         </div>
         <div className="flex gap-2">
           <Link
             href="/students/promote"
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-sm font-medium px-4 py-2.5 rounded-xl transition whitespace-nowrap"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 text-sm font-medium px-4 py-2.5 rounded-xl transition whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             <span>Promote</span>
@@ -228,12 +232,12 @@ export default function StudentsPage() {
             placeholder="Search by name, mobile, class, diary number.."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full h-11 pl-9 pr-10 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-full h-11 pl-9 pr-10 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-400"
             >
               <X className="w-4 h-4" />
             </button>
@@ -243,7 +247,7 @@ export default function StudentsPage() {
           <select
             value={selectedClass}
             onChange={e => setSelectedClass(e.target.value)}
-            className="h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="h-11 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
             <option value="">All Classes</option>
             {CLASSES.map(c => (
@@ -254,7 +258,7 @@ export default function StudentsPage() {
           <select
             value={selectedYear}
             onChange={e => setSelectedYear(e.target.value)}
-            className="h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="h-11 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
             <option value="">All Years</option>
             {ACADEMIC_YEARS.map(y => (
@@ -265,7 +269,7 @@ export default function StudentsPage() {
           <select
             value={selectedStudentStatus}
             onChange={e => setSelectedStudentStatus(e.target.value)}
-            className="h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="h-11 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
             <option value="">All Status</option>
             <option value="active">Active Students</option>
@@ -276,7 +280,7 @@ export default function StudentsPage() {
           <select
             value={selectedStatus}
             onChange={e => setSelectedStatus(e.target.value)}
-            className="h-11 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="h-11 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
             <option value="">Payment: All</option>
             <option value="paid">Paid</option>
@@ -308,15 +312,15 @@ export default function StudentsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100">
-                    <th className="text-left p-4 text-zinc-500 font-medium">Name</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium">Class</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium text-right">Current Fee</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium text-right">Old Dues</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium text-right">Paid</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium text-right">Remaining</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium text-center">Status</th>
-                    <th className="text-left p-4 text-zinc-500 font-medium">Progress</th>
+                  <tr className="border-b border-zinc-100 dark:border-zinc-800/50">
+                    <th className="text-left p-4 text-zinc-500 dark:text-zinc-400 font-medium">Name</th>
+                    <th className="text-left p-4 text-zinc-500 dark:text-zinc-400 font-medium">Class</th>
+                    <th className="text-left p-4 text-zinc-500 dark:text-zinc-400 font-medium text-right">Current Fee</th>
+                    <th className="text-left p-4 text-zinc-500 dark:text-zinc-400 font-medium text-right">Old Dues</th>
+                    <th className="text-left p-4 text-zinc-500 dark:text-zinc-400 font-medium text-right">Paid</th>
+                    <th className="text-left p-4 text-zinc-500 dark:text-zinc-400 font-medium text-right">Remaining</th>
+                    <th className="text-left p-4 text-zinc-500 dark:text-zinc-400 font-medium text-center">Status</th>
+                    <th className="text-left p-4 text-zinc-500 dark:text-zinc-400 font-medium">Progress</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -339,14 +343,18 @@ export default function StudentsPage() {
                     }
 
                     return (
-                      <tr key={s.id} className="border-b border-zinc-50 hover:bg-zinc-50 transition">
+                      <tr 
+                        key={s.id} 
+                        onClick={() => router.push(`/students/${s.id}`)}
+                        className="border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition cursor-pointer"
+                      >
                         <td className="p-4">
-                          <Link href={`/students/${s.id}`} className="font-medium text-zinc-900 hover:text-violet-600">
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100 hover:text-violet-600">
                             {s.name}
-                          </Link>
+                          </span>
                         </td>
-                        <td className="p-4 text-zinc-600 whitespace-nowrap">{s.class}</td>
-                        <td className="p-4 text-zinc-600 whitespace-nowrap text-right">{formatCurrency(s.total_fee)}</td>
+                        <td className="p-4 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">{s.class}</td>
+                        <td className="p-4 text-zinc-600 dark:text-zinc-400 whitespace-nowrap text-right">{formatCurrency(s.total_fee)}</td>
                         <td className="p-4 text-amber-600 whitespace-nowrap text-right">{formatCurrency(s.previous_dues)}</td>
                         <td className="p-4 text-green-600 font-medium whitespace-nowrap text-right">{formatCurrency(s.total_paid)}</td>
                         <td className="p-4 whitespace-nowrap text-right">
@@ -404,17 +412,17 @@ export default function StudentsPage() {
                 <Card className="hover:shadow-md transition">
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-zinc-900">{s.name}</p>
+                      <p className="font-semibold text-zinc-900 dark:text-zinc-100">{s.name}</p>
                       <Badge variant={paymentStatus}>{paymentStatus}</Badge>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-zinc-500">
+                    <div className="flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-400">
                       <span>{s.class} ({s.academic_year})</span>
                       <span>{s.mobile || '-'}</span>
                     </div>
                     <Progress value={progress} indicatorClassName={getProgressColor(progress)} />
-                    <div className="grid grid-cols-2 gap-2 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                    <div className="grid grid-cols-2 gap-2 text-[10px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                       <div>
-                        Fee: <span className="text-zinc-900">{formatCurrency(s.total_fee)}</span>
+                        Fee: <span className="text-zinc-900 dark:text-zinc-100">{formatCurrency(s.total_fee)}</span>
                       </div>
                       <div className="text-right">
                         Old: <span className="text-amber-600">{formatCurrency(s.previous_dues)}</span>

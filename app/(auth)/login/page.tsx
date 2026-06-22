@@ -95,7 +95,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
 
         {/* School Header */}
@@ -103,12 +103,12 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 bg-violet-600 rounded-2xl mb-4">
             <GraduationCap className="text-white w-7 h-7" />
           </div>
-          <h1 className="text-xl font-semibold text-zinc-900">Ayushman Educational Academy</h1>
-          <p className="text-sm text-zinc-500 mt-1">Fee Management System</p>
+          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Ayushman Educational Academy</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Fee Management System</p>
         </div>
 
         {/* Card */}
-        <Card className="border-zinc-200 shadow-sm rounded-2xl">
+        <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">
               {isLogin ? 'Welcome Back' : 'Create Account'}

@@ -64,9 +64,9 @@ export default function NotificationsDropdown() {
     <div className="relative">
       <button 
         onClick={() => setOpen(!open)}
-        className="w-9 h-9 rounded-full bg-zinc-100 flex items-center justify-center relative hover:bg-zinc-200 transition-colors"
+        className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center relative hover:bg-zinc-200 transition-colors"
       >
-        <Bell className="w-4 h-4 text-zinc-600" />
+        <Bell className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
             {unreadCount}
@@ -77,10 +77,10 @@ export default function NotificationsDropdown() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-zinc-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-zinc-50 flex items-center justify-between bg-zinc-50/50">
-              <p className="font-bold text-zinc-900 text-sm">Notifications</p>
-              <button onClick={() => setOpen(false)} className="text-zinc-400 hover:text-zinc-600">
+          <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-100 dark:border-zinc-800/50 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-zinc-50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50">
+              <p className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">Notifications</p>
+              <button onClick={() => setOpen(false)} className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-400">
                 <X size={16} />
               </button>
             </div>
@@ -95,7 +95,7 @@ export default function NotificationsDropdown() {
                     key={n.id} 
                     onClick={() => markAsRead(n.id)}
                     className={cn(
-                      "p-4 border-b border-zinc-50 last:border-0 cursor-pointer hover:bg-zinc-50 transition-colors flex gap-3",
+                      "p-4 border-b border-zinc-50 last:border-0 cursor-pointer hover:bg-zinc-50 dark:bg-zinc-950 transition-colors flex gap-3",
                       !n.is_read && "bg-violet-50/30"
                     )}
                   >
@@ -106,8 +106,8 @@ export default function NotificationsDropdown() {
                       {n.type === 'geofence_breach' ? <AlertTriangle size={14} /> : <Info size={14} />}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs font-bold text-zinc-900 leading-tight">{n.title}</p>
-                      <p className="text-[10px] text-zinc-500 font-medium leading-relaxed">{n.message}</p>
+                      <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-tight">{n.title}</p>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">{n.message}</p>
                       <p className="text-[9px] text-zinc-400 font-bold">{dayjs(n.created_at).fromNow()}</p>
                     </div>
                   </div>

@@ -13,29 +13,30 @@ export async function POST(req: NextRequest) {
       messagesArray = []
     }
 
-    const response = await fetch(
-      'https://openrouter.ai/api/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'deepseek/deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: `
-You are the "Ayushman School Assistant & Fee Manager". Your job is to help the school owner/admin manage their school, track student fees, and answer questions about specific students.
+    let finalContext = context
+    if (!finalContext) {
+      const { createClient } = require('@/lib/supabase/server')
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: students } = await supabase.from('student_fee_summary').select('*').eq('user_id', user.id).eq('status', 'active')
+        if (students) {
+          finalContext = `Student List (Name|Class|Total|Paid|Due|Mobile|Guardian):\n` +
+            students.map((s: any) => `${s.name}|${s.class}|${s.total_fee}|${s.total_paid}|${s.remaining_fee}|${s.mobile || 'N/A'}|${s.guardian_name || 'N/A'}`).join('\n')
+        }
+      }
+    }
+
+    const systemPrompt = `
+You are the "Ayushman School & Software Expert Assistant". Your job is to help the school owner/admin manage their school, track student fees, answer questions about specific students, and provide guidance on ANY feature of this website/software.
 
 ====================================
 🤖 YOUR IDENTITY & BEHAVIOR
 ====================================
-- Roles: School Management Expert, Fee Collection Assistant, and Administrative Support.
+- Roles: Software Expert, School Management Expert, Fee Collection Assistant, and Administrative Support.
 - Tone: Helpful, polite, and professional. Use "Namaste" or "Aadab" as appropriate.
 - Language: Always respond in SIMPLE HINDI (HINGLISH). Use clear, easy-to-understand words.
-- Goal: Answer student-specific fee questions, give collection advice, and help use the software.
+- Goal: Answer ANY question about the software/website, help with student-specific fee queries, give collection advice, and explain how to use different modules.
 
 ====================================
 🏫 SCHOOL INFORMATION
@@ -47,7 +48,7 @@ Contact: ${schoolMobile || 'N/A'}
 ====================================
 📊 DATA CONTEXT (Current Stats & Students)
 ====================================
-${context}
+${finalContext}
 
 ====================================
 🗣 RESPONSE RULES (STRICT)
@@ -60,7 +61,7 @@ ${context}
 6. For "How to collect" or "When to collect", give practical advice (e.g., Harvest timing, installment plans).
 7. Give STEP-BY-STEP instructions for software tasks (1, 2, 3...).
 8. Use emojis: 💰, ✅, ⚠️, 🚀, 🏫.
-9. Keep it short and useful.
+9. KEEP ANSWERS EXTREMELY SHORT (1-2 lines maximum) unless the user asks for a long explanation. Do not write unnecessary greetings or filler words. Speed is priority!
 
 ====================================
 🚀 APPLICATION MODULES & KNOWLEDGE (Quick Reference)
@@ -71,19 +72,35 @@ ${context}
 4. AI INSIGHTS (/ai): This page! See collection stats and defaulters.
 5. PROFILE (/profile): Change school name, address, and mobile number.
 `
-            },
-            ...messagesArray
-          ]
+
+    const geminiMessages = messagesArray.map((msg: any) => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.content }]
+    }))
+
+    const geminiKey = process.env.GEMINI_API_KEY
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
+          },
+          contents: geminiMessages
         })
       }
     )
 
     const data = await response.json()
     if (!response.ok) {
-      console.error('OpenRouter API Error:', data)
+      console.error('Gemini API Error:', data)
       return NextResponse.json({ reply: `API Error: ${data.error?.message || response.statusText}` }, { status: response.status })
     }
-    const reply = data.choices?.[0]?.message?.content || 'No response'
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response'
     return NextResponse.json({ reply })
 
   } catch (error: any) {

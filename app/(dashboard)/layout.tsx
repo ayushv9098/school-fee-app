@@ -15,7 +15,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-screen bg-zinc-50">
+    <div className="flex h-screen bg-zinc-50 dark:bg-zinc-950">
       <DesktopSidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
@@ -37,15 +37,15 @@ function Header() {
   return (
     <>
       {/* Mobile Header */}
-      <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-zinc-100 sticky top-0 z-30">
+      <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800/50 sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <MobileSidebar />
           {!isDashboard && (
-            <Link href="/dashboard" className="p-1.5 rounded-lg hover:bg-zinc-100 transition">
-              <ArrowLeft className="w-4 h-4 text-zinc-600" />
+            <Link href="/dashboard" className="p-1.5 rounded-lg hover:bg-zinc-100 dark:bg-zinc-800 transition">
+              <ArrowLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
             </Link>
           )}
-          <p className="text-sm font-semibold text-zinc-900">Ayushman Academy</p>
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Ayushman Academy</p>
         </div>
         <div className="flex items-center gap-2">
           <NotificationsDropdown />
@@ -56,14 +56,14 @@ function Header() {
       </header>
 
       {/* Desktop Header */}
-      <header className="hidden lg:flex items-center justify-between px-6 py-3 bg-white border-b border-zinc-100 sticky top-0 z-30">
+      <header className="hidden lg:flex items-center justify-between px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800/50 sticky top-0 z-30">
         <div className="flex items-center gap-3">
           {!isDashboard && (
-            <Link href="/dashboard" className="p-1.5 rounded-lg hover:bg-zinc-100 transition">
-              <ArrowLeft className="w-4 h-4 text-zinc-600" />
+            <Link href="/dashboard" className="p-1.5 rounded-lg hover:bg-zinc-100 dark:bg-zinc-800 transition">
+              <ArrowLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
             </Link>
           )}
-          <p className="text-sm font-semibold text-zinc-900">Ayushman Academy</p>
+          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Ayushman Academy</p>
         </div>
         <div className="flex items-center gap-4">
           <NotificationsDropdown />

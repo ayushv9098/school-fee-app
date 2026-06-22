@@ -92,22 +92,22 @@ export default function AddStudentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-4 md:p-8">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-4 md:p-8">
       <div className="max-w-2xl mx-auto space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Link
             href="/students"
-            className="p-2 rounded-xl hover:bg-zinc-100 transition"
+            className="p-2 rounded-xl hover:bg-zinc-100 dark:bg-zinc-800 transition"
           >
-            <ArrowLeft className="w-5 h-5 text-zinc-600" />
+            <ArrowLeft className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
           </Link>
 
           <div>
-            <h1 className="text-lg font-semibold text-zinc-900">
+            <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
               Add Student
             </h1>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Add a new student
             </p>
           </div>
@@ -144,7 +144,7 @@ export default function AddStudentPage() {
                     name="class"
                     value={form.class}
                     onChange={handleChange}
-                    className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                   >
                     <option value="">Select Class</option>
                     {CLASSES.map(c => (
@@ -220,7 +220,7 @@ export default function AddStudentPage() {
                         }))}
                         className="w-4 h-4 accent-violet-600"
                       />
-                      <label htmlFor="is_free" className="text-sm text-zinc-600">Free (no fees)</label>
+                      <label htmlFor="is_free" className="text-sm text-zinc-600 dark:text-zinc-400">Free (no fees)</label>
                     </div>
                     <Input
                       id="total_fee"
@@ -289,7 +289,7 @@ export default function AddStudentPage() {
                   value={form.address}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
                 />
               </div>
 
@@ -304,7 +304,7 @@ export default function AddStudentPage() {
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Link
                   href="/students"
-                  className="h-11 flex items-center justify-center rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition sm:flex-1"
+                  className="h-11 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-950 transition sm:flex-1"
                 >
                   Cancel
                 </Link>

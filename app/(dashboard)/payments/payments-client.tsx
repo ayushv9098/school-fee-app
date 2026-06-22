@@ -103,20 +103,20 @@ export default function PaymentsClient({
 
       {/* Header */}
       <div>
-        <h1 className="text-lg font-semibold text-zinc-900">Payments</h1>
-        <p className="text-sm text-zinc-500">{filterLabel()}</p>
+        <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Payments</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{filterLabel()}</p>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 p-1 bg-zinc-100 rounded-xl w-fit">
+      <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl w-fit">
         {(['month', 'week', 'year'] as const).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition capitalize ${
               filter === f
-                ? 'bg-white text-zinc-900 shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-700'
+                ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300'
             }`}
           >
             {f}
@@ -130,7 +130,7 @@ export default function PaymentsClient({
           <select
             value={selectedMonth}
             onChange={e => setSelectedMonth(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
             {months.map(m => (
               <option key={m.value} value={m.value}>{m.label}</option>
@@ -141,7 +141,7 @@ export default function PaymentsClient({
           <select
             value={selectedWeek}
             onChange={e => setSelectedWeek(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
             {weeks.map(w => (
               <option key={w} value={w}>Week {w}</option>
@@ -151,7 +151,7 @@ export default function PaymentsClient({
         <select
           value={selectedYear}
           onChange={e => setSelectedYear(e.target.value)}
-          className="h-10 px-3 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          className="h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
         >
           {years.map(y => (
             <option key={y} value={y}>{y}</option>
@@ -164,7 +164,7 @@ export default function PaymentsClient({
         <Card className="border-green-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-500">Collected</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Collected</span>
               <TrendingUp className="w-4 h-4 text-green-500" />
             </div>
             <p className="text-xl font-bold text-green-600">{formatCurrency(totalCollected)}</p>
@@ -175,7 +175,7 @@ export default function PaymentsClient({
         <Card className="border-red-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-500">Total Pending</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Total Pending</span>
               <TrendingDown className="w-4 h-4 text-red-500" />
             </div>
             <p className="text-xl font-bold text-red-500">{formatCurrency(totalPending)}</p>
@@ -186,10 +186,10 @@ export default function PaymentsClient({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-500">Students Paid</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Students Paid</span>
               <Users className="w-4 h-4 text-violet-500" />
             </div>
-            <p className="text-xl font-bold text-zinc-900">{uniqueStudents}</p>
+            <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{uniqueStudents}</p>
             <p className="text-xs text-zinc-400 mt-1">This period</p>
           </CardContent>
         </Card>
@@ -197,10 +197,10 @@ export default function PaymentsClient({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-500">Collection Rate</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Collection Rate</span>
               <CreditCard className="w-4 h-4 text-blue-500" />
             </div>
-            <p className="text-xl font-bold text-zinc-900">
+            <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
               {totalFees > 0 ? Math.round((totalCollected / totalFees) * 100) : 0}%
             </p>
             <p className="text-xs text-zinc-400 mt-1">Of total fees</p>
@@ -215,7 +215,7 @@ export default function PaymentsClient({
           placeholder="Search by student name..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full h-11 pl-9 pr-4 rounded-xl border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          className="w-full h-11 pl-9 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
         />
       </div>
 
@@ -233,8 +233,8 @@ export default function PaymentsClient({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-zinc-900">{p.students?.name || '-'}</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">{p.students?.class || '-'} • {p.mode} • {dayjs(p.paid_at).format('DD MMM YYYY')}</p>
+                  <p className="font-semibold text-zinc-900 dark:text-zinc-100">{p.students?.name || '-'}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{p.students?.class || '-'} • {p.mode} • {dayjs(p.paid_at).format('DD MMM YYYY')}</p>
                   {p.note && <p className="text-xs text-zinc-400 mt-0.5">{p.note}</p>}
                 </div>
                 <p className="text-lg font-bold text-green-600">{formatCurrency(p.amount)}</p>

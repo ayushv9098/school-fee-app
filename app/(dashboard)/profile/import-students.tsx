@@ -100,8 +100,8 @@ export default function ImportStudents() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-blue-50 rounded-xl gap-4">
         <div>
-          <p className="font-medium text-zinc-900">Import from Student Management</p>
-          <p className="text-sm text-zinc-500">Import your students from the other system</p>
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">Import from Student Management</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Import your students from the other system</p>
         </div>
         <button
           onClick={handleImport}

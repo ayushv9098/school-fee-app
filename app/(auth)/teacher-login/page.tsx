@@ -90,28 +90,28 @@ export default function TeacherLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-violet-600 rounded-2xl mb-4 shadow-lg shadow-violet-200">
             <GraduationCap className="text-white w-7 h-7" />
           </div>
-          <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Ayushman Educational Academy</h1>
-          <p className="text-sm text-zinc-500 mt-1 font-medium tracking-tight">Teacher Portal Login</p>
+          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Ayushman Educational Academy</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium tracking-tight">Teacher Portal Login</p>
         </div>
 
         {showInstallBtn && (
           <button 
             onClick={handleInstall}
-            className="w-full mb-6 bg-white border border-violet-100 p-4 rounded-3xl flex items-center gap-4 shadow-sm hover:shadow-md transition-all active:scale-95 group relative overflow-hidden text-sans"
+            className="w-full mb-6 bg-white dark:bg-zinc-900 border border-violet-100 p-4 rounded-3xl flex items-center gap-4 shadow-sm hover:shadow-md transition-all active:scale-95 group relative overflow-hidden text-sans"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-violet-500/5 to-violet-500/0 animate-shimmer" />
             <div className="w-11 h-11 bg-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-200 shrink-0 group-hover:scale-110 transition-transform">
               <Download size={20} strokeWidth={2.5} />
             </div>
             <div className="text-left">
-              <p className="text-sm font-bold text-zinc-900 leading-tight">Install Official App</p>
-              <p className="text-[10px] text-zinc-500 font-medium mt-0.5">Faster access & offline attendance tracking</p>
+              <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight">Install Official App</p>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">Faster access & offline attendance tracking</p>
             </div>
             <div className="ml-auto w-8 h-8 bg-violet-50 rounded-full flex items-center justify-center text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity">
               <Plus size={14} strokeWidth={3} />
@@ -119,10 +119,10 @@ export default function TeacherLoginPage() {
           </button>
         )}
 
-        <Card className="border-zinc-200 shadow-sm rounded-3xl overflow-hidden">
+        <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm rounded-3xl overflow-hidden">
           <CardHeader className="pb-4 pt-6">
             <CardTitle className="text-lg font-bold text-zinc-800">Welcome Back</CardTitle>
-            <CardDescription className="text-zinc-500 font-medium">Sign in to mark your daily attendance</CardDescription>
+            <CardDescription className="text-zinc-500 dark:text-zinc-400 font-medium">Sign in to mark your daily attendance</CardDescription>
           </CardHeader>
           <CardContent className="pb-8">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -135,7 +135,7 @@ export default function TeacherLoginPage() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
-                  className="h-12 rounded-2xl border-zinc-200 focus:ring-violet-500 focus:border-violet-500 font-medium px-4"
+                  className="h-12 rounded-2xl border-zinc-200 dark:border-zinc-800 focus:ring-violet-500 focus:border-violet-500 font-medium px-4"
                 />
               </div>
 
@@ -148,7 +148,7 @@ export default function TeacherLoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  className="h-12 rounded-2xl border-zinc-200 focus:ring-violet-500 focus:border-violet-500 font-medium px-4"
+                  className="h-12 rounded-2xl border-zinc-200 dark:border-zinc-800 focus:ring-violet-500 focus:border-violet-500 font-medium px-4"
                 />
               </div>
 

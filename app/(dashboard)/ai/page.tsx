@@ -23,7 +23,7 @@ export default function AIPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       const [studentsRes, paymentsRes, subscriptionRes, schoolSettingsRes, studentsWithEmailRes] = await Promise.all([
-        supabase.from('student_fee_summary').select('*').eq('academic_year', academicYear),
+        supabase.from('student_fee_summary').select('*').eq('academic_year', academicYear).eq('status', 'active').eq('user_id', user?.id),
         supabase.from('payments').select('*, student:students!inner(academic_year)').eq('students.academic_year', academicYear).order('paid_at', { ascending: false }),
         supabase.from('subscriptions').select('*').eq('user_id', user?.id).eq('status', 'active').gte('expires_at', new Date().toISOString()).maybeSingle(),
         supabase.from('school_settings').select('*').eq('user_id', user?.id).maybeSingle(),
@@ -65,8 +65,8 @@ export default function AIPage() {
   const totalPending = students?.reduce((a: number, s: any) => a + s.remaining_fee, 0) || 0
   const collectionRate = totalFees > 0 ? Math.round((totalCollected / totalFees) * 100) : 0
   const paidStudents = students?.filter((s: any) => s.remaining_fee <= 0).length || 0
-  const unpaidStudents = students?.filter((s: any) => s.total_paid === 0).length || 0
-  const partialStudents = students?.filter((s: any) => s.total_paid > 0 && s.remaining_fee > 0).length || 0
+  const partialStudents = students?.filter((s: any) => s.remaining_fee > 0 && s.total_paid > 0).length || 0
+  const unpaidStudents = students?.filter((s: any) => s.remaining_fee > 0 && s.total_paid === 0).length || 0
 
   const defaultersRaw = students
     ?.filter((s: any) => s.remaining_fee > 0)
@@ -96,8 +96,8 @@ export default function AIPage() {
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-zinc-900">AI Insights</h1>
-          <p className="text-sm text-zinc-500">Smart analysis for {academicYear}</p>
+          <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">AI Insights</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Smart analysis for {academicYear}</p>
         </div>
         <div className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px] font-bold border border-emerald-100 uppercase tracking-wider">
           <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
@@ -109,10 +109,10 @@ export default function AIPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-500">Collection Rate</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Collection Rate</span>
               <TrendingUp className="w-4 h-4 text-green-500" />
             </div>
-            <p className="text-2xl font-bold text-zinc-900">{collectionRate}%</p>
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{collectionRate}%</p>
             <Progress value={collectionRate} className="mt-2" />
           </CardContent>
         </Card>
@@ -120,7 +120,7 @@ export default function AIPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-500">Total Collected</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Total Collected</span>
               <IndianRupee className="w-4 h-4 text-indigo-500" />
             </div>
             <p className="text-2xl font-bold text-green-600">{formatCurrency(totalCollected)}</p>
@@ -130,7 +130,7 @@ export default function AIPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-500">Total Pending</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Total Pending</span>
               <TrendingDown className="w-4 h-4 text-red-500" />
             </div>
             <p className="text-2xl font-bold text-red-500">{formatCurrency(totalPending)}</p>
@@ -140,10 +140,10 @@ export default function AIPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-zinc-500">Total Students</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Total Students</span>
               <Users className="w-4 h-4 text-blue-500" />
             </div>
-            <p className="text-2xl font-bold text-zinc-900">{totalStudents}</p>
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalStudents}</p>
           </CardContent>
         </Card>
       </div>
@@ -155,7 +155,7 @@ export default function AIPage() {
               <CheckCircle className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-zinc-500">Fully Paid</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Fully Paid</p>
               <p className="text-2xl font-bold text-green-600">{paidStudents}</p>
             </div>
           </CardContent>
@@ -167,7 +167,7 @@ export default function AIPage() {
               <AlertCircle className="w-5 h-5 text-yellow-600" />
             </div>
             <div>
-              <p className="text-sm text-zinc-500">Partial</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Partial</p>
               <p className="text-2xl font-bold text-yellow-600">{partialStudents}</p>
             </div>
           </CardContent>
@@ -179,7 +179,7 @@ export default function AIPage() {
               <AlertCircle className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-zinc-500">Unpaid</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Unpaid</p>
               <p className="text-2xl font-bold text-red-600">{unpaidStudents}</p>
             </div>
           </CardContent>
@@ -198,8 +198,8 @@ export default function AIPage() {
           {classStats.map(cls => (
             <div key={cls.name} className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-zinc-900">{cls.name}</span>
-                <span className="text-zinc-500">{cls.percent}% • {cls.count} students</span>
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">{cls.name}</span>
+                <span className="text-zinc-500 dark:text-zinc-400">{cls.percent}% • {cls.count} students</span>
               </div>
               <Progress value={cls.percent} />
               <div className="flex justify-between text-xs">

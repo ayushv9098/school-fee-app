@@ -429,16 +429,16 @@ export default function AttendanceClient({
     <div className="p-4 md:p-6 space-y-6 pb-20 font-sans max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-zinc-900 tracking-tight leading-tight">Teacher Attendance</h1>
-          <p className="text-sm text-zinc-500 mt-0.5 font-medium">Control and track staff records</p>
+          <h1 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">Teacher Attendance</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">Control and track staff records</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex bg-zinc-100 p-1 rounded-xl">
+          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
              <button 
                 onClick={() => setActiveTab('attendance')}
                 className={cn(
                    "px-4 py-2 text-sm font-bold rounded-lg transition-all",
-                   activeTab === 'attendance' ? "bg-white text-violet-600 shadow-sm" : "text-zinc-500 hover:text-zinc-700"
+                   activeTab === 'attendance' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300"
                 )}
              >
                 Records
@@ -447,7 +447,7 @@ export default function AttendanceClient({
                 onClick={() => setActiveTab('leaves')}
                 className={cn(
                    "px-4 py-2 text-sm font-bold rounded-lg transition-all flex items-center gap-2",
-                   activeTab === 'leaves' ? "bg-white text-violet-600 shadow-sm" : "text-zinc-500 hover:text-zinc-700"
+                   activeTab === 'leaves' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300"
                 )}
              >
                 Leaves
@@ -512,18 +512,18 @@ export default function AttendanceClient({
             </div>
 
             {/* Daily Status Card */}
-            <Card className="border-zinc-200 shadow-sm rounded-2xl overflow-hidden font-sans">
-               <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-               <CardTitle className="text-sm font-bold text-zinc-700 uppercase tracking-widest flex items-center gap-2 font-sans text-[11px] md:text-sm">
+            <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden font-sans">
+               <CardHeader className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/50 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+               <CardTitle className="text-sm font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-widest flex items-center gap-2 font-sans text-[11px] md:text-sm">
                   <Calendar size={16} className="text-violet-600 font-sans" /> Status: {dayjs(selectedDate).format('dddd, DD MMM YYYY')}
                </CardTitle>
-               <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-zinc-200 shadow-sm self-start md:self-auto">
+               <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm self-start md:self-auto">
                   <Calendar size={14} className="text-zinc-400 ml-2" />
                   <input 
                      type="date" 
                      value={selectedDate}
                      onChange={(e) => handleDateChange(e.target.value)}
-                     className="text-xs font-bold text-zinc-700 focus:outline-none pr-2 bg-transparent h-7"
+                     className="text-xs font-bold text-zinc-700 dark:text-zinc-300 focus:outline-none pr-2 bg-transparent h-7"
                   />
                </div>
                </CardHeader>
@@ -542,7 +542,7 @@ export default function AttendanceClient({
                            <div 
                               key={teacher.id}
                               onClick={() => { setEditingTeacher(teacher); setShowEditModal(true); }}
-                              className="group p-4 hover:bg-zinc-50/80 transition-all cursor-pointer flex items-center gap-4"
+                              className="group p-4 hover:bg-zinc-50 dark:bg-zinc-950/80 transition-all cursor-pointer flex items-center gap-4"
                            >
                               {/* Selfie Thumbnail */}
                               <div className="relative shrink-0">
@@ -562,7 +562,7 @@ export default function AttendanceClient({
                                        />
                                     </div>
                                  ) : (
-                                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-300 border border-zinc-200">
+                                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-300 border border-zinc-200 dark:border-zinc-800">
                                        <Camera size={20} />
                                     </div>
                                  )}
@@ -578,11 +578,11 @@ export default function AttendanceClient({
 
                               {/* Staff Info */}
                               <div className="flex-1 min-w-0">
-                                 <h3 className="font-bold text-zinc-900 text-sm md:text-base truncate group-hover:text-violet-600 transition-colors">
+                                 <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm md:text-base truncate group-hover:text-violet-600 transition-colors">
                                     {teacher.name}
                                  </h3>
                                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                                    <span className="text-[10px] md:text-xs text-zinc-500 font-medium tracking-tight">
+                                    <span className="text-[10px] md:text-xs text-zinc-500 dark:text-zinc-400 font-medium tracking-tight">
                                        {teacher.subject}
                                     </span>
                                     {record && (
@@ -599,7 +599,7 @@ export default function AttendanceClient({
                               {/* Time & Tracking */}
                               <div className="text-right shrink-0 space-y-2">
                                  <div className="flex flex-col">
-                                    <div className="flex items-center justify-end gap-1.5 text-zinc-900">
+                                    <div className="flex items-center justify-end gap-1.5 text-zinc-900 dark:text-zinc-100">
                                        <Clock size={12} className="text-zinc-400" />
                                        <span className="text-xs md:text-sm font-bold tracking-tight">
                                           {record?.check_in_time ? dayjs(record.check_in_time).format('hh:mm A') : '--:--'}
@@ -630,28 +630,28 @@ export default function AttendanceClient({
             </Card>
 
             {/* Monthly Register Card */}
-            <Card className="border-zinc-200 shadow-sm rounded-2xl overflow-hidden mb-10 font-sans">
-               <CardHeader className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b border-zinc-100 bg-zinc-50/50 gap-4">
+            <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden mb-10 font-sans">
+               <CardHeader className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-950/50 gap-4">
                <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-sm md:text-base font-bold text-zinc-800 tracking-tight whitespace-nowrap">
                      {dayjs().year(selectedYear).month(selectedMonth - 1).format('MMMM YYYY')} Register
                   </h2>
                   
-                  <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-zinc-200 shadow-sm">
+                  <div className="flex items-center gap-1.5 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
                      <button 
                      onClick={handlePrevMonth}
-                     className="p-1.5 hover:bg-zinc-50 rounded-lg text-zinc-500 transition-colors"
+                     className="p-1.5 hover:bg-zinc-50 dark:bg-zinc-950 rounded-lg text-zinc-500 dark:text-zinc-400 transition-colors"
                      title="Previous Month"
                      >
                      <ChevronLeft size={16} />
                      </button>
                      
-                     <div className="h-4 w-px bg-zinc-100 mx-1" />
+                     <div className="h-4 w-px bg-zinc-100 dark:bg-zinc-800 mx-1" />
                      
                      <select 
                      value={selectedMonth}
                      onChange={(e) => handleMonthChange(parseInt(e.target.value))}
-                     className="text-xs font-bold text-zinc-600 bg-transparent px-1 focus:outline-none cursor-pointer"
+                     className="text-xs font-bold text-zinc-600 dark:text-zinc-400 bg-transparent px-1 focus:outline-none cursor-pointer"
                      >
                      {MONTHS.map((m, i) => (
                         <option key={m} value={i + 1}>{m}</option>
@@ -661,18 +661,18 @@ export default function AttendanceClient({
                      <select 
                      value={selectedYear}
                      onChange={(e) => handleYearChange(parseInt(e.target.value))}
-                     className="text-xs font-bold text-zinc-600 bg-transparent px-1 focus:outline-none cursor-pointer"
+                     className="text-xs font-bold text-zinc-600 dark:text-zinc-400 bg-transparent px-1 focus:outline-none cursor-pointer"
                      >
                      {YEARS.map(y => (
                         <option key={y} value={y}>{y}</option>
                      ))}
                      </select>
 
-                     <div className="h-4 w-px bg-zinc-100 mx-1" />
+                     <div className="h-4 w-px bg-zinc-100 dark:bg-zinc-800 mx-1" />
 
                      <button 
                      onClick={handleNextMonth}
-                     className="p-1.5 hover:bg-zinc-50 rounded-lg text-zinc-500 transition-colors"
+                     className="p-1.5 hover:bg-zinc-50 dark:bg-zinc-950 rounded-lg text-zinc-500 dark:text-zinc-400 transition-colors"
                      title="Next Month"
                      >
                      <ChevronRight size={16} />
@@ -683,7 +683,7 @@ export default function AttendanceClient({
                <div className="flex items-center gap-2">
                   <button 
                      onClick={handleGoToToday}
-                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-500 hover:bg-white hover:text-violet-600 border border-transparent hover:border-zinc-200 transition-all shadow-none hover:shadow-sm"
+                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:bg-white dark:bg-zinc-900 hover:text-violet-600 border border-transparent hover:border-zinc-200 dark:border-zinc-800 transition-all shadow-none hover:shadow-sm"
                   >
                      <RotateCcw size={14} /> Today
                   </button>
@@ -698,9 +698,9 @@ export default function AttendanceClient({
                <CardContent className="p-0 overflow-x-auto scrollbar-hide font-sans relative">
                <div key={`${selectedMonth}-${selectedYear}`} className="animate-in fade-in slide-in-from-right-1 duration-500">
                   <table className="w-full text-[10px] border-collapse min-w-[800px] table-fixed font-sans">
-                     <thead className="bg-zinc-50/30 font-sans sticky top-0 z-20">
-                     <tr className="border-b border-zinc-100">
-                        <th className="text-left p-3 border-r border-zinc-100 sticky left-0 bg-zinc-50 z-30 font-bold text-zinc-400 uppercase tracking-tighter w-[140px] align-middle">
+                     <thead className="bg-zinc-50 dark:bg-zinc-950/30 font-sans sticky top-0 z-20">
+                     <tr className="border-b border-zinc-100 dark:border-zinc-800/50">
+                        <th className="text-left p-3 border-r border-zinc-100 dark:border-zinc-800/50 sticky left-0 bg-zinc-50 dark:bg-zinc-950 z-30 font-bold text-zinc-400 uppercase tracking-tighter w-[140px] align-middle">
                            Teacher
                         </th>
                         {dates.map(date => {
@@ -709,7 +709,7 @@ export default function AttendanceClient({
                            return (
                            <th 
                               key={date} 
-                              className={`p-1.5 border-r border-zinc-100 text-center font-bold min-w-[36px] w-[36px] transition-colors
+                              className={`p-1.5 border-r border-zinc-100 dark:border-zinc-800/50 text-center font-bold min-w-[36px] w-[36px] transition-colors
                                  ${isSunday ? 'bg-red-50/50 text-red-400' : 'text-zinc-400'}
                                  ${isToday ? 'bg-violet-50 text-violet-600 ring-inset ring-1 ring-violet-100' : ''}
                               `}
@@ -727,8 +727,8 @@ export default function AttendanceClient({
                      </thead>
                      <tbody className="divide-y divide-zinc-100 font-sans">
                      {initialTeachers.map(teacher => (
-                        <tr key={teacher.id} className="hover:bg-zinc-50/30 transition-colors">
-                           <td className="p-3 border-r border-zinc-100 font-bold text-zinc-800 sticky left-0 bg-white z-10 truncate max-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                        <tr key={teacher.id} className="hover:bg-zinc-50 dark:bg-zinc-950/30 transition-colors">
+                           <td className="p-3 border-r border-zinc-100 dark:border-zinc-800/50 font-bold text-zinc-800 sticky left-0 bg-white dark:bg-zinc-900 z-10 truncate max-w-[140px] shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                               <div className="flex flex-col gap-1">
                                  <span className="truncate">{teacher.name}</span>
                                  <button 
@@ -747,7 +747,7 @@ export default function AttendanceClient({
                            return (
                               <td 
                                  key={date} 
-                                 className={`p-2 border-r border-zinc-100 text-center transition-colors
+                                 className={`p-2 border-r border-zinc-100 dark:border-zinc-800/50 text-center transition-colors
                                  ${isToday ? 'bg-violet-50/30' : ''} 
                                  ${isSunday ? 'bg-red-50/20' : ''}
                                  `}
@@ -787,25 +787,25 @@ export default function AttendanceClient({
       ) : (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {pendingLeaves.length === 0 ? (
-               <div className="col-span-full py-20 text-center bg-white rounded-[32px] border border-dashed border-zinc-200">
+               <div className="col-span-full py-20 text-center bg-white dark:bg-zinc-900 rounded-[32px] border border-dashed border-zinc-200 dark:border-zinc-800">
                   <p className="text-zinc-400 font-bold">No pending leave requests</p>
                </div>
             ) : (
                pendingLeaves.map(leave => (
-                  <Card key={leave.id} className="border-zinc-100 shadow-sm hover:shadow-md transition-all rounded-[32px] overflow-hidden">
+                  <Card key={leave.id} className="border-zinc-100 dark:border-zinc-800/50 shadow-sm hover:shadow-md transition-all rounded-[32px] overflow-hidden">
                      <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-3">
                            <div className="w-12 h-12 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-600">
                               <Users size={24} />
                            </div>
                            <div>
-                              <p className="font-bold text-zinc-900">{leave.teachers?.name || 'Unknown'}</p>
+                              <p className="font-bold text-zinc-900 dark:text-zinc-100">{leave.teachers?.name || 'Unknown'}</p>
                               <p className="text-xs text-zinc-400 font-medium">{leave.teachers?.subject || 'N/A'}</p>
                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                           <div className="bg-zinc-50 p-3 rounded-2xl">
+                           <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-2xl">
                               <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Status</p>
                               <Badge className={cn(
                                  "border-none text-[10px] font-bold uppercase",
@@ -816,7 +816,7 @@ export default function AttendanceClient({
                                  {leave.status}
                               </Badge>
                            </div>
-                           <div className="bg-zinc-50 p-3 rounded-2xl">
+                           <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-2xl">
                               <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Duration</p>
                               <p className="text-[10px] font-bold text-zinc-800">
                                  {dayjs(leave.start_date).format('DD MMM')} - {dayjs(leave.end_date).format('DD MMM')}
@@ -824,9 +824,9 @@ export default function AttendanceClient({
                            </div>
                         </div>
 
-                        <div className="bg-zinc-50 p-3 rounded-2xl">
+                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-2xl">
                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Reason</p>
-                           <p className="text-xs text-zinc-600 font-medium line-clamp-2">{leave.reason || 'No reason provided'}</p>
+                           <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium line-clamp-2">{leave.reason || 'No reason provided'}</p>
                         </div>
 
                         {leave.status === 'pending' ? (
@@ -864,10 +864,10 @@ export default function AttendanceClient({
       {/* Add Teacher Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm font-sans">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden font-sans">
-            <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50 font-sans">
-              <h2 className="text-base font-bold text-zinc-900 font-sans">Add New Staff Member</h2>
-              <button onClick={() => setShowAddModal(false)} className="text-zinc-400 hover:text-zinc-600 transition">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden font-sans">
+            <div className="p-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50 font-sans">
+              <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 font-sans">Add New Staff Member</h2>
+              <button onClick={() => setShowAddModal(false)} className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-400 transition">
                 <X size={20} />
               </button>
             </div>
@@ -892,7 +892,7 @@ export default function AttendanceClient({
               </div>
 
               <div className="flex gap-3 pt-4 font-sans">
-                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 h-12 rounded-xl border border-zinc-200 text-sm font-bold text-zinc-600 hover:bg-zinc-50 transition">Cancel</button>
+                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 h-12 rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:bg-zinc-950 transition">Cancel</button>
                 <button type="submit" disabled={loading} className="flex-1 h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold transition disabled:opacity-50 shadow-lg shadow-violet-100">
                   {loading ? <Loader2 className="animate-spin mx-auto font-sans" size={20} /> : 'Save & Invite'}
                 </button>
@@ -905,18 +905,18 @@ export default function AttendanceClient({
       {/* Edit/Manage Teacher Modal */}
       {showEditModal && editingTeacher && (
         <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm font-sans">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden font-sans">
-            <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50 font-sans">
-              <h2 className="text-base font-bold text-zinc-900 font-sans">Manage Staff Member</h2>
-              <button onClick={() => { setShowEditModal(false); setEditingTeacher(null); }} className="text-zinc-400 hover:text-zinc-600 transition">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden font-sans">
+            <div className="p-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50 font-sans">
+              <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 font-sans">Manage Staff Member</h2>
+              <button onClick={() => { setShowEditModal(false); setEditingTeacher(null); }} className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-400 transition">
                 <X size={20} />
               </button>
             </div>
             <div className="p-6 space-y-6">
                <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-lg font-bold text-zinc-900">{editingTeacher.name}</h3>
-                    <p className="text-sm text-zinc-500 font-medium">{editingTeacher.subject}</p>
+                    <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{editingTeacher.name}</h3>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">{editingTeacher.subject}</p>
                   </div>
                </div>
 
@@ -938,7 +938,7 @@ export default function AttendanceClient({
                   )}
                </div>
 
-               <div className="h-px bg-zinc-100" />
+               <div className="h-px bg-zinc-100 dark:bg-zinc-800" />
 
                <div className="space-y-3">
                   <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Manual Attendance Override ({dayjs(selectedDate).format('DD MMM')})</Label>
@@ -974,7 +974,7 @@ export default function AttendanceClient({
                   </div>
                </div>
 
-               <div className="h-px bg-zinc-100" />
+               <div className="h-px bg-zinc-100 dark:bg-zinc-800" />
 
                <form onSubmit={handleEditTeacher} className="space-y-4 font-sans">
                 <div className="space-y-1.5 font-sans">
@@ -1017,19 +1017,19 @@ export default function AttendanceClient({
       {/* Movement Tracking Modal */}
       {showMovementModal && trackingTeacher && (
         <div className="fixed inset-0 bg-black/40 z-[150] flex items-center justify-center p-4 backdrop-blur-sm font-sans animate-in fade-in duration-300">
-          <div className="bg-white rounded-[32px] shadow-xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden font-sans border border-zinc-100">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] shadow-xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden font-sans border border-zinc-100 dark:border-zinc-800/50">
             
-            <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+            <div className="p-6 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50">
               <div className="flex items-center gap-4">
                  <div className="w-12 h-12 bg-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-100">
                     <Users size={24} />
                  </div>
                  <div>
-                    <h2 className="text-lg font-bold text-zinc-900 leading-tight">{trackingTeacher.name}</h2>
+                    <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-tight">{trackingTeacher.name}</h2>
                     <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-0.5">Staff Movement Log • {dayjs(selectedDate).format('DD MMM')}</p>
                  </div>
               </div>
-              <button onClick={() => setShowMovementModal(false)} className="w-10 h-10 rounded-full bg-white border border-zinc-100 flex items-center justify-center text-zinc-400 hover:text-zinc-600 transition-all active:scale-95">
+              <button onClick={() => setShowMovementModal(false)} className="w-10 h-10 rounded-full bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800/50 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:text-zinc-400 transition-all active:scale-95">
                 <X size={20} />
               </button>
             </div>
@@ -1038,9 +1038,9 @@ export default function AttendanceClient({
                
                {/* Stats Grid */}
                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-5 bg-zinc-50 rounded-3xl border border-zinc-100 relative group">
+                  <div className="p-5 bg-zinc-50 dark:bg-zinc-950 rounded-3xl border border-zinc-100 dark:border-zinc-800/50 relative group">
                      <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Outside Today</p>
-                     <p className="text-2xl font-bold text-zinc-900 tracking-tight">
+                     <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                         {movementHistory.reduce((acc, m) => m.return_time ? acc + dayjs(m.return_time).diff(dayjs(m.exit_time), 'minute') : acc, 0)}
                         <span className="text-xs ml-1 font-bold text-zinc-400">MINS</span>
                      </p>
@@ -1081,20 +1081,20 @@ export default function AttendanceClient({
                <div className="space-y-4">
                   <div className="flex items-center justify-between px-1">
                      <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Movement Timeline</h3>
-                     <div className="px-2.5 py-1 bg-zinc-100 rounded-full text-[9px] font-bold text-zinc-500 uppercase">
+                     <div className="px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full text-[9px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">
                         {movementHistory.length} Sessions
                      </div>
                   </div>
 
                   {movementHistory.length === 0 ? (
-                    <div className="text-center py-12 bg-zinc-50/50 rounded-3xl border border-dashed border-zinc-200">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 text-zinc-200 shadow-sm"><RotateCcw size={20} /></div>
+                    <div className="text-center py-12 bg-zinc-50 dark:bg-zinc-950/50 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800">
+                      <div className="w-12 h-12 bg-white dark:bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-3 text-zinc-200 shadow-sm"><RotateCcw size={20} /></div>
                       <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">No movements recorded today</p>
                     </div>
                   ) : (
                     <div className="relative pl-4 space-y-4">
                       {/* Vertical Line */}
-                      <div className="absolute left-[19px] top-2 bottom-4 w-0.5 bg-zinc-100" />
+                      <div className="absolute left-[19px] top-2 bottom-4 w-0.5 bg-zinc-100 dark:bg-zinc-800" />
                       
                       {movementHistory.map((move, idx) => (
                         <div key={move.id} className="relative group">
@@ -1103,7 +1103,7 @@ export default function AttendanceClient({
                             move.return_time ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
                           )} />
                           
-                          <div className="bg-white border border-zinc-100 rounded-2xl p-4 shadow-sm group-hover:border-violet-100 transition-all">
+                          <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800/50 rounded-2xl p-4 shadow-sm group-hover:border-violet-100 transition-all">
                             <div className="flex justify-between items-start mb-4">
                               <div className="space-y-3">
                                  <div className="flex items-center gap-3">
@@ -1116,7 +1116,7 @@ export default function AttendanceClient({
                                  <div className="flex items-center gap-3">
                                     <div className={cn(
                                        "w-8 h-8 rounded-xl flex items-center justify-center",
-                                       move.return_time ? "bg-emerald-50 text-emerald-600" : "bg-zinc-50 text-zinc-300"
+                                       move.return_time ? "bg-emerald-50 text-emerald-600" : "bg-zinc-50 dark:bg-zinc-950 text-zinc-300"
                                     )}><Home size={16} /></div>
                                     <div>
                                        <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-tight">Returned</p>
@@ -1132,14 +1132,14 @@ export default function AttendanceClient({
                               <div className="flex flex-col gap-2">
                                 <button 
                                   onClick={() => window.open(`https://www.google.com/maps?q=${move.exit_lat},${move.exit_lng}`, '_blank')}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50 hover:bg-violet-50 text-zinc-500 hover:text-violet-600 rounded-xl text-[10px] font-bold transition-all border border-transparent hover:border-violet-100"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-950 hover:bg-violet-50 text-zinc-500 dark:text-zinc-400 hover:text-violet-600 rounded-xl text-[10px] font-bold transition-all border border-transparent hover:border-violet-100"
                                 >
                                   <MapPin size={12} /> Exit Loc
                                 </button>
                                 {move.return_lat && (
                                   <button 
                                     onClick={() => window.open(`https://www.google.com/maps?q=${move.return_lat},${move.return_lng}`, '_blank')}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50 hover:bg-emerald-50 text-zinc-500 hover:text-emerald-600 rounded-xl text-[10px] font-bold transition-all border border-transparent hover:border-emerald-100"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-950 hover:bg-emerald-50 text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 rounded-xl text-[10px] font-bold transition-all border border-transparent hover:border-emerald-100"
                                   >
                                     <MapPin size={12} /> Entry Loc
                                   </button>
@@ -1162,8 +1162,8 @@ export default function AttendanceClient({
                   )}
                </div>
             </div>
-            <div className="p-4 bg-zinc-50 border-t border-zinc-100">
-              <button onClick={() => setShowMovementModal(false)} className="w-full h-12 bg-white border border-zinc-200 rounded-2xl text-xs font-bold text-zinc-500 hover:text-zinc-800 transition-all active:scale-[0.98]">
+            <div className="p-4 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-800/50">
+              <button onClick={() => setShowMovementModal(false)} className="w-full h-12 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 transition-all active:scale-[0.98]">
                 Close Movement Log
               </button>
             </div>

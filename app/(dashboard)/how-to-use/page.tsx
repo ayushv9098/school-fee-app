@@ -127,11 +127,11 @@ export default function HowToUsePage() {
       Ayushman Educational Academy
     </p>
 
-    <h1 className="text-2xl md:text-3xl font-bold text-zinc-900">
+    <h1 className="text-2xl md:text-3xl font-bold text-zinc-900 dark:text-zinc-100">
       How to Use
     </h1>
 
-    <p className="text-sm md:text-base text-zinc-500">
+    <p className="text-sm md:text-base text-zinc-500 dark:text-zinc-400">
       Step by step guide
     </p>
   </div>
@@ -174,7 +174,7 @@ export default function HowToUsePage() {
             <item.icon className="w-5 h-5" />
           </div>
 
-          <p className="text-sm font-semibold text-zinc-700">
+          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
             {item.label}
           </p>
         </CardContent>
@@ -185,7 +185,7 @@ export default function HowToUsePage() {
 
       {/* ==================== STEPS ==================== */}
       <div>
-        <h2 className="text-base font-semibold text-zinc-900 mb-4">How to Use</h2>
+        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-4">How to Use</h2>
         <div className="space-y-3">
           {steps.map((step, i) => (
             <Card key={i} className="hover:shadow-md transition">
@@ -195,8 +195,8 @@ export default function HowToUsePage() {
                     <step.icon className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-zinc-900 text-sm">{step.title}</p>
-                    <p className="text-sm text-zinc-500 mt-1">{step.description}</p>
+                    <p className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">{step.title}</p>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{step.description}</p>
                     <Link href={step.link} className="inline-flex items-center gap-1 text-xs text-violet-600 hover:text-violet-700 font-medium mt-2">
                       {step.linkText}
                       <ChevronRight className="w-3 h-3" />
@@ -212,7 +212,7 @@ export default function HowToUsePage() {
      {/* ==================== FAQ ACCORDION ==================== */}
 <div className="pt-2 md:pt-4">
   {/* Heading with proper top spacing */}
-  <h2 className="text-base font-semibold text-zinc-900 mb-4 md:mb-5">
+  <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-4 md:mb-5">
     Frequently Asked Questions
   </h2>
 
@@ -221,19 +221,19 @@ export default function HowToUsePage() {
     {faqs.map((faq, i) => (
       <Card
         key={i}
-        className="overflow-hidden rounded-2xl border border-zinc-200 shadow-sm"
+        className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm"
       >
         <button
           onClick={() => setOpenFaq(openFaq === i ? null : i)}
-          className="w-full px-4 py-4 text-left hover:bg-zinc-50 transition-colors"
+          className="w-full px-4 py-4 text-left hover:bg-zinc-50 dark:bg-zinc-950 transition-colors"
         >
           <div className="flex items-center justify-between gap-4">
-            <p className="font-semibold text-sm text-zinc-900">
+            <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">
               Q: {faq.q}
             </p>
 
             <ChevronDown
-              className={`w-4 h-4 text-zinc-500 transition-transform duration-200 flex-shrink-0 ${
+              className={`w-4 h-4 text-zinc-500 dark:text-zinc-400 transition-transform duration-200 flex-shrink-0 ${
                 openFaq === i ? 'rotate-180' : ''
               }`}
             />
@@ -241,8 +241,8 @@ export default function HowToUsePage() {
         </button>
 
         {openFaq === i && (
-          <div className="px-4 pb-4 pt-3 border-t border-zinc-100 animate-in slide-in-from-top-2 duration-200">
-            <p className="text-sm text-zinc-600 leading-relaxed">
+          <div className="px-4 pb-4 pt-3 border-t border-zinc-100 dark:border-zinc-800/50 animate-in slide-in-from-top-2 duration-200">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
               A: {faq.a}
             </p>
           </div>
@@ -261,15 +261,15 @@ export default function HowToUsePage() {
 
     {/* Header */}
     <div className="flex items-start gap-3">
-      <div className="w-10 h-10 sm:w-11 sm:h-11 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
+      <div className="w-10 h-10 sm:w-11 sm:h-11 bg-white dark:bg-zinc-900 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
         <MessageCircle className="w-5 h-5 text-violet-600" />
       </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className="font-bold text-zinc-900 text-sm sm:text-base">
+        <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm sm:text-base">
           Need Help?
         </h3>
-        <p className="text-xs sm:text-sm text-zinc-500 mt-1">
+        <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1">
           Contact us for any assistance or support.
         </p>
       </div>
@@ -329,7 +329,7 @@ export default function HowToUsePage() {
       <div className="h-6"></div>
 
       {/* ==================== FOOTER ==================== */}
-      <div className="text-center pt-4 border-t border-zinc-200">
+      <div className="text-center pt-4 border-t border-zinc-200 dark:border-zinc-800">
         <p className="text-xs text-zinc-400 mt-2">
           &copy; {new Date().getFullYear()} Designed & Developed by AV Infra
         </p>

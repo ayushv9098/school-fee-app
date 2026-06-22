@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { pdf, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import html2canvas from 'html2canvas'
 import { Download, X, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -70,6 +70,7 @@ const translations = {
     studentDetails: 'Student Details',
     studentName: 'Student Name',
     class: 'Class',
+    session: 'Session',
     paymentBreakdown: 'Payment Breakdown',
     totalFee: 'Total School Fee',
     installmentPaid: 'Installment Paid',
@@ -92,6 +93,7 @@ const translations = {
     studentDetails: 'छात्र का विवरण',
     studentName: 'छात्र का नाम',
     class: 'कक्षा',
+    session: 'सत्र',
     paymentBreakdown: 'भुगतान का विवरण',
     totalFee: 'कुल स्कूल फीस',
     installmentPaid: 'जमा किस्त',
@@ -113,6 +115,7 @@ interface Props {
   studentName: string
   fatherName?: string
   className: string
+  session?: string
   amountPaid: number
   totalFees: number
   previousDues?: number
@@ -131,7 +134,7 @@ interface Props {
   receiptId?: string
 }
 
-function ReceiptDocument({ studentName, fatherName, className, amountPaid, totalFees, previousDues = 0, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'hi', receiptId }: Props) {
+function ReceiptDocument({ studentName, fatherName, className, session, amountPaid, totalFees, previousDues = 0, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'hi', receiptId }: Props) {
   const t = translations[lang]
   const date = new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
   const totalPayable = totalFees + previousDues
@@ -151,7 +154,9 @@ function ReceiptDocument({ studentName, fatherName, className, amountPaid, total
           <Text style={styles.schoolName}>{schoolName}</Text>
           {schoolAddress ? <Text style={styles.subtitle}>{schoolAddress}</Text> : null}
           {schoolMobile ? <Text style={styles.subtitle}>📞 {schoolMobile}</Text> : null}
-          <Text style={[styles.subtitle, { marginTop: 8, fontWeight: 'bold' }]}>{t.feeReceipt.toUpperCase()}</Text>
+          <Text style={[styles.subtitle, { marginTop: 8, fontWeight: 'bold' }]}>
+            {t.feeReceipt.toUpperCase()} {session ? `(${session})` : ''}
+          </Text>
         </View>
 
         <View>
@@ -239,7 +244,7 @@ function ReceiptDocument({ studentName, fatherName, className, amountPaid, total
 }
 
 // Hidden receipt for image capture
-function ReceiptHTML({ studentName, fatherName, className, amountPaid, totalFees, previousDues = 0, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'hi', receiptId }: Props) {
+function ReceiptHTML({ studentName, fatherName, className, session, amountPaid, totalFees, previousDues = 0, remainingFees, schoolName, schoolAddress, schoolMobile, payments, lang = 'hi', receiptId }: Props) {
   const t = translations[lang]
   const date = new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
   const totalPayable = totalFees + previousDues
@@ -267,7 +272,9 @@ function ReceiptHTML({ studentName, fatherName, className, amountPaid, totalFees
         {schoolAddress && <p style={{ fontSize: '12px', color: '#71717a', margin: '0 0 4px' }}>{schoolAddress}</p>}
         {schoolMobile && <p style={{ fontSize: '12px', color: '#71717a', margin: 0 }}>📞 {schoolMobile}</p>}
         <div style={{ margin: '20px auto 0', height: '2px', width: '40px', backgroundColor: '#7c3aed', borderRadius: '2px' }}></div>
-        <p style={{ fontSize: '13px', fontWeight: '700', color: '#71717a', marginTop: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.feeReceipt}</p>
+        <p style={{ fontSize: '13px', fontWeight: '700', color: '#71717a', marginTop: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {t.feeReceipt} {session ? `(${session})` : ''}
+        </p>
       </div>
 
       {/* Details */}
@@ -523,16 +530,16 @@ export default function ReceiptPDF(props: Props) {
     <div className="w-full space-y-4">
 
       {/* Language Toggle */}
-      <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-xl w-fit">
+      <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl w-fit">
         <button
           onClick={() => setLang('en')}
-          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${lang === 'en' ? 'bg-white text-violet-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${lang === 'en' ? 'bg-white dark:bg-zinc-900 text-violet-600 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300'}`}
         >
           English
         </button>
         <button
           onClick={() => setLang('hi')}
-          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${lang === 'hi' ? 'bg-white text-violet-600 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+          className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${lang === 'hi' ? 'bg-white dark:bg-zinc-900 text-violet-600 shadow-sm' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300'}`}
         >
           हिंदी (Hindi)
         </button>
@@ -587,10 +594,10 @@ export default function ReceiptPDF(props: Props) {
       {/* Preview Modal */}
       {previewUrl && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 sm:p-6">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-              <h2 className="text-lg font-bold text-zinc-900">{lang === 'hi' ? 'रसीद पूर्वावलोकन' : 'Receipt Preview'}</h2>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800/50">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{lang === 'hi' ? 'रसीद पूर्वावलोकन' : 'Receipt Preview'}</h2>
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleDownloadImage}
@@ -601,7 +608,7 @@ export default function ReceiptPDF(props: Props) {
                 </button>
                 <button
                   onClick={handleClose}
-                  className="p-2 rounded-xl hover:bg-zinc-100 transition-colors text-zinc-400 hover:text-zinc-600"
+                  className="p-2 rounded-xl hover:bg-zinc-100 dark:bg-zinc-800 transition-colors text-zinc-400 hover:text-zinc-600 dark:text-zinc-400"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -609,7 +616,7 @@ export default function ReceiptPDF(props: Props) {
             </div>
 
             {/* Modal Content */}
-            <div className="flex-1 overflow-auto bg-zinc-100/50 p-6 sm:p-8 flex justify-center">
+            <div className="flex-1 overflow-auto bg-zinc-100 dark:bg-zinc-800/50 p-6 sm:p-8 flex justify-center">
               <div className="relative">
                 <img 
                   src={previewUrl} 
@@ -619,7 +626,7 @@ export default function ReceiptPDF(props: Props) {
               </div>
             </div>
             
-            <div className="p-3 bg-zinc-50 border-t border-zinc-100 flex justify-center">
+            <div className="p-3 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-800/50 flex justify-center">
                <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">
                  {lang === 'hi' ? 'पूर्वावलोकन मोड • उच्च गुणवत्ता वाली रसीद' : 'Preview Mode • High Quality Capture'}
                </p>

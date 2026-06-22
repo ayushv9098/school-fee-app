@@ -29,19 +29,19 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-5 border-b border-zinc-100">
+      <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-800/50">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-zinc-900 leading-tight">Ayushman</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">Ayushman</p>
             <p className="text-xs text-zinc-400">Fee Manager</p>
           </div>
         </div>
         {onClose && (
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-zinc-100">
-            <X className="w-4 h-4 text-zinc-500" />
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-zinc-100 dark:bg-zinc-800">
+            <X className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
           </button>
         )}
       </div>
@@ -60,7 +60,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
                 active
                   ? 'bg-violet-600 text-white'
-                  : 'text-zinc-600 hover:bg-zinc-100'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800'
               )}
             >
               <Icon className="w-4 h-4" />
@@ -71,7 +71,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-zinc-100">
+      <div className="p-4 border-t border-zinc-100 dark:border-zinc-800/50">
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 w-full transition-all"
@@ -91,9 +91,9 @@ export function MobileSidebar() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="p-2 rounded-lg hover:bg-zinc-100 lg:hidden"
+        className="p-2 rounded-lg hover:bg-zinc-100 dark:bg-zinc-800 lg:hidden"
       >
-        <Menu className="w-5 h-5 text-zinc-600" />
+        <Menu className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
       </button>
 
       {/* Overlay */}
@@ -106,7 +106,7 @@ export function MobileSidebar() {
 
       {/* Drawer */}
       <div className={cn(
-        'fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-xl transition-transform duration-300 lg:hidden',
+        'fixed top-0 left-0 h-full w-64 bg-white dark:bg-zinc-900 z-50 shadow-xl transition-transform duration-300 lg:hidden',
         open ? 'translate-x-0' : '-translate-x-full'
       )}>
         <SidebarContent onClose={() => setOpen(false)} />
@@ -117,7 +117,7 @@ export function MobileSidebar() {
 
 export function DesktopSidebar() {
   return (
-    <div className="hidden lg:flex lg:flex-col w-60 bg-white border-r border-zinc-100 h-screen sticky top-0">
+    <div className="hidden lg:flex lg:flex-col w-60 bg-white dark:bg-zinc-900 border-r border-zinc-100 dark:border-zinc-800/50 h-screen sticky top-0">
       <SidebarContent />
     </div>
   )

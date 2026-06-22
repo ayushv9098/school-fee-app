@@ -429,7 +429,7 @@ export default function TeacherAttendanceClient({
   const leaveCount = leaves.filter(l => l.status === 'approved').length
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-57px)] bg-[#F9FAFC] text-zinc-900 overflow-hidden relative font-sans">
+    <div className="flex flex-col h-[calc(100dvh-57px)] bg-[#F9FAFC] text-zinc-900 dark:text-zinc-100 overflow-hidden relative font-sans">
       
       {/* --- SCROLLABLE CONTENT --- */}
       <div className="flex-1 overflow-y-auto pb-20">
@@ -458,15 +458,15 @@ export default function TeacherAttendanceClient({
               {showInstallBtn && (
                 <button 
                   onClick={handleInstall}
-                  className="w-full bg-white border border-violet-100 p-4 rounded-3xl flex items-center gap-4 shadow-sm hover:shadow-md transition-all active:scale-95 group relative overflow-hidden"
+                  className="w-full bg-white dark:bg-zinc-900 border border-violet-100 p-4 rounded-3xl flex items-center gap-4 shadow-sm hover:shadow-md transition-all active:scale-95 group relative overflow-hidden"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-violet-500/5 to-violet-500/0 animate-shimmer" />
                   <div className="w-12 h-12 bg-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-200 shrink-0 group-hover:scale-110 transition-transform">
                     <Download size={22} strokeWidth={2.5} />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold text-zinc-900 leading-tight">Install App</p>
-                    <p className="text-[10px] text-zinc-500 font-medium mt-0.5">Install the app for faster attendance access</p>
+                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight">Install App</p>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">Install the app for faster attendance access</p>
                   </div>
                   <div className="ml-auto w-8 h-8 bg-violet-50 rounded-full flex items-center justify-center text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Plus size={14} strokeWidth={3} />
@@ -481,7 +481,7 @@ export default function TeacherAttendanceClient({
                        <CalendarIcon size={14} className="text-violet-200" />
                        <p className="text-[10px] font-bold uppercase tracking-widest text-violet-100">{dayjs().format('ddd, DD MMM')}</p>
                     </div>
-                    <Badge className="bg-white/20 text-white border-none text-[9px] font-bold uppercase">Live Time</Badge>
+                    <Badge className="bg-white dark:bg-zinc-900/20 text-white border-none text-[9px] font-bold uppercase">Live Time</Badge>
                  </div>
                  <p className="text-4xl font-bold tracking-tighter">
                     {dayjs().format('hh:mm')}
@@ -489,7 +489,7 @@ export default function TeacherAttendanceClient({
                  </p>
               </div>
 
-              <Card className="border-none shadow-sm rounded-[32px] bg-white overflow-hidden ring-1 ring-zinc-100">
+              <Card className="border-none shadow-sm rounded-[32px] bg-white dark:bg-zinc-900 overflow-hidden ring-1 ring-zinc-100">
                 <CardContent className="p-0">
                   
                   {step === 'init' && (
@@ -524,7 +524,7 @@ export default function TeacherAttendanceClient({
                       </div>
                       <button
                         onClick={captureSelfie}
-                        className="w-16 h-16 bg-white border-[6px] border-violet-600 rounded-full flex items-center justify-center text-violet-600 shadow-xl active:scale-90 transition-all"
+                        className="w-16 h-16 bg-white dark:bg-zinc-900 border-[6px] border-violet-600 rounded-full flex items-center justify-center text-violet-600 shadow-xl active:scale-90 transition-all"
                       >
                         <Camera size={24} strokeWidth={3} />
                       </button>
@@ -533,13 +533,13 @@ export default function TeacherAttendanceClient({
 
                   {step === 'preview' && (
                     <div className="p-6 flex flex-col items-center space-y-6">
-                      <div className="w-full aspect-square bg-white rounded-[32px] overflow-hidden border-4 border-zinc-50 shadow-xl">
+                      <div className="w-full aspect-square bg-white dark:bg-zinc-900 rounded-[32px] overflow-hidden border-4 border-zinc-50 shadow-xl">
                         <img src={selfie!} alt="Preview" className="w-full h-full object-cover" />
                       </div>
                       <div className="flex gap-3 w-full">
                         <button
                           onClick={() => { setStep('camera'); setTimeout(startCamera, 100); }}
-                          className="flex-1 h-12 bg-zinc-100 text-zinc-500 rounded-2xl text-xs font-bold transition-colors"
+                          className="flex-1 h-12 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-2xl text-xs font-bold transition-colors"
                         >
                           RETAKE
                         </button>
@@ -579,18 +579,18 @@ export default function TeacherAttendanceClient({
                           <div className="flex justify-between w-full px-4">
                             <div className="text-center flex-1">
                                <p className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest mb-0.5">Checked In</p>
-                               <p className="text-xl font-bold text-zinc-900 tracking-tight">{dayjs(todayRecord?.check_in_time).format('hh:mm A')}</p>
+                               <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{dayjs(todayRecord?.check_in_time).format('hh:mm A')}</p>
                             </div>
                             {todayRecord?.check_out_time && (
                               <div className="text-center flex-1">
                                  <p className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest mb-0.5">Checked Out</p>
-                                 <p className="text-xl font-bold text-zinc-900 tracking-tight">{dayjs(todayRecord?.check_out_time).format('hh:mm A')}</p>
+                                 <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{dayjs(todayRecord?.check_out_time).format('hh:mm A')}</p>
                               </div>
                             )}
                           </div>
 
                           {todayRecord?.selfie_url && (
-                            <div className="w-40 aspect-square bg-white p-1 rounded-[32px] border border-zinc-100 shadow-md">
+                            <div className="w-40 aspect-square bg-white dark:bg-zinc-900 p-1 rounded-[32px] border border-zinc-100 dark:border-zinc-800/50 shadow-md">
                               <img 
                                 src={supabase.storage.from('attendance-selfies').getPublicUrl(todayRecord.selfie_url).data.publicUrl} 
                                 alt="Selfie" 
@@ -609,7 +609,7 @@ export default function TeacherAttendanceClient({
                               {loading ? 'VERIFYING...' : 'CHECK-OUT NOW'}
                             </button>
                           ) : (
-                            <div className="w-full p-4 bg-zinc-50 rounded-2xl text-center">
+                            <div className="w-full p-4 bg-zinc-50 dark:bg-zinc-950 rounded-2xl text-center">
                               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Shift Completed</p>
                               {todayRecord.early_exit && (
                                 <p className="text-[10px] font-bold text-amber-600 uppercase mt-1">Flagged: Early Exit</p>
@@ -617,7 +617,7 @@ export default function TeacherAttendanceClient({
                             </div>
                           )}
 
-                          <Badge className="bg-zinc-50 text-zinc-400 border-none text-[8px] font-bold tracking-widest">DIGITAL LOG: {todayRecord?.id.slice(0,8)}</Badge>
+                          <Badge className="bg-zinc-50 dark:bg-zinc-950 text-zinc-400 border-none text-[8px] font-bold tracking-widest">DIGITAL LOG: {todayRecord?.id.slice(0,8)}</Badge>
                        </div>
                     </div>
                   )}
@@ -632,7 +632,7 @@ export default function TeacherAttendanceClient({
               </Card>
 
               {/* Leave & Half-Day Quick Actions */}
-              <div className="bg-white rounded-[32px] p-5 border border-zinc-100 shadow-sm space-y-4">
+              <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-5 border border-zinc-100 dark:border-zinc-800/50 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-violet-50 rounded-2xl flex items-center justify-center text-violet-600">
@@ -651,9 +651,9 @@ export default function TeacherAttendanceClient({
                       setLeaveData(prev => ({ ...prev, type: 'full' }));
                       setShowLeaveModal(true);
                     }}
-                    className="flex flex-col items-center gap-3 p-4 rounded-[24px] bg-zinc-50 border border-zinc-100/50 hover:bg-amber-50 hover:border-amber-100 transition-all active:scale-95 group"
+                    className="flex flex-col items-center gap-3 p-4 rounded-[24px] bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800/50/50 hover:bg-amber-50 hover:border-amber-100 transition-all active:scale-95 group"
                   >
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-zinc-400 shadow-sm group-hover:text-amber-500 transition-colors">
+                    <div className="w-12 h-12 bg-white dark:bg-zinc-900 rounded-2xl flex items-center justify-center text-zinc-400 shadow-sm group-hover:text-amber-500 transition-colors">
                       <CalendarIcon size={24} />
                     </div>
                     <div className="text-center">
@@ -667,9 +667,9 @@ export default function TeacherAttendanceClient({
                       setLeaveData(prev => ({ ...prev, type: 'half' }));
                       setShowLeaveModal(true);
                     }}
-                    className="flex flex-col items-center gap-3 p-4 rounded-[24px] bg-zinc-50 border border-zinc-100/50 hover:bg-blue-50 hover:border-blue-100 transition-all active:scale-95 group"
+                    className="flex flex-col items-center gap-3 p-4 rounded-[24px] bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800/50/50 hover:bg-blue-50 hover:border-blue-100 transition-all active:scale-95 group"
                   >
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-zinc-400 shadow-sm group-hover:text-blue-500 transition-colors">
+                    <div className="w-12 h-12 bg-white dark:bg-zinc-900 rounded-2xl flex items-center justify-center text-zinc-400 shadow-sm group-hover:text-blue-500 transition-colors">
                       <Clock size={24} />
                     </div>
                     <div className="text-center">
@@ -682,11 +682,11 @@ export default function TeacherAttendanceClient({
 
               {/* Status Row */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white p-3.5 rounded-[24px] border border-zinc-100 shadow-sm flex items-center gap-3">
+                <div className="bg-white dark:bg-zinc-900 p-3.5 rounded-[24px] border border-zinc-100 dark:border-zinc-800/50 shadow-sm flex items-center gap-3">
                   <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500"><Clock size={16} /></div>
                   <div><p className="text-[8px] text-zinc-300 font-bold uppercase mb-0.5">Shift</p><p className="text-[11px] font-bold text-zinc-800">Active</p></div>
                 </div>
-                <div className="bg-white p-3.5 rounded-[24px] border border-zinc-100 shadow-sm flex items-center gap-3">
+                <div className="bg-white dark:bg-zinc-900 p-3.5 rounded-[24px] border border-zinc-100 dark:border-zinc-800/50 shadow-sm flex items-center gap-3">
                   <div className={cn(
                     "w-8 h-8 rounded-xl flex items-center justify-center",
                     todayRecord?.status === 'late' ? "bg-amber-50 text-amber-500" : "bg-emerald-50 text-emerald-500"
@@ -710,13 +710,13 @@ export default function TeacherAttendanceClient({
               <div className="space-y-3">
                  <h2 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest px-1">My Leave Applications</h2>
                  {leaves.length === 0 ? (
-                    <div className="text-center py-10 bg-white rounded-3xl border border-dashed border-zinc-200">
+                    <div className="text-center py-10 bg-white dark:bg-zinc-900 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800">
                        <p className="text-[10px] text-zinc-400 font-bold uppercase">No leave history</p>
                     </div>
                  ) : (
                     <div className="space-y-2">
                        {leaves.map(leave => (
-                          <div key={leave.id} className="bg-white p-4 rounded-3xl border border-zinc-100 shadow-sm space-y-3">
+                          <div key={leave.id} className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-100 dark:border-zinc-800/50 shadow-sm space-y-3">
                              <div className="flex justify-between items-start">
                                 <div>
                                    <p className="text-sm font-bold text-zinc-800">{dayjs(leave.start_date).format('DD MMM')} {leave.type === 'full' ? `- ${dayjs(leave.end_date).format('DD MMM')}` : ''}</p>
@@ -731,8 +731,8 @@ export default function TeacherAttendanceClient({
                                    {leave.status}
                                 </Badge>
                              </div>
-                             <div className="p-2.5 bg-zinc-50 rounded-xl">
-                                <p className="text-[10px] text-zinc-500 font-medium leading-relaxed italic line-clamp-2">"{leave.reason}"</p>
+                             <div className="p-2.5 bg-zinc-50 dark:bg-zinc-950 rounded-xl">
+                                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed italic line-clamp-2">"{leave.reason}"</p>
                              </div>
                           </div>
                        ))}
@@ -740,20 +740,20 @@ export default function TeacherAttendanceClient({
                  )}
               </div>
 
-              <div className="h-px bg-zinc-100 mx-2" />
+              <div className="h-px bg-zinc-100 dark:bg-zinc-800 mx-2" />
 
               <div className="space-y-3 pb-4">
                  <h2 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest px-1">Attendance Activity</h2>
                  {historyLoading ? (
                    <div className="py-10 flex justify-center"><Loader2 className="animate-spin text-violet-200" size={32} /></div>
                  ) : history.length === 0 ? (
-                   <div className="text-center py-10 bg-white rounded-3xl border border-dashed border-zinc-200"><p className="text-xs text-zinc-400 font-bold">No records found</p></div>
+                   <div className="text-center py-10 bg-white dark:bg-zinc-900 rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800"><p className="text-xs text-zinc-400 font-bold">No records found</p></div>
                  ) : (
                    <div className="space-y-2">
                      {history.map(item => (
-                       <div key={item.id} className="bg-white p-3 rounded-[24px] border border-zinc-100 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all">
+                       <div key={item.id} className="bg-white dark:bg-zinc-900 p-3 rounded-[24px] border border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all">
                          <div className="flex items-center gap-3">
-                           <div className="w-10 h-10 rounded-xl bg-zinc-50 border border-zinc-100 overflow-hidden">
+                           <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800/50 overflow-hidden">
                              {item.selfie_url ? (
                                <img src={supabase.storage.from('attendance-selfies').getPublicUrl(item.selfie_url).data.publicUrl} className="w-full h-full object-cover grayscale-[0.2]" alt="S" />
                              ) : <User size={16} className="text-zinc-300 m-3" />}
@@ -784,16 +784,16 @@ export default function TeacherAttendanceClient({
           {/* --- PROFILE TAB --- */}
           {activeTab === 'profile' && (
             <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-500">
-              <Card className="border-none shadow-sm rounded-[32px] bg-white overflow-hidden text-center relative ring-1 ring-zinc-100">
+              <Card className="border-none shadow-sm rounded-[32px] bg-white dark:bg-zinc-900 overflow-hidden text-center relative ring-1 ring-zinc-100">
                 <div className="h-20 bg-gradient-to-tr from-violet-600 to-indigo-600" />
                 <div className="relative -mt-8 mb-4">
-                  <div className="w-20 h-20 bg-white rounded-full mx-auto p-1 shadow-md">
+                  <div className="w-20 h-20 bg-white dark:bg-zinc-900 rounded-full mx-auto p-1 shadow-md">
                     <div className="w-full h-full bg-violet-100 rounded-full flex items-center justify-center text-violet-600"><User size={40} /></div>
                   </div>
                 </div>
                 <CardContent className="p-6 pt-0 space-y-4">
                   <div>
-                    <h2 className="text-lg font-bold text-zinc-900 tracking-tight leading-none">{teacher.name}</h2>
+                    <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-none">{teacher.name}</h2>
                     <p className="text-[9px] text-violet-600 font-bold uppercase tracking-widest mt-1">{teacher.subject} Specialist</p>
                   </div>
                   <div className="grid grid-cols-1 gap-2 text-left">
@@ -802,14 +802,14 @@ export default function TeacherAttendanceClient({
                       { icon: CalendarIcon, label: 'Joined', value: dayjs(teacher.created_at).format('MMM YYYY') },
                       { icon: Mail, label: 'Email', value: teacher.email }
                     ].map((row, i) => (
-                      <div key={i} className="p-3 bg-zinc-50 rounded-2xl flex items-center justify-between border border-zinc-100/50">
+                      <div key={i} className="p-3 bg-zinc-50 dark:bg-zinc-950 rounded-2xl flex items-center justify-between border border-zinc-100 dark:border-zinc-800/50/50">
                         <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{row.label}</p>
-                        <p className="text-[10px] font-bold text-zinc-900 truncate max-w-[150px]">{row.value}</p>
+                        <p className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-[150px]">{row.value}</p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="pt-4 border-t border-zinc-100 space-y-2">
+                  <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/50 space-y-2">
                     <button 
                       onClick={() => setShowLeaveModal(true)}
                       className="w-full h-12 rounded-2xl border border-violet-100 bg-violet-50 text-violet-600 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all"
@@ -836,29 +836,29 @@ export default function TeacherAttendanceClient({
       {/* --- LEAVE MODAL --- */}
       {showLeaveModal && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
+           <div className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-t-[32px] sm:rounded-[32px] overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
               {leaveSuccess ? (
                 <div className="p-12 flex flex-col items-center text-center space-y-4 animate-in zoom-in-95 duration-300">
                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-2">
                       <CheckCircle size={48} strokeWidth={2.5} />
                    </div>
-                   <h2 className="text-xl font-bold text-zinc-900">Application Submitted!</h2>
-                   <p className="text-sm text-zinc-500 font-medium leading-relaxed">Your leave request has been sent to your admin successfully. ✅</p>
+                   <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Application Submitted!</h2>
+                   <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">Your leave request has been sent to your admin successfully. ✅</p>
                 </div>
               ) : (
                 <>
-                  <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-                    <h2 className="text-base font-bold text-zinc-900 tracking-tight">Apply for Leave</h2>
-                    <button onClick={() => setShowLeaveModal(false)} className="w-8 h-8 rounded-full bg-white border border-zinc-100 flex items-center justify-center text-zinc-400"><X size={18} /></button>
+                  <div className="p-6 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50">
+                    <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Apply for Leave</h2>
+                    <button onClick={() => setShowLeaveModal(false)} className="w-8 h-8 rounded-full bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800/50 flex items-center justify-center text-zinc-400"><X size={18} /></button>
                   </div>
                   <form onSubmit={handleApplyLeave} className="p-6 space-y-5">
-                    <div className="grid grid-cols-2 gap-2 bg-zinc-100 p-1 rounded-2xl">
+                    <div className="grid grid-cols-2 gap-2 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-2xl">
                         <button 
                           type="button"
                           onClick={() => setLeaveData({ ...leaveData, type: 'full' })}
                           className={cn(
                             "h-10 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
-                            leaveData.type === 'full' ? "bg-white text-violet-600 shadow-sm" : "text-zinc-500"
+                            leaveData.type === 'full' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400"
                           )}
                         >Full Day</button>
                         <button 
@@ -866,7 +866,7 @@ export default function TeacherAttendanceClient({
                           onClick={() => setLeaveData({ ...leaveData, type: 'half' })}
                           className={cn(
                             "h-10 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
-                            leaveData.type === 'half' ? "bg-white text-violet-600 shadow-sm" : "text-zinc-500"
+                            leaveData.type === 'half' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400"
                           )}
                         >Half Day</button>
                     </div>
@@ -880,7 +880,7 @@ export default function TeacherAttendanceClient({
                           required
                           value={leaveData.startDate}
                           onChange={e => setLeaveData({ ...leaveData, startDate: e.target.value })}
-                          className="w-full h-12 bg-zinc-50 border border-zinc-100 rounded-2xl px-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
+                          className="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800/50 rounded-2xl px-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
                         />
                     </div>
 
@@ -892,7 +892,7 @@ export default function TeacherAttendanceClient({
                             required
                             value={leaveData.endDate}
                             onChange={e => setLeaveData({ ...leaveData, endDate: e.target.value })}
-                            className="w-full h-12 bg-zinc-50 border border-zinc-100 rounded-2xl px-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
+                            className="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800/50 rounded-2xl px-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
                           />
                       </div>
                     )}
@@ -904,7 +904,7 @@ export default function TeacherAttendanceClient({
                           placeholder="Explain your reason..."
                           value={leaveData.reason}
                           onChange={e => setLeaveData({ ...leaveData, reason: e.target.value })}
-                          className="w-full h-24 bg-zinc-50 border border-zinc-100 rounded-2xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all resize-none"
+                          className="w-full h-24 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800/50 rounded-2xl p-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all resize-none"
                         />
                     </div>
 
@@ -926,7 +926,7 @@ export default function TeacherAttendanceClient({
       <canvas ref={canvasRef} className="hidden" />
 
       {/* --- FIXED BOTTOM NAVIGATION --- */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-zinc-100 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900/80 backdrop-blur-xl border-t border-zinc-100 dark:border-zinc-800/50 z-50">
         <nav className="flex justify-around items-center px-4 h-16">
           {[
             { id: 'history', label: 'Log', icon: HistoryIcon },

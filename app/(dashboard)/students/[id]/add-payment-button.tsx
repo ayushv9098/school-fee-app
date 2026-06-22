@@ -123,14 +123,14 @@ export default function AddPaymentButton({
       {/* Modal */}
       {open && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-zinc-100">
+            <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-800/50">
               <div>
-                <h2 className="text-base font-semibold text-zinc-900">
+                <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                   Add Payment
                 </h2>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   Remaining: {formatCurrency(remainingFee)}
                 </p>
               </div>
@@ -140,9 +140,9 @@ export default function AddPaymentButton({
                   setOpen(false)
                   setError('')
                 }}
-                className="p-1.5 rounded-lg hover:bg-zinc-100 transition"
+                className="p-1.5 rounded-lg hover:bg-zinc-100 dark:bg-zinc-800 transition"
               >
-                <X className="w-4 h-4 text-zinc-500" />
+                <X className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
               </button>
             </div>
 
@@ -173,7 +173,7 @@ export default function AddPaymentButton({
                 <select
                   value={feeFor}
                   onChange={(e) => setFeeFor(e.target.value)}
-                  className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                 >
                   <option value="Current Month">Current Month</option>
                   <option value="Previous Dues">Previous Dues</option>
@@ -212,7 +212,7 @@ export default function AddPaymentButton({
                 <select
                   value={mode}
                   onChange={(e) => setMode(e.target.value)}
-                  className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                 >
                   {PAYMENT_MODES.map((m) => (
                     <option key={m} value={m}>
@@ -248,7 +248,7 @@ export default function AddPaymentButton({
                     setOpen(false)
                     setError('')
                   }}
-                  className="flex-1 h-11 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
+                  className="flex-1 h-11 rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-950 transition"
                 >
                   Cancel
                 </button>

@@ -20,10 +20,13 @@ export default async function StudentDetailPage({
   const { id } = await params
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { data: student } = await supabase
     .from('student_fee_summary')
     .select('*')
     .eq('id', id)
+    .eq('user_id', user?.id)
     .single()
 
   const { data: payments } = await supabase
@@ -48,18 +51,18 @@ export default async function StudentDetailPage({
       {/* Header & Main Actions */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/students" className="p-2 rounded-xl hover:bg-zinc-100 transition">
-            <ArrowLeft className="w-5 h-5 text-zinc-600" />
+          <Link href="/students" className="p-2 rounded-xl hover:bg-zinc-100 dark:bg-zinc-800 transition">
+            <ArrowLeft className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
           </Link>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg font-bold text-zinc-900">{student.name}</h1>
+              <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{student.name}</h1>
               <Badge variant={paymentStatus}>{paymentStatus}</Badge>
               {student.status !== 'active' && (
                 <Badge variant="outline" className="capitalize">{student.status}</Badge>
               )}
             </div>
-            <p className="text-sm text-zinc-500 font-medium">{student.class} • {student.mobile || 'No mobile'}</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">{student.class} • {student.mobile || 'No mobile'}</p>
           </div>
         </div>
         
@@ -80,20 +83,20 @@ export default async function StudentDetailPage({
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-5">
-            <p className="text-sm text-zinc-500 mb-1">Current Fee</p>
-            <p className="text-xl font-bold text-zinc-900">{formatCurrency(student.total_fee)}</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">Current Fee</p>
+            <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(student.total_fee)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
-            <p className="text-sm text-zinc-500 mb-1">Previous Dues</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">Previous Dues</p>
             <p className="text-xl font-bold text-amber-600">{formatCurrency(student.previous_dues)}</p>
           </CardContent>
         </Card>
         <PaidCard totalPaid={student.total_paid} remainingFee={student.remaining_fee} />
         <Card>
           <CardContent className="p-5">
-            <p className="text-sm text-zinc-500 mb-1">Remaining</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1">Remaining</p>
             <p className={`text-xl font-bold ${student.remaining_fee > 0 ? 'text-red-500' : 'text-zinc-400'}`}>
               {formatCurrency(student.remaining_fee)}
             </p>
@@ -105,8 +108,8 @@ export default async function StudentDetailPage({
       <Card>
         <CardContent className="p-5 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-zinc-500">Overall Payment Progress (Total: {formatCurrency(totalPayable)})</span>
-            <span className="font-medium text-zinc-900">{percent}%</span>
+            <span className="text-zinc-500 dark:text-zinc-400">Overall Payment Progress (Total: {formatCurrency(totalPayable)})</span>
+            <span className="font-medium text-zinc-900 dark:text-zinc-100">{percent}%</span>
           </div>
           <Progress value={percent} />
         </CardContent>
@@ -120,20 +123,20 @@ export default async function StudentDetailPage({
         <CardContent className="p-5 pt-0">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-zinc-500">Guardian</p>
-              <p className="font-medium text-zinc-900">{student.guardian_name || '-'}</p>
+              <p className="text-zinc-500 dark:text-zinc-400">Guardian</p>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{student.guardian_name || '-'}</p>
             </div>
             <div>
-              <p className="text-zinc-500">Academic Year</p>
-              <p className="font-medium text-zinc-900">{student.academic_year || '-'}</p>
+              <p className="text-zinc-500 dark:text-zinc-400">Academic Year</p>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{student.academic_year || '-'}</p>
             </div>
             <div>
-              <p className="text-zinc-500">Diary Page Number</p>
-              <p className="font-medium text-zinc-900">{student.diary_page_number || '-'}</p>
+              <p className="text-zinc-500 dark:text-zinc-400">Diary Page Number</p>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{student.diary_page_number || '-'}</p>
             </div>
             <div className="sm:col-span-2">
-              <p className="text-zinc-500">Address</p>
-              <p className="font-medium text-zinc-900">{student.address || '-'}</p>
+              <p className="text-zinc-500 dark:text-zinc-400">Address</p>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">{student.address || '-'}</p>
             </div>
           </div>
         </CardContent>
@@ -143,6 +146,7 @@ export default async function StudentDetailPage({
       studentName={student.name}
       fatherName={student.guardian_name}
       className={student.class}
+      session={student.academic_year}
       amountPaid={student.total_paid}
       totalFees={student.total_fee}
       previousDues={student.previous_dues}
@@ -163,23 +167,23 @@ export default async function StudentDetailPage({
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100">
-                    <th className="text-left py-2 pr-4 text-zinc-500 font-medium whitespace-nowrap">Date</th>
-                    <th className="text-left py-2 pr-4 text-zinc-500 font-medium whitespace-nowrap">Amount</th>
-                    <th className="text-left py-2 pr-4 text-zinc-500 font-medium whitespace-nowrap">Mode</th>
-                    <th className="text-left py-2 text-zinc-500 font-medium">Note</th>
+                  <tr className="border-b border-zinc-100 dark:border-zinc-800/50">
+                    <th className="text-left py-2 pr-4 text-zinc-500 dark:text-zinc-400 font-medium whitespace-nowrap">Date</th>
+                    <th className="text-left py-2 pr-4 text-zinc-500 dark:text-zinc-400 font-medium whitespace-nowrap">Amount</th>
+                    <th className="text-left py-2 pr-4 text-zinc-500 dark:text-zinc-400 font-medium whitespace-nowrap">Mode</th>
+                    <th className="text-left py-2 text-zinc-500 dark:text-zinc-400 font-medium">Note</th>
                   </tr>
                 </thead>
                 <tbody>
                   {payments?.map(p => (
                     <tr key={p.id} className="border-b border-zinc-50">
-                      <td className="py-3 pr-4 text-zinc-600 whitespace-nowrap">
+                      <td className="py-3 pr-4 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
                         {dayjs(p.paid_at).format('DD MMM YYYY')}
                       </td>
                       <td className="py-3 pr-4 font-medium text-green-600 whitespace-nowrap">
                         {formatCurrency(p.amount)}
                       </td>
-                      <td className="py-3 pr-4 text-zinc-600 whitespace-nowrap capitalize">{p.mode}</td>
+                      <td className="py-3 pr-4 text-zinc-600 dark:text-zinc-400 whitespace-nowrap capitalize">{p.mode}</td>
                       <td className="py-3 text-zinc-400 min-w-[150px]">{p.note || '-'}</td>
                     </tr>
                   ))}

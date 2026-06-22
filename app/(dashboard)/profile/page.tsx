@@ -13,7 +13,7 @@ import { ContactPicker } from '@/components/contact-picker'
 
 const LiveMap = dynamic(() => import('@/components/live-map'), { 
   ssr: false,
-  loading: () => <div className="h-full w-full bg-zinc-100 animate-pulse flex items-center justify-center text-xs text-zinc-400">Initializing Map...</div>
+  loading: () => <div className="h-full w-full bg-zinc-100 dark:bg-zinc-800 animate-pulse flex items-center justify-center text-xs text-zinc-400">Initializing Map...</div>
 })
 
 export default function ProfilePage() {
@@ -128,8 +128,8 @@ export default function ProfilePage() {
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5">
 
       <div>
-        <h1 className="text-lg font-semibold text-zinc-900">Profile</h1>
-        <p className="text-sm text-zinc-500">Your account & school information</p>
+        <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Profile</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Your account & school information</p>
       </div>
 
       {/* School Settings Card */}
@@ -203,7 +203,7 @@ export default function ProfilePage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">School Entry Time</Label>
+              <Label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">School Entry Time</Label>
               <Input
                 type="time"
                 value={school.school_start_time}
@@ -213,7 +213,7 @@ export default function ProfilePage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">School Exit Time</Label>
+              <Label className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">School Exit Time</Label>
               <Input
                 type="time"
                 value={school.school_end_time}
@@ -228,7 +228,7 @@ export default function ProfilePage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setEditing(false)}
-                className="flex-1 h-11 flex items-center justify-center rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
+                className="flex-1 h-11 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-950 transition"
               >
                 Cancel
               </button>
@@ -289,19 +289,19 @@ export default function ProfilePage() {
           
           <div className="space-y-2">
             <p className="text-sm font-medium text-zinc-800">Attendance Location Setup:</p>
-            <p className="text-[11px] text-zinc-500 leading-relaxed">
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
               Click <b>"Auto-Detect"</b> while you are at school, or <b>enter coordinates</b> manually from Google Maps.
             </p>
           </div>
 
-          <div className="bg-white rounded-xl p-4 border border-zinc-200 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${school.lat ? 'bg-violet-100 text-violet-600' : 'bg-zinc-100 text-zinc-400'}`}>
+                <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${school.lat ? 'bg-violet-100 text-violet-600' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'}`}>
                   <Navigation className={`w-5 h-5 ${locationLoading ? 'animate-spin' : ''}`} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-bold text-zinc-900 mb-2">GPS Coordinates</p>
+                  <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mb-2">GPS Coordinates</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label className="text-[9px] text-zinc-400 font-bold uppercase">Latitude</Label>
@@ -340,11 +340,11 @@ export default function ProfilePage() {
               </button>
             </div>
 
-            <div className="pt-2 border-t border-zinc-100 space-y-3">
+            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/50 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-xs font-bold text-zinc-900">Allowed Attendance Range</Label>
-                  <p className="text-[10px] text-zinc-500">How far can teachers be from school?</p>
+                  <Label className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Allowed Attendance Range</Label>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400">How far can teachers be from school?</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
@@ -357,7 +357,7 @@ export default function ProfilePage() {
                     className="h-9 text-xs w-20 text-center font-bold"
                     disabled={!locationEditing}
                   />
-                  <span className="text-xs font-medium text-zinc-500">meters</span>
+                  <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">meters</span>
                 </div>
               </div>
 
@@ -372,7 +372,7 @@ export default function ProfilePage() {
                     className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition border ${
                       school.radius === m 
                         ? 'bg-violet-600 text-white border-violet-600' 
-                        : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
+                        : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:bg-zinc-950'
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {m === 1000 ? '1 KM' : `${m} Meters`}
@@ -380,7 +380,7 @@ export default function ProfilePage() {
                 ))}
               </div>
 
-              <p className="text-[11px] leading-relaxed text-zinc-500 bg-zinc-50 p-2 rounded-lg border border-dashed border-zinc-200">
+              <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800">
                 Teachers must be within <strong>{school.radius} meters</strong> from the GPS center to mark attendance. 
                 If your school building is large, select <strong>200</strong> or <strong>500</strong>.
               </p>
@@ -389,11 +389,11 @@ export default function ProfilePage() {
 
           {school.lat && school.lng && (
             <div className="space-y-2">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-tight flex items-center gap-1.5">
+              <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-tight flex items-center gap-1.5">
                 <MapIcon className="w-3 h-3 text-violet-600" />
                 Live School Map & Teacher Tracking
               </p>
-              <div className="h-80 w-full bg-zinc-100 rounded-xl overflow-hidden border border-zinc-200 relative group shadow-inner">
+              <div className="h-80 w-full bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 relative group shadow-inner">
                 <LiveMap 
                   schoolLat={school.lat} 
                   schoolLng={school.lng} 
@@ -410,7 +410,7 @@ export default function ProfilePage() {
                   setEditing(false)
                   setLocationEditing(false)
                 }}
-                className="flex-1 h-12 flex items-center justify-center rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
+                className="flex-1 h-12 flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-950 transition"
               >
                 Cancel
               </button>
@@ -437,15 +437,15 @@ export default function ProfilePage() {
         <CardContent className="p-5 pt-0 space-y-4">
           <div className="space-y-1.5">
             <Label>Email</Label>
-            <div className="flex items-center gap-3 h-11 px-3 rounded-lg border border-zinc-200 bg-zinc-50">
+            <div className="flex items-center gap-3 h-11 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
               <Mail className="w-4 h-4 text-zinc-400" />
-              <span className="text-sm text-zinc-700">{user?.email || '...'}</span>
+              <span className="text-sm text-zinc-700 dark:text-zinc-300">{user?.email || '...'}</span>
             </div>
           </div>
           <div className="space-y-1.5">
             <Label>Member Since</Label>
-            <div className="flex items-center gap-3 h-11 px-3 rounded-lg border border-zinc-200 bg-zinc-50">
-              <span className="text-sm text-zinc-700">
+            <div className="flex items-center gap-3 h-11 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+              <span className="text-sm text-zinc-700 dark:text-zinc-300">
                 {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-IN', {
                   day: 'numeric', month: 'long', year: 'numeric'
                 }) : '...'}
@@ -473,8 +473,8 @@ export default function ProfilePage() {
         <CardContent className="p-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <p className="font-medium text-zinc-900">Sign Out</p>
-              <p className="text-sm text-zinc-500">Sign out of your account</p>
+              <p className="font-medium text-zinc-900 dark:text-zinc-100">Sign Out</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Sign out of your account</p>
             </div>
             {!showConfirm ? (
               <button
@@ -488,7 +488,7 @@ export default function ProfilePage() {
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => setShowConfirm(false)}
-                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
+                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-950 transition"
                 >
                   Cancel
                 </button>

@@ -85,7 +85,7 @@ export default function EmailPreviewModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-3 sm:p-4 md:p-6">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between flex-shrink-0">
@@ -95,7 +95,7 @@ export default function EmailPreviewModal({
           </div>
           <button 
             onClick={onClose}
-            className="text-white/80 hover:text-white hover:bg-white/20 rounded-lg p-1.5 sm:p-2 transition-colors"
+            className="text-white/80 hover:text-white hover:bg-white dark:bg-zinc-900/20 rounded-lg p-1.5 sm:p-2 transition-colors"
           >
             <X size={18} className="sm:w-5 sm:h-5" />
           </button>
@@ -126,23 +126,23 @@ export default function EmailPreviewModal({
           )}
 
           {/* Email Meta */}
-          <div className="bg-zinc-50 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3 border border-zinc-200">
+          <div className="bg-zinc-50 dark:bg-zinc-950 rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3 border border-zinc-200 dark:border-zinc-800">
             <div className="flex flex-col xs:flex-row xs:items-start gap-1 xs:gap-2">
-              <span className="font-semibold text-zinc-600 min-w-[50px] text-xs sm:text-sm">To:</span>
-              <span className={`break-all text-xs sm:text-sm font-mono ${hasRealEmail ? 'text-zinc-900' : 'text-orange-600 italic'}`}>
+              <span className="font-semibold text-zinc-600 dark:text-zinc-400 min-w-[50px] text-xs sm:text-sm">To:</span>
+              <span className={`break-all text-xs sm:text-sm font-mono ${hasRealEmail ? 'text-zinc-900 dark:text-zinc-100' : 'text-orange-600 italic'}`}>
                 {hasRealEmail ? emailData.to : manualEmail || 'Not provided'}
               </span>
             </div>
             <div className="flex flex-col xs:flex-row xs:items-start gap-1 xs:gap-2">
-              <span className="font-semibold text-zinc-600 min-w-[50px] text-xs sm:text-sm">Subject:</span>
-              <span className="text-zinc-900 break-all text-xs sm:text-sm">
+              <span className="font-semibold text-zinc-600 dark:text-zinc-400 min-w-[50px] text-xs sm:text-sm">Subject:</span>
+              <span className="text-zinc-900 dark:text-zinc-100 break-all text-xs sm:text-sm">
                 ⚠️ Fee Payment Reminder - ₹{emailData.remainingFee.toLocaleString('en-IN')} Pending
               </span>
             </div>
           </div>
 
           {/* Email Preview Card */}
-          <div className="border border-zinc-300 rounded-lg overflow-hidden shadow-sm">
+          <div className="border border-zinc-300 dark:border-zinc-700 rounded-lg overflow-hidden shadow-sm">
             
             {/* Header */}
             <div className="bg-gradient-to-r from-violet-600 to-purple-600 text-white p-6 sm:p-8 text-center">
@@ -151,31 +151,31 @@ export default function EmailPreviewModal({
             </div>
 
             {/* Body */}
-            <div className="bg-zinc-50 p-4 sm:p-6 space-y-3 sm:space-y-4">
+            <div className="bg-zinc-50 dark:bg-zinc-950 p-4 sm:p-6 space-y-3 sm:space-y-4">
               
-              <p className="text-zinc-700 leading-relaxed text-xs sm:text-base">Dear Parent/Guardian,</p>
+              <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed text-xs sm:text-base">Dear Parent/Guardian,</p>
               
-              <p className="text-zinc-600 leading-relaxed text-xs sm:text-base">
+              <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed text-xs sm:text-base">
                 We hope this message finds you well. This is a friendly reminder regarding the pending fee payment.
               </p>
 
               {/* Student Info */}
-              <div className="bg-white p-4 sm:p-5 rounded-lg border-2 border-violet-200 shadow-sm">
+              <div className="bg-white dark:bg-zinc-900 p-4 sm:p-5 rounded-lg border-2 border-violet-200 shadow-sm">
                 <h3 className="font-bold text-violet-800 mb-2 sm:mb-3 text-sm sm:text-lg flex items-center gap-2">
                   👨‍🎓 Student Details
                 </h3>
                 <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
-                  <div className="flex justify-between py-1 border-b border-zinc-100">
-                    <span className="text-zinc-600">Student Name:</span>
-                    <span className="font-semibold text-zinc-900">{emailData.studentName}</span>
+                  <div className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-800/50">
+                    <span className="text-zinc-600 dark:text-zinc-400">Student Name:</span>
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">{emailData.studentName}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-zinc-100">
-                    <span className="text-zinc-600">Class:</span>
-                    <span className="font-semibold text-zinc-900">{emailData.className}</span>
+                  <div className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-800/50">
+                    <span className="text-zinc-600 dark:text-zinc-400">Class:</span>
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">{emailData.className}</span>
                   </div>
                   {percentage > 0 && (
                     <div className="flex justify-between py-1">
-                      <span className="text-zinc-600">Pending:</span>
+                      <span className="text-zinc-600 dark:text-zinc-400">Pending:</span>
                       <span className="font-semibold text-red-600">{percentage}%</span>
                     </div>
                   )}
@@ -204,17 +204,17 @@ export default function EmailPreviewModal({
                 </span>
               </div>
 
-              <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed bg-yellow-50 p-2.5 sm:p-3 rounded border-l-4 border-yellow-400">
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed bg-yellow-50 p-2.5 sm:p-3 rounded border-l-4 border-yellow-400">
                 ⚠️ Please clear the dues at your earliest convenience.
               </p>
             </div>
 
             {/* Footer */}
-            <div className="bg-zinc-100 p-4 sm:p-5 text-center border-t border-zinc-200">
+            <div className="bg-zinc-100 dark:bg-zinc-800 p-4 sm:p-5 text-center border-t border-zinc-200 dark:border-zinc-800">
               <p className="font-bold text-zinc-800 text-sm sm:text-base">
                 {emailData.schoolName || 'Ayushman Educational Academy'}
               </p>
-              <p className="text-xs text-zinc-500 mt-1 sm:mt-2">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 sm:mt-2">
                 This is an automated message. Please do not reply.
               </p>
             </div>
@@ -259,11 +259,11 @@ export default function EmailPreviewModal({
         </div>
 
         {/* Footer Buttons */}
-        <div className="border-t border-zinc-200 px-4 sm:px-6 py-3 sm:py-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 bg-zinc-50 flex-shrink-0">
+        <div className="border-t border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 py-3 sm:py-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 bg-zinc-50 dark:bg-zinc-950 flex-shrink-0">
           <button
             onClick={onClose}
             disabled={isSending}
-            className="w-full sm:w-auto px-5 py-2.5 text-zinc-700 hover:bg-zinc-200 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm sm:text-base order-2 sm:order-1"
+            className="w-full sm:w-auto px-5 py-2.5 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm sm:text-base order-2 sm:order-1"
           >
             Cancel
           </button>

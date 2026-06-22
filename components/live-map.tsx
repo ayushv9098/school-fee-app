@@ -204,8 +204,8 @@ export default function LiveMap({
             >
               <Popup>
                 <div className="p-1">
-                  <p className="text-xs font-bold text-zinc-900">{teacher.name}</p>
-                  <p className="text-[10px] text-zinc-500">
+                  <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{teacher.name}</p>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
                     {isInside ? '🟢 Inside School' : '🔴 Outside Range'}
                   </p>
                   <p className="text-[9px] text-zinc-400 mt-1">
@@ -219,7 +219,7 @@ export default function LiveMap({
       </MapContainer>
       
       {loading && (
-        <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-[1000] flex items-center justify-center">
+        <div className="absolute inset-0 bg-white dark:bg-zinc-900/50 backdrop-blur-[2px] z-[1000] flex items-center justify-center">
           <div className="flex flex-col items-center gap-2">
             <div className="w-6 h-6 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
             <p className="text-[10px] font-bold text-violet-600">Loading map...</p>
@@ -228,14 +228,14 @@ export default function LiveMap({
       )}
 
       {/* Legend */}
-      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur p-2 rounded-lg border border-zinc-200 shadow-sm z-[1000] space-y-1.5">
+      <div className="absolute bottom-2 right-2 bg-white dark:bg-zinc-900/90 backdrop-blur p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm z-[1000] space-y-1.5">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-[#22c55e] border border-white" />
-          <span className="text-[9px] font-bold text-zinc-600">In School</span>
+          <span className="text-[9px] font-bold text-zinc-600 dark:text-zinc-400">In School</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-[#ef4444] border border-white" />
-          <span className="text-[9px] font-bold text-zinc-600">Outside</span>
+          <span className="text-[9px] font-bold text-zinc-600 dark:text-zinc-400">Outside</span>
         </div>
       </div>
     </div>

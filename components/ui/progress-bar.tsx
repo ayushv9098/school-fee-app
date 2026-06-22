@@ -88,7 +88,7 @@ function ProgressBarInner() {
   return (
     <>
       {isNavigating && (
-        <div className="fixed inset-0 bg-white/5 backdrop-blur-[1px] z-[9998] pointer-events-none transition-opacity duration-200 animate-in fade-in" />
+        <div className="fixed inset-0 bg-white dark:bg-zinc-900/5 backdrop-blur-[1px] z-[9998] pointer-events-none transition-opacity duration-200 animate-in fade-in" />
       )}
     </>
   )
