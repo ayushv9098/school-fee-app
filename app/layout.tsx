@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     description: 'Smart Fee Management & Attendance System for Ayushman Educational Academy, Semli Bari.',
   },
   verification: {
-    google: '43kBf7wbRNbMvj2iP62Do7dbpMRbGuggmzAbBNK5SwM',
+    google: '0JHKfwWhqYVUvuV0cvGJ4vqVoRJkI5JvK3qD2OE4PoM',
   },
   category: 'education',
 }
