@@ -85,43 +85,7 @@ export default function DashboardPage() {
 
   const mask = '₹ ••••••'
 
-  if (loading) {
-    return (
-      <div className="p-4 md:p-6 space-y-6 animate-pulse">
-        {/* Header Skeleton */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="h-6 w-32 bg-zinc-200 dark:bg-zinc-800 rounded-md mb-2"></div>
-            <div className="h-4 w-48 bg-zinc-100 dark:bg-zinc-800/50 rounded-md"></div>
-          </div>
-          <div className="h-9 w-24 bg-zinc-200 dark:bg-zinc-800 rounded-xl"></div>
-        </div>
-        
-        {/* Stats Cards Skeleton */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
-          {[...Array(5)].map((_, i) => (
-             <div key={i} className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 h-28 ${i === 4 ? 'col-span-2 sm:col-span-1 lg:col-span-1' : ''}`}>
-               <div className="flex justify-between mb-4">
-                  <div className="h-4 w-16 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
-                  <div className="h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg"></div>
-               </div>
-               <div className="h-6 w-24 bg-zinc-200 dark:bg-zinc-700 rounded"></div>
-            </div>
-          ))}
-        </div>
 
-        {/* Big Section Skeleton */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 h-64 mt-6">
-           <div className="h-6 w-40 bg-zinc-200 dark:bg-zinc-800 rounded mb-6"></div>
-           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[...Array(3)].map((_, i) => (
-                 <div key={i} className="h-32 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl"></div>
-              ))}
-           </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -232,7 +196,7 @@ export default function DashboardPage() {
       <CollapsibleSection 
         title="Class-wise Overview"
         icon={<BarChart3 size={20} />}
-        defaultOpen={true}
+        defaultOpen={false}
       >
         {classStats.length === 0 ? (
           <div className="p-8 text-center">
