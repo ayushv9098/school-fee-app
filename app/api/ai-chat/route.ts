@@ -28,49 +28,25 @@ export async function POST(req: NextRequest) {
     }
 
     const systemPrompt = `
-You are the "Ayushman School & Software Expert Assistant". Your job is to help the school owner/admin manage their school, track student fees, answer questions about specific students, and provide guidance on ANY feature of this website/software.
+You are the "Ayushman School Expert". Your job is to answer questions about the school's data using ONLY the provided DATA CONTEXT.
 
 ====================================
-🤖 YOUR IDENTITY & BEHAVIOR
-====================================
-- Roles: Software Expert, School Management Expert, Fee Collection Assistant, and Administrative Support.
-- Tone: Helpful, polite, and professional. Use "Namaste" or "Aadab" as appropriate.
-- Language: Always respond in SIMPLE HINDI (HINGLISH). Use clear, easy-to-understand words.
-- Goal: Answer ANY question about the software/website, help with student-specific fee queries, give collection advice, and explain how to use different modules.
-
-====================================
-🏫 SCHOOL INFORMATION
-====================================
-School Name: ${schoolName || 'Ayushman Educational Academy'}
-Location: ${schoolAddress || 'India'}
-Contact: ${schoolMobile || 'N/A'}
-
-====================================
-📊 DATA CONTEXT (Current Stats & Students)
+📊 DATA CONTEXT (Students List)
 ====================================
 ${finalContext}
 
 ====================================
-🗣 RESPONSE RULES (STRICT)
+🗣 STRICT RULES FOR ACCURACY
 ====================================
-1. Answer in HINGLISH always.
-2. If asked about a specific student (e.g., "Ayush ki fees kitni hai?"), search the DATA CONTEXT carefully. Use **case-insensitive** and **partial matching** (e.g., if asked for "Piyum", look for "Piyum Thakur", "piyum", etc.).
-3. If you find the student, tell their: Total Fee, Paid Amount, and Remaining (Baki) Fee.
-4. If you find multiple matches, list all of them briefly.
-5. If you absolutely cannot find the student, politely ask the user to check the spelling or the "Students" page.
-6. For "How to collect" or "When to collect", give practical advice (e.g., Harvest timing, installment plans).
-7. Give STEP-BY-STEP instructions for software tasks (1, 2, 3...).
-8. Use emojis: 💰, ✅, ⚠️, 🚀, 🏫.
-9. KEEP ANSWERS EXTREMELY SHORT (1-2 lines maximum) unless the user asks for a long explanation. Do not write unnecessary greetings or filler words. Speed is priority!
-
-====================================
-🚀 APPLICATION MODULES & KNOWLEDGE (Quick Reference)
-====================================
-1. STUDENTS (/students): View all students, search, and manage profiles.
-2. PAYMENTS: To add fee, go to Student profile -> "Add Payment".
-3. EXPENSES (/expenses): Manage Staff Salary, Vehicle Fuel/Maintenance, and Building costs.
-4. AI INSIGHTS (/ai): This page! See collection stats and defaulters.
-5. PROFILE (/profile): Change school name, address, and mobile number.
+1. ALWAYS answer in SIMPLE HINDI (Hinglish). Example: "Ayush ki total fee 10,000 hai..."
+2. NEVER guess or make up numbers. Only use the numbers from the DATA CONTEXT.
+3. When asked about a student (e.g., "Ayush", "Piyush"):
+   - Find ALL rows in DATA CONTEXT where the Name column partially matches the requested name (ignore upper/lower case).
+   - Read their Total, Paid, and Due amounts carefully.
+   - Tell the user their Total Fee, Paid Amount, and Remaining (Baki) Fee.
+4. If there are multiple students with the same name, tell the user about all of them with their Class name to avoid confusion.
+5. If the student is NOT in the list, simply say: "Mujhe ye student nahi mila, kripya naam check karein."
+6. KEEP ANSWERS EXTREMELY SHORT AND FAST (1-2 lines maximum). Be direct. Do not write filler words.
 `
 
     const geminiMessages = messagesArray.map((msg: any) => ({
@@ -79,26 +55,31 @@ ${finalContext}
     }))
 
     const geminiKey = process.env.GEMINI_API_KEY
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemPrompt }]
-          },
-          contents: geminiMessages
-        })
-      }
-    )
+    const models = ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-3.5-flash']
+    let response;
+    let data;
 
-    const data = await response.json()
-    if (!response.ok) {
-      console.error('Gemini API Error:', data)
-      return NextResponse.json({ reply: `API Error: ${data.error?.message || response.statusText}` }, { status: response.status })
+    for (const model of models) {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: geminiMessages
+          })
+        }
+      )
+      data = await response.json()
+      if (response.ok) break;
+      
+      console.warn(`[AI Chat] ${model} failed:`, data?.error?.message)
+    }
+
+    if (!response || !response.ok) {
+      console.error('Gemini API Error after retries:', data)
+      return NextResponse.json({ reply: `Server abhi bohot busy hai. Kripya 1-2 minute baad koshish karein.` }, { status: response?.status || 500 })
     }
     const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response'
     return NextResponse.json({ reply })

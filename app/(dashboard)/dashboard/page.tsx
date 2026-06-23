@@ -98,9 +98,9 @@ export default function DashboardPage() {
         </div>
         
         {/* Stats Cards Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 h-28">
+             <div key={i} className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 h-28 ${i === 4 ? 'col-span-2 sm:col-span-1 lg:col-span-1' : ''}`}>
                <div className="flex justify-between mb-4">
                   <div className="h-4 w-16 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
                   <div className="h-8 w-8 bg-zinc-100 dark:bg-zinc-800 rounded-lg"></div>
@@ -152,75 +152,75 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
         <Link href="/students">
-          <Card className="hover:shadow-md transition cursor-pointer">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">Total Students</span>
-                <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-4 h-4 text-violet-600" />
+          <Card className="hover:shadow-md transition cursor-pointer h-full">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start sm:items-center justify-between mb-2 sm:mb-3">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400 truncate pr-1">Total Students</span>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 bg-violet-100 rounded-lg flex items-center justify-center">
+                  <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-violet-600" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalStudents}</p>
+              <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 truncate">{totalStudents}</p>
             </CardContent>
           </Card>
         </Link>
 
-        <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">Total Fees</span>
-              <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <IndianRupee className="w-4 h-4 text-indigo-600" />
+        <Card className="h-full">
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex items-start sm:items-center justify-between mb-2 sm:mb-3">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400 truncate pr-1">Total Fees</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <IndianRupee className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <p className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 truncate">
               {hidden ? mask : formatCurrency(totalFees)}
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">Collected</span>
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-green-600" />
+        <Card className="h-full">
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex items-start sm:items-center justify-between mb-2 sm:mb-3">
+              <span className="text-sm text-zinc-500 dark:text-zinc-400 truncate pr-1">Collected</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 bg-green-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-xl sm:text-2xl font-bold text-green-600 truncate">
               {hidden ? mask : formatCurrency(totalCollected)}
             </p>
           </CardContent>
         </Card>
 
         <Link href="/students?status=partial">
-          <Card className="hover:shadow-md transition cursor-pointer">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">Pending</span>
-                <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-4 h-4 text-red-600" />
+          <Card className="hover:shadow-md transition cursor-pointer h-full">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start sm:items-center justify-between mb-2 sm:mb-3">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400 truncate pr-1">Pending</span>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 bg-red-100 rounded-lg flex items-center justify-center">
+                  <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-xl sm:text-2xl font-bold text-red-600 truncate">
                 {hidden ? mask : formatCurrency(totalPending)}
               </p>
             </CardContent>
           </Card>
         </Link>
 
-        <Link href="/expenses">
-          <Card className={`hover:shadow-md transition cursor-pointer ${netProfit >= 0 ? 'border-green-100' : 'border-red-100'}`}>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">Net Profit</span>
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                  <Wallet className={`w-4 h-4 ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+        <Link href="/expenses" className="col-span-2 sm:col-span-1 lg:col-span-1">
+          <Card className={`hover:shadow-md transition cursor-pointer h-full ${netProfit >= 0 ? 'border-green-100' : 'border-red-100'}`}>
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start sm:items-center justify-between mb-2 sm:mb-3">
+                <span className="text-sm text-zinc-500 dark:text-zinc-400 truncate pr-1">Net Profit</span>
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-lg flex items-center justify-center ${netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+                  <Wallet className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`} />
                 </div>
               </div>
-              <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className={`text-xl sm:text-2xl font-bold truncate ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {hidden ? mask : formatCurrency(netProfit)}
               </p>
             </CardContent>

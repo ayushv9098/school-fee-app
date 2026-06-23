@@ -70,12 +70,12 @@ useEffect(() => {
     <>
       {/* Floating Button */}
       <button
-        onClick={() => isSubscribed ? setOpen(true) : router.push('/ai')}
+        onClick={() => isSubscribed ? setOpen(true) : router.push('/ai#ai-chat-section')}
         className={cn(
-          "fixed bottom-6 right-6 z-40 w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 border-2 border-white/20",
+          "fixed bottom-6 right-6 z-40 w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 border border-white/20 dark:border-white/10",
           isSubscribed 
-            ? "bg-gradient-to-br from-violet-500 to-violet-700 shadow-violet-500/20" 
-            : "bg-gradient-to-br from-zinc-600 to-zinc-800 shadow-black/20"
+            ? "bg-violet-600/70 backdrop-blur-md shadow-violet-500/20 hover:bg-violet-600/90" 
+            : "bg-zinc-600/70 backdrop-blur-md shadow-black/20 hover:bg-zinc-600/90"
         )}
       >
         {isSubscribed ? (
@@ -103,7 +103,10 @@ useEffect(() => {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => router.push('/ai')}
+                onClick={() => {
+                  setOpen(false)
+                  router.push('/ai#ai-chat-section')
+                }}
                 className="text-violet-200 hover:text-white text-xs transition"
               >
                 Full Page →

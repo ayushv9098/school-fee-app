@@ -43,6 +43,14 @@ export default function AIPage() {
     fetchData()
   }, [academicYear])
 
+  useEffect(() => {
+    if (!loading && typeof window !== 'undefined' && window.location.hash === '#ai-chat-section') {
+      setTimeout(() => {
+        document.getElementById('ai-chat-section')?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+    }
+  }, [loading])
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -226,23 +234,25 @@ export default function AIPage() {
         </div>
       </CollapsibleSection>
 
-      <AIChat
-        totalStudents={totalStudents}
-        totalFees={totalFees}
-        totalCollected={totalCollected}
-        totalPending={totalPending}
-        collectionRate={collectionRate}
-        paidStudents={paidStudents}
-        unpaidStudents={unpaidStudents}
-        partialStudents={partialStudents}
-        classStats={classStats}
-        defaulters={defaulters}
-        students={students}
-        isSubscribed={isSubscribed}
-        schoolName={schoolSettings?.school_name || 'My School'}
-        schoolAddress={schoolSettings?.address || ''}
-        schoolMobile={schoolSettings?.mobile || ''}
-      />
+      <div id="ai-chat-section">
+        <AIChat
+          totalStudents={totalStudents}
+          totalFees={totalFees}
+          totalCollected={totalCollected}
+          totalPending={totalPending}
+          collectionRate={collectionRate}
+          paidStudents={paidStudents}
+          unpaidStudents={unpaidStudents}
+          partialStudents={partialStudents}
+          classStats={classStats}
+          defaulters={defaulters}
+          students={students}
+          isSubscribed={isSubscribed}
+          schoolName={schoolSettings?.school_name || 'My School'}
+          schoolAddress={schoolSettings?.address || ''}
+          schoolMobile={schoolSettings?.mobile || ''}
+        />
+      </div>
     </div>
   )
 }
