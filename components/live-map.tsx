@@ -10,7 +10,16 @@ import { createClient } from '@/lib/supabase/client'
 function ChangeView({ center, zoom }: { center: [number, number], zoom: number }) {
   const map = useMap()
   useEffect(() => {
-    map.setView(center, zoom)
+    // Small delay to ensure the map container is fully in the DOM (needed inside portals)
+    const timer = setTimeout(() => {
+      try {
+        map.invalidateSize()
+        map.setView(center, zoom)
+      } catch (e) {
+        // Map not ready yet, ignore
+      }
+    }, 100)
+    return () => clearTimeout(timer)
   }, [center, zoom, map])
   return null
 }
@@ -54,11 +63,17 @@ interface AttendanceRecord {
 export default function LiveMap({ 
   schoolLat, 
   schoolLng, 
-  radius 
+  radius,
+  focusLat,
+  focusLng,
+  targetTeacherId
 }: { 
   schoolLat: number, 
   schoolLng: number, 
-  radius: number 
+  radius: number,
+  focusLat?: number,
+  focusLng?: number,
+  targetTeacherId?: string
 }) {
   const [teachers, setTeachers] = useState<TeacherLocation[]>([])
   const [loading, setLoading] = useState(true)
@@ -148,12 +163,12 @@ export default function LiveMap({
         }
       `}</style>
       <MapContainer 
-        center={[schoolLat, schoolLng]} 
+        center={[focusLat || schoolLat, focusLng || schoolLng]} 
         zoom={17} 
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={false}
       >
-        <ChangeView center={[schoolLat, schoolLng]} zoom={17} />
+        <ChangeView center={[focusLat || schoolLat, focusLng || schoolLng]} zoom={17} />
         
         <LayersControl position="topright">
           <LayersControl.BaseLayer checked name="Satellite View">
@@ -192,6 +207,7 @@ export default function LiveMap({
 
         {/* Teacher Markers */}
         {teachers.map(teacher => {
+          if (targetTeacherId && teacher.id !== targetTeacherId) return null
           if (!teacher.last_lat || !teacher.last_lng) return null
           const distance = calculateDistance(schoolLat, schoolLng, teacher.last_lat, teacher.last_lng)
           const isInside = distance <= radius

@@ -147,7 +147,28 @@ export default function StudentsPage() {
     }
 
     const { data } = await query.order('remaining_fee', { ascending: false }).order('name')
-    setStudents(data || [])
+
+    const sortedData = (data || []).sort((a, b) => {
+      const getStatus = (student: any) => 
+        student.remaining_fee <= 0 ? 'paid' : student.total_paid > 0 ? 'partial' : 'unpaid';
+      
+      const rank = { unpaid: 1, partial: 2, paid: 3 };
+      
+      const rankA = rank[getStatus(a)];
+      const rankB = rank[getStatus(b)];
+      
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+      
+      if (b.remaining_fee !== a.remaining_fee) {
+        return b.remaining_fee - a.remaining_fee;
+      }
+      
+      return (a.name || '').localeCompare(b.name || '');
+    });
+
+    setStudents(sortedData)
     setLoading(false)
   }, [search, selectedClass, selectedStatus, selectedStudentStatus, currentYearFilter])
 

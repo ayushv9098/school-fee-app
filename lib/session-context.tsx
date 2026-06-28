@@ -11,12 +11,19 @@ type SessionContextType = {
 const SessionContext = createContext<SessionContextType | undefined>(undefined)
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const [academicYear, setAcademicYearState] = useState('2025-26')
+  const [academicYear, setAcademicYearState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('selectedAcademicYear')
+      if (saved) return saved;
+    }
+    return '2025-26'
+  })
   const availableYears = ['2024-25', '2025-26', '2026-27']
 
   useEffect(() => {
+    // Only used to ensure local state syncs if needed, though initialization handles it.
     const saved = localStorage.getItem('selectedAcademicYear')
-    if (saved && availableYears.includes(saved)) {
+    if (saved && availableYears.includes(saved) && saved !== academicYear) {
       setAcademicYearState(saved)
     }
   }, [])

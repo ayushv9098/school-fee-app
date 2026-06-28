@@ -49,6 +49,13 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
     console.error('Error fetching leaves:', leaveError)
   }
 
+  // Fetch settings for map
+  const { data: settings } = await supabase
+    .from('school_settings')
+    .select('*')
+    .eq('user_id', user?.id)
+    .maybeSingle()
+
   console.log('Admin ID:', user?.id)
   console.log('Pending Leaves:', pendingLeaves)
 
@@ -63,6 +70,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
       selectedDate={selectedDate}
       selectedMonth={selectedMonth}
       selectedYear={selectedYear}
+      settings={settings}
     />
   )
 }

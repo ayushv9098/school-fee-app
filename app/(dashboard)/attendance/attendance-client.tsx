@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
+
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +15,11 @@ import { cn } from '@/lib/utils'
 import dayjs from 'dayjs'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+
+const LiveMap = dynamic(() => import('@/components/live-map'), { 
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-zinc-100 dark:bg-zinc-800 animate-pulse flex items-center justify-center text-xs text-zinc-400">Initializing Map...</div>
+})
 
 interface Teacher {
   id: string
@@ -50,6 +58,7 @@ interface Props {
   selectedDate: string
   selectedMonth: number
   selectedYear: number
+  settings?: any
 }
 
 export default function AttendanceClient({ 
@@ -61,7 +70,8 @@ export default function AttendanceClient({
   adminId,
   selectedDate,
   selectedMonth,
-  selectedYear
+  selectedYear,
+  settings
 }: Props) {
   const router = useRouter()
   const supabase = createClient()
@@ -70,6 +80,11 @@ export default function AttendanceClient({
   const [pendingLeaves, setPendingLeaves] = useState(initialPendingLeaves)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [newTeacher, setNewTeacher] = useState({
@@ -77,6 +92,8 @@ export default function AttendanceClient({
     subject: '',
     salary: '',
     email: '',
+    mobile: '',
+    address: '',
   })
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
   
@@ -87,23 +104,42 @@ export default function AttendanceClient({
   const handleExportPDF = () => {
     const doc = new jsPDF('l', 'mm', 'a4')
     const monthName = MONTHS[selectedMonth - 1]
+    const schoolName = settings?.school_name || 'School'
+    const schoolAddress = settings?.address || ''
     
-    doc.setFontSize(18)
-    doc.text('Monthly Attendance Report', 14, 15)
-    doc.setFontSize(12)
-    doc.text(`Period: ${monthName} ${selectedYear}`, 14, 22)
+    // Header - School Info
+    doc.setFillColor(124, 58, 237)
+    doc.rect(0, 0, 297, 28, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.text(schoolName.toUpperCase(), 14, 12)
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    if (schoolAddress) doc.text(schoolAddress, 14, 18)
+    doc.text(`Monthly Attendance Register  •  ${monthName} ${selectedYear}`, 14, 24)
+    
+    // Right side info
+    doc.setFontSize(9)
+    doc.text(`Total Staff: ${initialTeachers.length}`, 260, 12)
+    doc.text(`Generated: ${dayjs().format('DD MMM YYYY, hh:mm A')}`, 235, 18)
+    
+    doc.setTextColor(0, 0, 0)
 
-    const tableHeaders = ['Teacher', ...dates.map(d => dayjs(d).format('D')), 'P', 'A', 'L', 'H']
-    const tableData = initialTeachers.map(teacher => {
+    const tableHeaders = ['#', 'Teacher Name', 'Role', ...dates.map(d => dayjs(d).format('D')), 'P', 'A', 'L', 'H', 'LV', '%']
+    const tableData = initialTeachers.map((teacher, idx) => {
       const records = monthlyAttendance.filter(a => a.teacher_id === teacher.id)
       const pCount = records.filter(a => a.status === 'present').length
       const aCount = records.filter(a => a.status === 'absent').length
       const lCount = records.filter(a => a.status === 'late').length
       const hCount = records.filter(a => a.status === 'half_day').length
+      const lvCount = records.filter(a => a.status === 'on_leave').length
+      const workingDays = dates.filter(d => dayjs(d).day() !== 0).length
+      const attendPercent = workingDays > 0 ? Math.round(((pCount + lCount + hCount) / workingDays) * 100) : 0
       
       const dayStatuses = dates.map(date => {
         const r = records.find(a => a.date === date)
-        if (!r) return dayjs(date).day() === 0 ? 'SUN' : 'A'
+        if (!r) return dayjs(date).day() === 0 ? 'S' : '-'
         if (r.status === 'present') return 'P'
         if (r.status === 'absent') return 'A'
         if (r.status === 'late') return 'L'
@@ -112,17 +148,41 @@ export default function AttendanceClient({
         return '-'
       })
 
-      return [teacher.name, ...dayStatuses, pCount, aCount, lCount, hCount]
+      return [idx + 1, teacher.name, teacher.subject || '-', ...dayStatuses, pCount, aCount, lCount, hCount, lvCount, `${attendPercent}%`]
     })
 
     autoTable(doc, {
       head: [tableHeaders],
       body: tableData,
-      startY: 30,
-      styles: { fontSize: 7, cellPadding: 1 },
-      headStyles: { fillColor: '#f0f0f0', textColor: 0, fontStyle: 'bold' },
-      columnStyles: { 0: { cellWidth: 30, fontStyle: 'bold' } }
+      startY: 32,
+      styles: { fontSize: 6, cellPadding: 1.5, lineColor: [220, 220, 220], lineWidth: 0.2 },
+      headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: 'bold', fontSize: 6, halign: 'center' },
+      columnStyles: { 
+        0: { cellWidth: 8, halign: 'center', fontStyle: 'bold' },
+        1: { cellWidth: 28, fontStyle: 'bold' },
+        2: { cellWidth: 18, fontSize: 5 }
+      },
+      bodyStyles: { halign: 'center' },
+      didParseCell: function(data: any) {
+        if (data.section === 'body' && data.column.index >= 3) {
+          const val = data.cell.raw
+          if (val === 'P') { data.cell.styles.textColor = [22, 163, 74]; data.cell.styles.fontStyle = 'bold' }
+          else if (val === 'A') { data.cell.styles.textColor = [220, 38, 38]; data.cell.styles.fontStyle = 'bold' }
+          else if (val === 'L') { data.cell.styles.textColor = [234, 88, 12] }
+          else if (val === 'H') { data.cell.styles.textColor = [202, 138, 4] }
+          else if (val === 'LV') { data.cell.styles.textColor = [37, 99, 235]; data.cell.styles.fontSize = 5 }
+          else if (val === 'S') { data.cell.styles.textColor = [161, 161, 170]; data.cell.styles.fillColor = [250, 250, 250] }
+        }
+      },
+      alternateRowStyles: { fillColor: [248, 247, 255] }
     })
+
+    // Legend at bottom
+    const finalY = (doc as any).lastAutoTable.finalY + 6
+    doc.setFontSize(7)
+    doc.setTextColor(100, 100, 100)
+    doc.text('P = Present  |  A = Absent  |  L = Late  |  H = Half Day  |  LV = On Leave  |  S = Sunday  |  % = Attendance Percentage', 14, finalY)
+    doc.text(`${schoolName}  •  Confidential Document`, 14, finalY + 5)
 
     doc.save(`Attendance_${monthName}_${selectedYear}.pdf`)
   }
@@ -130,43 +190,122 @@ export default function AttendanceClient({
   const handleExportSingleTeacherPDF = (teacher: Teacher) => {
     const doc = new jsPDF()
     const monthName = MONTHS[selectedMonth - 1]
+    const schoolName = settings?.school_name || 'School'
+    const schoolAddress = settings?.address || ''
     const records = monthlyAttendance.filter(a => a.teacher_id === teacher.id)
     
-    doc.setFontSize(18)
-    doc.text('Individual Attendance Report', 14, 15)
+    // Header
+    doc.setFillColor(124, 58, 237)
+    doc.rect(0, 0, 210, 35, 'F')
+    doc.setTextColor(255, 255, 255)
     doc.setFontSize(14)
-    doc.text(teacher.name, 14, 25)
+    doc.setFont('helvetica', 'bold')
+    doc.text(schoolName.toUpperCase(), 14, 12)
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    if (schoolAddress) doc.text(schoolAddress, 14, 18)
     doc.setFontSize(10)
-    doc.text(`Subject: ${teacher.subject}`, 14, 30)
-    doc.text(`Period: ${monthName} ${selectedYear}`, 14, 35)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Individual Attendance Report  •  ${monthName} ${selectedYear}`, 14, 28)
+    
+    doc.setTextColor(0, 0, 0)
+    
+    // Teacher Info Card
+    doc.setFillColor(248, 247, 255)
+    doc.roundedRect(14, 40, 182, 22, 3, 3, 'F')
+    doc.setFontSize(13)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(50, 50, 50)
+    doc.text(teacher.name, 20, 50)
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(120, 120, 120)
+    doc.text(`Role: ${teacher.subject || '-'}  |  Salary: ₹${teacher.monthly_salary?.toLocaleString() || '-'}`, 20, 57)
 
+    // Summary Stats
     const pCount = records.filter(a => a.status === 'present').length
     const lCount = records.filter(a => a.status === 'late').length
     const hCount = records.filter(a => a.status === 'half_day').length
     const lvCount = records.filter(a => a.status === 'on_leave').length
-    const aCount = dates.length - (pCount + lCount + hCount + lvCount)
+    const workingDays = dates.filter(d => dayjs(d).day() !== 0).length
+    const aCount = workingDays - (pCount + lCount + hCount + lvCount)
+    const attendPercent = workingDays > 0 ? Math.round(((pCount + lCount + hCount) / workingDays) * 100) : 0
 
-    doc.text(`Summary: P: ${pCount} | L: ${lCount} | H: ${hCount} | LV: ${lvCount} | A: ${aCount}`, 14, 45)
+    const statsY = 70
+    const statsData = [
+      { label: 'Present', value: pCount, color: [22, 163, 74] },
+      { label: 'Absent', value: aCount, color: [220, 38, 38] },
+      { label: 'Late', value: lCount, color: [234, 88, 12] },
+      { label: 'Half Day', value: hCount, color: [202, 138, 4] },
+      { label: 'Leave', value: lvCount, color: [37, 99, 235] },
+      { label: 'Attendance', value: `${attendPercent}%`, color: [124, 58, 237] },
+    ]
+    
+    const boxW = 28
+    statsData.forEach((stat, i) => {
+      const x = 14 + i * (boxW + 4.5)
+      doc.setFillColor(stat.color[0], stat.color[1], stat.color[2])
+      doc.roundedRect(x, statsY, boxW, 16, 2, 2, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'bold')
+      doc.text(String(stat.value), x + boxW / 2, statsY + 8, { align: 'center' })
+      doc.setFontSize(6)
+      doc.text(stat.label.toUpperCase(), x + boxW / 2, statsY + 13, { align: 'center' })
+    })
 
+    doc.setTextColor(0, 0, 0)
+
+    // Attendance Table
     const tableData = dates.map(date => {
       const r = records.find(a => a.date === date)
-      const dayName = dayjs(date).format('dddd')
+      const dayName = dayjs(date).format('ddd')
+      const isSunday = dayjs(date).day() === 0
+      let status = '-'
+      if (r) status = r.status.replace('_', ' ').toUpperCase()
+      else if (isSunday) status = 'SUNDAY'
+      else status = 'ABSENT'
+      
       return [
-        dayjs(date).format('DD MMM YYYY'),
-        dayName,
-        r ? r.status.toUpperCase() : (dayName === 'Sunday' ? 'SUNDAY' : 'ABSENT'),
+        dayjs(date).format('DD'),
+        dayName.toUpperCase(),
+        status,
         r?.check_in_time ? dayjs(r.check_in_time).format('hh:mm A') : '-',
         r?.check_out_time ? dayjs(r.check_out_time).format('hh:mm A') : '-'
       ]
     })
 
     autoTable(doc, {
-      head: [['Date', 'Day', 'Status', 'In Time', 'Out Time']],
+      head: [['Date', 'Day', 'Status', 'Check In', 'Check Out']],
       body: tableData,
-      startY: 50,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [124, 58, 237] }
+      startY: 92,
+      styles: { fontSize: 8, cellPadding: 2.5, lineColor: [230, 230, 230], lineWidth: 0.2 },
+      headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: 'bold', halign: 'center' },
+      bodyStyles: { halign: 'center' },
+      columnStyles: {
+        0: { cellWidth: 15, fontStyle: 'bold' },
+        1: { cellWidth: 18 },
+        2: { cellWidth: 30, fontStyle: 'bold' },
+      },
+      didParseCell: function(data: any) {
+        if (data.section === 'body' && data.column.index === 2) {
+          const val = data.cell.raw
+          if (val === 'PRESENT') { data.cell.styles.textColor = [22, 163, 74] }
+          else if (val === 'ABSENT') { data.cell.styles.textColor = [220, 38, 38] }
+          else if (val === 'LATE') { data.cell.styles.textColor = [234, 88, 12] }
+          else if (val === 'HALF DAY') { data.cell.styles.textColor = [202, 138, 4] }
+          else if (val === 'ON LEAVE') { data.cell.styles.textColor = [37, 99, 235] }
+          else if (val === 'SUNDAY') { data.cell.styles.textColor = [161, 161, 170]; data.cell.styles.fillColor = [250, 250, 250] }
+        }
+      },
+      alternateRowStyles: { fillColor: [248, 247, 255] }
     })
+
+    // Footer
+    const footerY = (doc as any).lastAutoTable.finalY + 8
+    doc.setFontSize(7)
+    doc.setTextColor(150, 150, 150)
+    doc.text(`Generated on ${dayjs().format('DD MMM YYYY, hh:mm A')}  •  ${schoolName}  •  Confidential`, 14, footerY)
 
     doc.save(`${teacher.name}_Attendance_${monthName}.pdf`)
   }
@@ -266,6 +405,8 @@ export default function AttendanceClient({
         subject: newTeacher.subject,
         monthly_salary: Number(newTeacher.salary),
         email: newTeacher.email,
+        mobile: newTeacher.mobile || null,
+        address: newTeacher.address || null,
         role: 'teacher'
       })
       .select()
@@ -312,7 +453,7 @@ export default function AttendanceClient({
     }
 
     setShowAddModal(false)
-    setNewTeacher({ name: '', subject: '', salary: '', email: '' })
+    setNewTeacher({ name: '', subject: '', salary: '', email: '', mobile: '', address: '' })
     setLoading(false)
     router.refresh()
   }
@@ -471,40 +612,41 @@ export default function AttendanceClient({
       {activeTab === 'attendance' ? (
          <>
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                {[
-               { label: 'Present Today', value: presentCount, icon: CheckCircle2, color: 'green' },
-               { label: 'Absent Today', value: absentCount, icon: XCircle, color: 'red' },
-               { label: 'Total Staff', value: initialTeachers.length, icon: Users, color: 'violet' }
+               { label: 'Present Today', value: presentCount, icon: CheckCircle2, color: 'green', span: 'col-span-1' },
+               { label: 'Absent Today', value: absentCount, icon: XCircle, color: 'red', span: 'col-span-1' },
+               { label: 'Total Staff', value: initialTeachers.length, icon: Users, color: 'violet', span: 'col-span-2 md:col-span-1' }
                ].map(stat => (
                <Card key={stat.label} className={cn(
+                  stat.span,
                   stat.color === 'green' ? "border-green-100 bg-green-50/50" :
                   stat.color === 'red' ? "border-red-100 bg-red-50/50" :
                   "border-violet-100 bg-violet-50/50",
                   "hover:shadow-md transition"
                )}>
-                  <CardContent className="p-5">
-                     <div className="flex items-center justify-between mb-3">
+                  <CardContent className="p-4 md:p-5">
+                     <div className="flex items-center justify-between mb-2 md:mb-3">
                      <span className={cn(
                         stat.color === 'green' ? "text-green-700/60" :
                         stat.color === 'red' ? "text-red-700/60" :
                         "text-violet-700/60",
-                        "text-sm font-bold uppercase tracking-wider"
+                        "text-xs md:text-sm font-bold uppercase tracking-wider"
                      )}>{stat.label}</span>
                      <div className={cn(
                         stat.color === 'green' ? "bg-green-100 text-green-600 border-green-200/50" :
                         stat.color === 'red' ? "bg-red-100 text-red-600 border-red-200/50" :
                         "bg-violet-100 text-violet-600 border-violet-200/50",
-                        "w-9 h-9 rounded-xl flex items-center justify-center shadow-sm border"
+                        "w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center shadow-sm border"
                      )}>
-                        <stat.icon size={20} />
+                        <stat.icon className="w-4 h-4 md:w-5 md:h-5" />
                      </div>
                      </div>
                      <p className={cn(
                         stat.color === 'green' ? "text-green-600" :
                         stat.color === 'red' ? "text-red-600" :
                         "text-violet-600",
-                        "text-3xl font-bold tracking-tight"
+                        "text-2xl md:text-3xl font-bold tracking-tight"
                      )}>{stat.value}</p>
                   </CardContent>
                </Card>
@@ -862,10 +1004,13 @@ export default function AttendanceClient({
       )}
 
       {/* Add Teacher Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm font-sans">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden font-sans">
-            <div className="p-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50 font-sans">
+      {showAddModal && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] font-sans">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+          <div className="absolute inset-0 p-4" style={{ overflowY: 'scroll' }}>
+            <div className="flex min-h-full items-center justify-center">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 font-sans relative z-10">
+            <div className="p-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50 font-sans rounded-t-2xl">
               <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 font-sans">Add New Staff Member</h2>
               <button onClick={() => setShowAddModal(false)} className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-400 transition">
                 <X size={20} />
@@ -890,6 +1035,14 @@ export default function AttendanceClient({
                   <Input required type="email" placeholder="rahul@example.com" value={newTeacher.email} onChange={e => setNewTeacher({ ...newTeacher, email: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
                 </div>
               </div>
+              <div className="space-y-1.5 font-sans">
+                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Mobile Number</Label>
+                <Input type="tel" placeholder="e.g. 9876543210" value={newTeacher.mobile} onChange={e => setNewTeacher({ ...newTeacher, mobile: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
+              </div>
+              <div className="space-y-1.5 font-sans">
+                <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Address</Label>
+                <Input placeholder="e.g. 123 Main Street, City" value={newTeacher.address} onChange={e => setNewTeacher({ ...newTeacher, address: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
+              </div>
 
               <div className="flex gap-3 pt-4 font-sans">
                 <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 h-12 rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:bg-zinc-950 transition">Cancel</button>
@@ -899,14 +1052,20 @@ export default function AttendanceClient({
               </div>
             </form>
           </div>
-        </div>
+          </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit/Manage Teacher Modal */}
-      {showEditModal && editingTeacher && (
-        <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4 backdrop-blur-sm font-sans">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 overflow-hidden font-sans">
-            <div className="p-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50 font-sans">
+      {showEditModal && editingTeacher && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] font-sans">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => { setShowEditModal(false); setEditingTeacher(null); }} />
+          <div className="absolute inset-0 p-4" style={{ overflowY: 'scroll' }}>
+            <div className="flex min-h-full items-center justify-center">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 font-sans relative z-10">
+            <div className="p-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50 font-sans rounded-t-2xl">
               <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 font-sans">Manage Staff Member</h2>
               <button onClick={() => { setShowEditModal(false); setEditingTeacher(null); }} className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-400 transition">
                 <X size={20} />
@@ -1011,15 +1170,21 @@ export default function AttendanceClient({
               </form>
             </div>
           </div>
-        </div>
+          </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Movement Tracking Modal */}
-      {showMovementModal && trackingTeacher && (
-        <div className="fixed inset-0 bg-black/40 z-[150] flex items-center justify-center p-4 backdrop-blur-sm font-sans animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 rounded-[32px] shadow-xl w-full max-w-lg animate-in zoom-in-95 duration-200 overflow-hidden font-sans border border-zinc-100 dark:border-zinc-800/50">
+      {showMovementModal && trackingTeacher && mounted && createPortal(
+        <div className="fixed inset-0 z-[150] font-sans animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMovementModal(false)} />
+          <div className="absolute inset-0 p-4" style={{ overflowY: 'scroll' }}>
+            <div className="flex min-h-full items-center justify-center">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] shadow-xl w-full max-w-lg animate-in zoom-in-95 duration-200 font-sans border border-zinc-100 dark:border-zinc-800/50 relative z-10">
             
-            <div className="p-6 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50">
+            <div className="p-6 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50 rounded-t-[32px] shrink-0">
               <div className="flex items-center gap-4">
                  <div className="w-12 h-12 bg-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-100">
                     <Users size={24} />
@@ -1034,7 +1199,7 @@ export default function AttendanceClient({
               </button>
             </div>
             
-            <div className="p-6 space-y-6 max-h-[65vh] overflow-y-auto scrollbar-hide">
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
                
                {/* Stats Grid */}
                <div className="grid grid-cols-2 gap-3">
@@ -1062,20 +1227,39 @@ export default function AttendanceClient({
                   </div>
                </div>
 
-               {/* Live Map Action */}
-               <button 
-                  onClick={() => {
-                    const record = todayAttendance.find(a => a.id === trackingTeacher.attendanceId);
-                    if (record?.last_lat && record?.last_lng) {
-                      window.open(`https://www.google.com/maps?q=${record.last_lat},${record.last_lng}`, '_blank');
-                    } else {
-                      alert('Live location not available yet.');
-                    }
-                  }}
-                  className="w-full h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg active:scale-[0.98]"
-               >
-                  <Map size={18} /> View Live Location on Map
-               </button>
+               {/* Live Embedded Map - Always show */}
+               {(() => {
+                  const record = todayAttendance.find(a => a.id === trackingTeacher.attendanceId);
+                  const hasLocation = record?.last_lat && record?.last_lng;
+                  return (
+                    <div className="w-full h-56 sm:h-64 rounded-3xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm relative group">
+                      <LiveMap 
+                        schoolLat={settings?.lat || 22.7196} 
+                        schoolLng={settings?.lng || 75.8577} 
+                        radius={settings?.radius || 200}
+                        focusLat={hasLocation ? record.last_lat : undefined}
+                        focusLng={hasLocation ? record.last_lng : undefined}
+                        targetTeacherId={trackingTeacher.id}
+                      />
+                      {hasLocation && (
+                        <button 
+                          onClick={() => window.open(`https://www.google.com/maps?q=${record.last_lat},${record.last_lng}`, '_blank')}
+                          className="absolute bottom-3 right-3 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 p-2.5 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors z-10 flex items-center gap-2"
+                        >
+                          <Map size={16} />
+                          <span className="text-[10px] font-bold uppercase tracking-widest">Open</span>
+                        </button>
+                      )}
+                      {!hasLocation && (
+                        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                          <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Teacher location not shared yet</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+               })()}
 
                {/* Timeline History */}
                <div className="space-y-4">
@@ -1168,7 +1352,10 @@ export default function AttendanceClient({
               </button>
             </div>
           </div>
-        </div>
+          </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Image Preview Modal */}

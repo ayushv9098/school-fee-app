@@ -68,6 +68,7 @@ export default function ExpensesClient({
   initialVehicleExpenses,
   initialBuildingExpenses,
   students,
+  onRefresh,
 }: {
   initialTeachers: Teacher[]
   initialTeacherPayments: TeacherPayment[]
@@ -75,6 +76,7 @@ export default function ExpensesClient({
   initialVehicleExpenses: VehicleExpense[]
   initialBuildingExpenses: BuildingExpense[]
   students: Student[]
+  onRefresh?: () => void
 }) {
   const router = useRouter()
   const { academicYear } = useSession()
@@ -136,6 +138,7 @@ export default function ExpensesClient({
     } else {
       setActiveModal(null)
       setModalData({})
+      onRefresh?.()
       router.refresh()
     }
     setLoading(false)
@@ -146,7 +149,10 @@ export default function ExpensesClient({
     setLoading(true)
     const { error } = await supabase.from('teachers').delete().eq('id', id)
     if (error) alert(error.message)
-    else router.refresh()
+    else {
+      onRefresh?.()
+      router.refresh()
+    }
     setLoading(false)
   }
 
@@ -174,6 +180,7 @@ export default function ExpensesClient({
     } else {
       setActiveModal(null)
       setModalData({})
+      onRefresh?.()
       router.refresh()
     }
     setLoading(false)
@@ -183,7 +190,10 @@ export default function ExpensesClient({
     if (!confirm('Delete this payment record?')) return
     const { error } = await supabase.from('teacher_payments').delete().eq('id', id)
     if (error) alert(error.message)
-    else router.refresh()
+    else {
+      onRefresh?.()
+      router.refresh()
+    }
   }
 
   async function handleVehicleAction(e: React.FormEvent) {
@@ -211,6 +221,7 @@ export default function ExpensesClient({
     } else {
       setActiveModal(null)
       setModalData({})
+      onRefresh?.()
       router.refresh()
     }
     setLoading(false)
@@ -221,7 +232,10 @@ export default function ExpensesClient({
     setLoading(true)
     const { error } = await supabase.from('vehicles').delete().eq('id', id)
     if (error) alert(error.message)
-    else router.refresh()
+    else {
+      onRefresh?.()
+      router.refresh()
+    }
     setLoading(false)
   }
 
@@ -244,6 +258,7 @@ export default function ExpensesClient({
     } else {
       setActiveModal(null)
       setModalData({})
+      onRefresh?.()
       router.refresh()
     }
     setLoading(false)
@@ -253,7 +268,10 @@ export default function ExpensesClient({
     if (!confirm('Delete this expense?')) return
     const { error } = await supabase.from('vehicle_expenses').delete().eq('id', id)
     if (error) alert(error.message)
-    else router.refresh()
+    else {
+      onRefresh?.()
+      router.refresh()
+    }
   }
 
   async function handleBuildingExpenseAction(e: React.FormEvent) {
@@ -274,6 +292,7 @@ export default function ExpensesClient({
     } else {
       setActiveModal(null)
       setModalData({})
+      onRefresh?.()
       router.refresh()
     }
     setLoading(false)
@@ -283,7 +302,10 @@ export default function ExpensesClient({
     if (!confirm('Delete this building expense?')) return
     const { error } = await supabase.from('building_expenses').delete().eq('id', id)
     if (error) alert(error.message)
-    else router.refresh()
+    else {
+      onRefresh?.()
+      router.refresh()
+    }
   }
 
   return (
@@ -329,157 +351,6 @@ export default function ExpensesClient({
           </CardContent>
         </Card>
       </div>
-
-      {/* --- SECTION 1: STAFF --- */}
-      <section className="space-y-3 md:space-y-4">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="w-9 h-9 md:w-10 md:h-10 bg-violet-100 rounded-lg md:rounded-xl flex items-center justify-center text-violet-600 flex-shrink-0">
-              <User size={18} className="md:w-5 md:h-5" />
-            </div>
-            <div>
-              <h2 className="text-base md:text-lg font-bold text-zinc-900 dark:text-zinc-100">Staff</h2>
-              <p className="text-[11px] md:text-sm text-zinc-500 dark:text-zinc-400 hidden xs:block">Manage staff and salaries</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => {
-              setActiveModal('add-teacher')
-              setError(null)
-              setModalData({ name: '', subject: '', salary: '' })
-            }}
-            className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs md:text-sm font-medium px-3 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-xl transition shadow-sm whitespace-nowrap"
-          >
-            <Plus size={16} />
-            <span>Add Staff</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {initialTeachers.map(teacher => {
-            const paidThisMonth = initialTeacherPayments
-              .filter(p => p.teacher_id === teacher.id && p.month === CURRENT_MONTH && p.year === CURRENT_YEAR)
-              .reduce((a, p) => a + Number(p.amount), 0)
-            
-            const teacherPayments = initialTeacherPayments.filter(p => p.teacher_id === teacher.id)
-
-            return (
-              <Card key={teacher.id} className="border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-none hover:shadow-sm transition">
-                <CardContent className="p-0">
-                  <div className="p-4 md:p-5 space-y-3 md:space-y-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="font-bold text-zinc-900 dark:text-zinc-100 truncate text-sm md:text-base">{teacher.name}</p>
-                          <button 
-                            onClick={() => {
-                              setActiveModal('edit-teacher')
-                              setError(null)
-                              setModalData({ id: teacher.id, name: teacher.name, subject: teacher.subject, salary: String(teacher.monthly_salary) })
-                            }}
-                            className="p-1 text-zinc-400 hover:text-violet-600 transition flex-shrink-0"
-                          >
-                            <Pencil size={13} />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteTeacher(teacher.id)}
-                            className="p-1 text-zinc-400 hover:text-red-600 transition flex-shrink-0"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                        <p className="text-[11px] md:text-xs text-zinc-500 dark:text-zinc-400">{teacher.subject}</p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm md:text-base font-semibold text-zinc-900 dark:text-zinc-100">{formatCurrency(teacher.monthly_salary)}</p>
-                        <p className="text-[9px] md:text-[10px] text-zinc-400 uppercase tracking-wider">Salary/Month</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-[9px] md:text-[10px] text-zinc-400 uppercase font-bold">Paid This Month</p>
-                        <p className={`text-sm md:text-base font-bold truncate ${paidThisMonth >= teacher.monthly_salary ? 'text-green-600' : 'text-orange-500'}`}>
-                          {formatCurrency(paidThisMonth)}
-                        </p>
-                      </div>
-                      <div className="flex gap-1.5 md:gap-2 flex-shrink-0">
-                         <button 
-                          onClick={() => setShowHistory(showHistory === teacher.id ? null : teacher.id)}
-                          className={`p-1.5 md:p-2 rounded-lg border transition ${showHistory === teacher.id ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:bg-zinc-950'}`}
-                          title="View History"
-                        >
-                          <History size={14} className="md:w-4 md:h-4" />
-                        </button>
-                        <button
-                         onClick={() => {
-                           setActiveModal('pay-salary')
-                           setError(null)
-                           setModalData({
-                             teacherId: teacher.id,
-                             teacherName: teacher.name,
-                             amount: '',
-                             suggestedAmount: String(teacher.monthly_salary - paidThisMonth > 0 ? teacher.monthly_salary - paidThisMonth : teacher.monthly_salary),
-                             month: CURRENT_MONTH,
-                             date: new Date().toISOString().split('T')[0],
-                             note: ''
-                           })
-                         }}
-                         className="px-3 md:px-4 py-1.5 md:py-2 bg-violet-600 text-white hover:bg-violet-700 rounded-lg text-[11px] md:text-xs font-bold transition shadow-sm whitespace-nowrap"
-                        >                          Pay Salary
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* History Section */}
-                  {showHistory === teacher.id && (
-                    <div className="bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-800/50 p-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Payment History</p>
-                        <button 
-                          onClick={() => handleDeleteTeacher(teacher.id)}
-                          className="text-[10px] text-red-500 hover:underline font-bold"
-                        >
-                          Delete Staff
-                        </button>
-                      </div>
-                      {teacherPayments.length === 0 ? (
-                        <p className="text-[11px] text-zinc-400 text-center py-2 italic">No records found</p>
-                      ) : (
-                        <div className="space-y-2 max-h-40 overflow-y-auto">
-                          {teacherPayments.map(p => (
-                            <div key={p.id} className="bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-                              <div className="min-w-0">
-                                <p className="text-[11px] font-bold text-zinc-800">
-                                  {new Date(2000, p.month - 1).toLocaleString('default', { month: 'short' })} {p.year}
-                                </p>
-                                <p className="text-[10px] text-zinc-400">{p.note || 'Salary payment'}</p>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <p className="text-xs font-bold text-green-600">{formatCurrency(p.amount)}</p>
-                                <button onClick={() => handleDeletePayment(p.id)} className="text-zinc-300 hover:text-red-500 transition">
-                                  <Trash2 size={12} />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
-          {initialTeachers.length === 0 && (
-            <div className="sm:col-span-2 lg:col-span-3 p-12 text-center bg-white dark:bg-zinc-900 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl">
-              <User className="mx-auto text-zinc-300 mb-3" size={40} />
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm">No staff added yet</p>
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* --- SECTION 2: VEHICLES --- */}
       <section className="space-y-3 md:space-y-4 pt-2 md:pt-4">

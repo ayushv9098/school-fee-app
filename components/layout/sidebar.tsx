@@ -5,14 +5,15 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, CreditCard, BookOpen, LogOut, GraduationCap, X, Menu, User, Bot, HelpCircle, Wallet } from 'lucide-react'
+import { LayoutDashboard, Users, CreditCard, BookOpen, LogOut, GraduationCap, X, Menu, User, Bot, HelpCircle, Wallet, Contact } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/students', label: 'Students', icon: Users },
+  { href: '/staff', label: 'Staff', icon: Contact },
+  { href: '/attendance', label: 'Attendance', icon: User },
   { href: '/payments', label: 'Payments', icon: CreditCard },
   { href: '/expenses', label: 'Expenses', icon: Wallet },
-  { href: '/attendance', label: 'Attendance', icon: User },
   { href: '/classes', label: 'Classes', icon: BookOpen },
   { href: '/ai', label: 'AI Insights', icon: Bot },
   { href: '/how-to-use', label: 'How to Use', icon: HelpCircle },

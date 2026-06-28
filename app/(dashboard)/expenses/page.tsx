@@ -10,10 +10,13 @@ export default function ExpensesPage() {
   const { academicYear } = useSession()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     async function fetchData() {
-      setLoading(true)
+      if (!data) {
+        setLoading(true)
+      }
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
@@ -38,9 +41,9 @@ export default function ExpensesPage() {
     }
 
     fetchData()
-  }, [academicYear])
+  }, [academicYear, refreshKey])
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
@@ -56,6 +59,7 @@ export default function ExpensesPage() {
       initialVehicleExpenses={data.vehicleExpenses}
       initialBuildingExpenses={data.buildingExpenses}
       students={data.students}
+      onRefresh={() => setRefreshKey(prev => prev + 1)}
     />
   )
 }

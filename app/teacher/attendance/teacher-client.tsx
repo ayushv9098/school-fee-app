@@ -429,7 +429,7 @@ export default function TeacherAttendanceClient({
   const leaveCount = leaves.filter(l => l.status === 'approved').length
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-57px)] bg-[#F9FAFC] text-zinc-900 dark:text-zinc-100 overflow-hidden relative font-sans">
+    <div className="flex flex-col h-[100dvh] bg-[#F9FAFC] text-zinc-900 dark:text-zinc-100 overflow-hidden relative font-sans">
       
       {/* --- SCROLLABLE CONTENT --- */}
       <div className="flex-1 overflow-y-auto pb-20">
@@ -556,69 +556,85 @@ export default function TeacherAttendanceClient({
 
                   {step === 'done' && (
                     <div className="flex flex-col items-center">
-                       <div className={cn(
-                         "w-full p-3 flex items-center justify-center gap-2",
-                         todayRecord?.status === 'late' ? "bg-amber-500" : "bg-green-500"
-                       )}>
-                          {todayRecord?.status === 'late' ? <AlertTriangle size={16} strokeWidth={3} className="text-white" /> : <CheckCircle size={16} strokeWidth={3} className="text-white" />}
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-white">
-                            {todayRecord?.status === 'late' ? 'Late Check-in' : 'Attendance Verified'}
-                          </p>
-                       </div>
-                       
-                       <div className="p-6 flex flex-col items-center space-y-4 w-full">
-                          
-                          {/* Live Tracking Status */}
-                          {!todayRecord?.check_out_time && (
-                            <div className="w-full bg-violet-50 border border-violet-100 p-3 rounded-2xl flex items-center justify-center gap-2 animate-pulse">
-                               <MapPin size={14} className="text-violet-600" />
-                               <p className="text-[10px] font-black text-violet-600 uppercase tracking-widest">Live Location Tracking Active</p>
-                            </div>
-                          )}
-
-                          <div className="flex justify-between w-full px-4">
-                            <div className="text-center flex-1">
-                               <p className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest mb-0.5">Checked In</p>
-                               <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{dayjs(todayRecord?.check_in_time).format('hh:mm A')}</p>
-                            </div>
-                            {todayRecord?.check_out_time && (
-                              <div className="text-center flex-1">
-                                 <p className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest mb-0.5">Checked Out</p>
-                                 <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{dayjs(todayRecord?.check_out_time).format('hh:mm A')}</p>
-                              </div>
-                            )}
-                          </div>
-
-                          {todayRecord?.selfie_url && (
-                            <div className="w-40 aspect-square bg-white dark:bg-zinc-900 p-1 rounded-[32px] border border-zinc-100 dark:border-zinc-800/50 shadow-md">
-                              <img 
-                                src={supabase.storage.from('attendance-selfies').getPublicUrl(todayRecord.selfie_url).data.publicUrl} 
-                                alt="Selfie" 
-                                className="w-full h-full object-cover rounded-[28px]"
-                              />
-                            </div>
-                          )}
-
-                          {!todayRecord?.check_out_time ? (
-                            <button
-                              onClick={handleCheckOut}
-                              disabled={loading}
-                              className="w-full h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
-                            >
-                              {loading ? <Loader2 size={18} className="animate-spin" /> : <LogOut size={16} strokeWidth={3} />}
-                              {loading ? 'VERIFYING...' : 'CHECK-OUT NOW'}
-                            </button>
-                          ) : (
-                            <div className="w-full p-4 bg-zinc-50 dark:bg-zinc-950 rounded-2xl text-center">
-                              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Shift Completed</p>
-                              {todayRecord.early_exit && (
-                                <p className="text-[10px] font-bold text-amber-600 uppercase mt-1">Flagged: Early Exit</p>
+                       {!todayRecord?.selfie_url ? (
+                         <div className="w-full p-8 flex flex-col items-center text-center space-y-4">
+                           <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 mb-2">
+                             <CheckCircle size={32} />
+                           </div>
+                           <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                             Admin Marked: <span className="uppercase text-amber-600">{todayRecord?.status?.replace('_', ' ')}</span>
+                           </h3>
+                           <p className="text-xs text-zinc-500 font-medium px-4">
+                             Your attendance for today was manually updated by the school administrator. No further action is required from you today.
+                           </p>
+                         </div>
+                       ) : (
+                         <>
+                           <div className={cn(
+                             "w-full p-3 flex items-center justify-center gap-2",
+                             todayRecord?.status === 'late' ? "bg-amber-500" : "bg-green-500"
+                           )}>
+                              {todayRecord?.status === 'late' ? <AlertTriangle size={16} strokeWidth={3} className="text-white" /> : <CheckCircle size={16} strokeWidth={3} className="text-white" />}
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-white">
+                                {todayRecord?.status === 'late' ? 'Late Check-in' : 'Attendance Verified'}
+                              </p>
+                           </div>
+                           
+                           <div className="p-6 flex flex-col items-center space-y-4 w-full">
+                              
+                              {/* Live Tracking Status */}
+                              {!todayRecord?.check_out_time && (
+                                <div className="w-full bg-violet-50 border border-violet-100 p-3 rounded-2xl flex items-center justify-center gap-2 animate-pulse">
+                                   <MapPin size={14} className="text-violet-600" />
+                                   <p className="text-[10px] font-black text-violet-600 uppercase tracking-widest">Live Location Tracking Active</p>
+                                </div>
                               )}
-                            </div>
-                          )}
 
-                          <Badge className="bg-zinc-50 dark:bg-zinc-950 text-zinc-400 border-none text-[8px] font-bold tracking-widest">DIGITAL LOG: {todayRecord?.id.slice(0,8)}</Badge>
-                       </div>
+                              <div className="flex justify-between w-full px-4">
+                                <div className="text-center flex-1">
+                                   <p className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest mb-0.5">Checked In</p>
+                                   <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{todayRecord?.check_in_time ? dayjs(todayRecord.check_in_time).format('hh:mm A') : '--:--'}</p>
+                                </div>
+                                {todayRecord?.check_out_time && (
+                                  <div className="text-center flex-1">
+                                     <p className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest mb-0.5">Checked Out</p>
+                                     <p className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{dayjs(todayRecord.check_out_time).format('hh:mm A')}</p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {todayRecord?.selfie_url && (
+                                <div className="w-40 aspect-square bg-white dark:bg-zinc-900 p-1 rounded-[32px] border border-zinc-100 dark:border-zinc-800/50 shadow-md">
+                                  <img 
+                                    src={supabase.storage.from('attendance-selfies').getPublicUrl(todayRecord.selfie_url).data.publicUrl} 
+                                    alt="Selfie" 
+                                    className="w-full h-full object-cover rounded-[28px]"
+                                  />
+                                </div>
+                              )}
+
+                              {!todayRecord?.check_out_time ? (
+                                <button
+                                  onClick={handleCheckOut}
+                                  disabled={loading}
+                                  className="w-full h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
+                                >
+                                  {loading ? <Loader2 size={18} className="animate-spin" /> : <LogOut size={16} strokeWidth={3} />}
+                                  {loading ? 'VERIFYING...' : 'CHECK-OUT NOW'}
+                                </button>
+                              ) : (
+                                <div className="w-full p-4 bg-zinc-50 dark:bg-zinc-950 rounded-2xl text-center">
+                                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Shift Completed</p>
+                                  {todayRecord.early_exit && (
+                                    <p className="text-[10px] font-bold text-amber-600 uppercase mt-1">Flagged: Early Exit</p>
+                                  )}
+                                </div>
+                              )}
+
+                              <Badge className="bg-zinc-50 dark:bg-zinc-950 text-zinc-400 border-none text-[8px] font-bold tracking-widest">DIGITAL LOG: {todayRecord?.id.slice(0,8)}</Badge>
+                           </div>
+                         </>
+                       )}
                     </div>
                   )}
 
