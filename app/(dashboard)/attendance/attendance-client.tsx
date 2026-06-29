@@ -443,7 +443,8 @@ export default function AttendanceClient({
       const proceed = confirm(`Teacher added! ✅\n\nInvitation Email Status: ${inviteRes.ok ? 'Sent' : 'Failed'}\n\nDo you want to copy the WhatsApp Invite Message now?`)
       
       if (proceed) {
-        const message = `Welcome to Ayushman Academy!\n\nPlease join our Teacher Portal using this link:\n\n📱 App (Recommended): ${appLink}\n\n🌐 Web: ${webLink}`
+        const apkLink = 'https://expo.dev/accounts/ayushv9098/projects/teacher-mobile-app/builds/99201c9a-e96d-4d41-bc83-4618880d8cf3'
+        const message = `Welcome to Ayushman Academy!\n\n1. First, download the App here:\n📥 ${apkLink}\n\n2. After installing, click this link to set your password and login:\n🔐 ${appLink}\n\n🌐 Web Portal: ${webLink}`
         await navigator.clipboard.writeText(message)
         alert('WhatsApp Invite Message copied to clipboard! 📋')
       }
@@ -578,7 +579,7 @@ export default function AttendanceClient({
              <button 
                 onClick={() => setActiveTab('attendance')}
                 className={cn(
-                   "px-4 py-2 text-sm font-bold rounded-lg transition-all",
+                   "px-4 py-2 text-sm font-medium rounded-lg transition-all",
                    activeTab === 'attendance' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300"
                 )}
              >
@@ -587,7 +588,7 @@ export default function AttendanceClient({
              <button 
                 onClick={() => setActiveTab('leaves')}
                 className={cn(
-                   "px-4 py-2 text-sm font-bold rounded-lg transition-all flex items-center gap-2",
+                   "px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2",
                    activeTab === 'leaves' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300"
                 )}
              >
@@ -601,7 +602,7 @@ export default function AttendanceClient({
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm md:text-base font-bold px-4 py-2.5 rounded-xl transition shadow-sm"
+            className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition shadow-sm"
           >
             <Plus className="w-4 h-4 md:w-5 md:h-5" />
             Add Teacher
@@ -625,7 +626,7 @@ export default function AttendanceClient({
                   "border-violet-100 bg-violet-50/50",
                   "hover:shadow-md transition"
                )}>
-                  <CardContent className="p-4 md:p-5">
+                  <CardContent className="p-4">
                      <div className="flex items-center justify-between mb-2 md:mb-3">
                      <span className={cn(
                         stat.color === 'green' ? "text-green-700/60" :
@@ -646,7 +647,7 @@ export default function AttendanceClient({
                         stat.color === 'green' ? "text-green-600" :
                         stat.color === 'red' ? "text-red-600" :
                         "text-violet-600",
-                        "text-2xl md:text-3xl font-bold tracking-tight"
+                        "text-2xl font-semibold tracking-tight"
                      )}>{stat.value}</p>
                   </CardContent>
                </Card>

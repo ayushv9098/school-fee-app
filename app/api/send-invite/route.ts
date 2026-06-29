@@ -42,8 +42,9 @@ export async function POST(req: Request) {
             <div style="background-color: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 16px; padding: 20px; margin: 25px 0;">
               <h3 style="color: #7c3aed; margin-top: 0; font-size: 16px;">How to set up your account:</h3>
               <ol style="color: #52525b; padding-left: 20px; margin-bottom: 0;">
-                <li>Download the official Android App.</li>
-                <li>Click the <strong>"Open in App"</strong> button below.</li>
+                <li>Download the App: <a href="https://expo.dev/accounts/ayushv9098/projects/teacher-mobile-app/builds/99201c9a-e96d-4d41-bc83-4618880d8cf3" target="_blank" style="color: #7c3aed;">Click Here to Download APK</a></li>
+                <li>Install the App on your Android phone.</li>
+                <li>Click the <strong>"Open in App"</strong> button below to set your password.</li>
                 <li>Set your password and start marking attendance!</li>
               </ol>
             </div>

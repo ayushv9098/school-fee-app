@@ -96,15 +96,35 @@ export default function StaffClient({ initialTeachers, initialTeacherPayments, o
 
     let res;
     if (activeModal === 'add-teacher') {
-      res = await supabase.from('teachers').insert({
-        user_id: user?.id,
-        name: modalData.name,
-        subject: modalData.subject,
-        email: modalData.email || null,
-        mobile: modalData.mobile || null,
-        address: modalData.address || null,
-        monthly_salary: Number(modalData.salary)
+      if (!modalData.email || !modalData.password) {
+        alert('Email and Password are required to create a Teacher login.')
+        setLoading(false)
+        return
+      }
+
+      const response = await fetch('/api/create-teacher', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user?.id,
+          name: modalData.name,
+          subject: modalData.subject,
+          email: modalData.email,
+          password: modalData.password,
+          mobile: modalData.mobile || null,
+          address: modalData.address || null,
+          monthly_salary: Number(modalData.salary),
+          shift_start_time: modalData.shift_start_time || null,
+          shift_end_time: modalData.shift_end_time || null
+        })
       })
+
+      const data = await response.json()
+      if (!response.ok) {
+        res = { error: { message: data.error } }
+      } else {
+        res = { error: null }
+      }
     } else if (activeModal === 'edit-teacher') {
       res = await supabase.from('teachers').update({
         name: modalData.name,
@@ -112,7 +132,9 @@ export default function StaffClient({ initialTeachers, initialTeacherPayments, o
         email: modalData.email || null,
         mobile: modalData.mobile || null,
         address: modalData.address || null,
-        monthly_salary: Number(modalData.salary)
+        monthly_salary: Number(modalData.salary),
+        shift_start_time: modalData.shift_start_time || null,
+        shift_end_time: modalData.shift_end_time || null
       }).eq('id', modalData.id)
     }
 
@@ -150,7 +172,7 @@ export default function StaffClient({ initialTeachers, initialTeacherPayments, o
         <button 
           onClick={() => {
             setActiveModal('add-teacher')
-            setModalData({ name: '', subject: '', mobile: '', email: '', address: '', salary: '' })
+            setModalData({ name: '', subject: '', mobile: '', email: '', password: '', address: '', salary: '', shift_start_time: '', shift_end_time: '' })
           }}
           className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition shadow-sm whitespace-nowrap"
         >
@@ -303,9 +325,15 @@ export default function StaffClient({ initialTeachers, initialTeacherPayments, o
                 <input type="tel" value={modalData.mobile || ''} onChange={e => setModalData({...modalData, mobile: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Email</label>
-                <input type="email" value={modalData.email || ''} onChange={e => setModalData({...modalData, email: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                <label className="text-sm font-medium mb-1 block">Login Email</label>
+                <input required={activeModal === 'add-teacher'} type="email" value={modalData.email || ''} onChange={e => setModalData({...modalData, email: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
               </div>
+              {activeModal === 'add-teacher' && (
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Login Password</label>
+                  <input required type="text" value={modalData.password || ''} onChange={e => setModalData({...modalData, password: e.target.value})} placeholder="e.g. teacher@123" className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium mb-1 block">Address</label>
                 <input type="text" value={modalData.address || ''} onChange={e => setModalData({...modalData, address: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
@@ -313,6 +341,16 @@ export default function StaffClient({ initialTeachers, initialTeacherPayments, o
               <div>
                 <label className="text-sm font-medium mb-1 block">Monthly Salary (₹)</label>
                 <input required type="number" value={modalData.salary} onChange={e => setModalData({...modalData, salary: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">In-Time (Optional)</label>
+                  <input type="time" value={modalData.shift_start_time || ''} onChange={e => setModalData({...modalData, shift_start_time: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Out-Time (Optional)</label>
+                  <input type="time" value={modalData.shift_end_time || ''} onChange={e => setModalData({...modalData, shift_end_time: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                </div>
               </div>
               <button type="submit" disabled={loading} className="w-full h-11 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium">
                 {loading ? 'Saving...' : 'Save'}

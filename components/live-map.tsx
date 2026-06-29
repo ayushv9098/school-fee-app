@@ -77,6 +77,7 @@ export default function LiveMap({
 }) {
   const [teachers, setTeachers] = useState<TeacherLocation[]>([])
   const [loading, setLoading] = useState(true)
+  const [viewType, setViewType] = useState<'satellite' | 'road'>('satellite')
 
   useEffect(() => {
     const supabase = createClient()
@@ -170,20 +171,12 @@ export default function LiveMap({
       >
         <ChangeView center={[focusLat || schoolLat, focusLng || schoolLng]} zoom={17} />
         
-        <LayersControl position="topright">
-          <LayersControl.BaseLayer checked name="Satellite View">
-            <TileLayer
-              attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Road View">
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-          </LayersControl.BaseLayer>
-        </LayersControl>
+        <TileLayer
+          attribution={viewType === 'satellite' ? '&copy; <a href="https://www.esri.com/">Esri</a>' : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}
+          url={viewType === 'satellite' 
+            ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" 
+            : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
+        />
         
         {/* School Building Marker */}
         <Marker position={[schoolLat, schoolLng]} icon={schoolIcon}>
@@ -254,6 +247,14 @@ export default function LiveMap({
           <span className="text-[9px] font-bold text-zinc-600 dark:text-zinc-400">Outside</span>
         </div>
       </div>
+
+      {/* Custom View Toggle */}
+      <button 
+        onClick={() => setViewType(v => v === 'satellite' ? 'road' : 'satellite')}
+        className="absolute top-2 right-2 z-[1000] bg-white dark:bg-zinc-900/90 backdrop-blur px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-300 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
+      >
+        {viewType === 'satellite' ? '🗺️ Switch to Road View' : '🛰️ Switch to Satellite'}
+      </button>
     </div>
   )
 }

@@ -32,7 +32,7 @@ export default function ProfilePage() {
     instagram: '',
     lat: null as number | null,
     lng: null as number | null,
-    radius: 100,
+    radius: '' as number | '',
     school_start_time: '09:30',
     school_end_time: '15:40',
   })
@@ -55,7 +55,7 @@ export default function ProfilePage() {
             instagram: settings.instagram || '',
             lat: settings.lat || null,
             lng: settings.lng || null,
-            radius: settings.radius || 100,
+            radius: settings.radius || '',
             school_start_time: settings.school_start_time ? settings.school_start_time.slice(0, 5) : '09:30',
             school_end_time: settings.school_end_time ? settings.school_end_time.slice(0, 5) : '15:40',
           })
@@ -352,7 +352,7 @@ export default function ProfilePage() {
                     placeholder="100"
                     value={school.radius}
                     onChange={e => {
-                      setSchool(prev => ({ ...prev, radius: Number(e.target.value) }));
+                      setSchool(prev => ({ ...prev, radius: e.target.value === '' ? '' : Number(e.target.value) }));
                     }}
                     className="h-9 text-xs w-20 text-center font-bold"
                     disabled={!locationEditing}
@@ -381,7 +381,7 @@ export default function ProfilePage() {
               </div>
 
               <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800">
-                Teachers must be within <strong>{school.radius} meters</strong> from the GPS center to mark attendance. 
+                Teachers must be within <strong>{school.radius || 100} meters</strong> from the GPS center to mark attendance. 
                 If your school building is large, select <strong>200</strong> or <strong>500</strong>.
               </p>
             </div>
@@ -397,7 +397,7 @@ export default function ProfilePage() {
                 <LiveMap 
                   schoolLat={school.lat} 
                   schoolLng={school.lng} 
-                  radius={school.radius} 
+                  radius={Number(school.radius) || 100} 
                 />
               </div>
             </div>

@@ -17,6 +17,7 @@ import { Progress } from '@/components/ui/progress'
 
 export default function StaffDetailClient({ teacher, schoolName, initialPayments, onRefresh }: { teacher: any, schoolName: string, initialPayments: any[], onRefresh?: () => void }) {
   const router = useRouter()
+  const { academicYear } = useSession()
   const now = new Date()
   const currentYear = now.getFullYear()
   const isAfterMarch = now.getMonth() >= 3
@@ -273,7 +274,8 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
       month: modalData.month,
       year: year,
       paid_at: modalData.date,
-      academic_year: teacherAcademicYear,
+      academic_year: academicYear,
+      mode: modalData.mode || 'Cash',
       note: modalData.note
     })
     
@@ -327,7 +329,9 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
       const res = await supabase.from('teachers').update({
         name: modalData.name,
         subject: modalData.subject,
-        email: modalData.mobile || null
+        email: modalData.mobile || null,
+        shift_start_time: modalData.shift_start_time || null,
+        shift_end_time: modalData.shift_end_time || null
       }).eq('id', teacher.id)
 
       if (res?.error) {
@@ -346,7 +350,9 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
       name: modalData.name,
       subject: modalData.subject,
       email: modalData.mobile || null,
-      monthly_salary: Number(modalData.salary)
+      monthly_salary: Number(modalData.salary),
+      shift_start_time: modalData.shift_start_time || null,
+      shift_end_time: modalData.shift_end_time || null
     }).eq('id', teacher.id)
 
     if (res?.error) {
@@ -395,7 +401,9 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
                   subject: teacher.subject, 
                   salary: String(customSalaries[selectedMonthView.monthName] ?? teacher.monthly_salary), 
                   mobile: teacher.email || '',
-                  monthName: selectedMonthView.monthName
+                  monthName: selectedMonthView.monthName,
+                  shift_start_time: teacher.shift_start_time || '',
+                  shift_end_time: teacher.shift_end_time || ''
                 })
               }}
               className="flex-1 md:flex-none flex items-center justify-center gap-2 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-4 py-2.5 rounded-xl transition font-medium text-sm"
@@ -414,10 +422,13 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
               onClick={(e) => {
                 e.stopPropagation()
                 setActiveModal('pay-salary')
-                setModalData({
+                setModalData({ 
+                  monthName: selectedMonthView.monthName, 
                   month: selectedMonthView.monthValue,
+                  balance: selectedMonthView.balance,
                   amount: '',
                   date: new Date().toISOString().split('T')[0],
+                  mode: 'Cash',
                   note: ''
                 })
               }}
@@ -565,6 +576,21 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
                 <p className="text-zinc-500 dark:text-zinc-400">Monthly Salary</p>
                 <p className="font-medium text-zinc-900 dark:text-zinc-100">{formatCurrency(customSalaries[selectedMonthView.monthName] ?? teacher.monthly_salary)}</p>
               </div>
+              <div>
+                <p className="text-zinc-500 dark:text-zinc-400">Shift Timings</p>
+                <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                  {teacher.shift_start_time && teacher.shift_end_time 
+                    ? (() => {
+                        const d1 = new Date(); const d2 = new Date();
+                        const [h1, m1] = teacher.shift_start_time.split(':');
+                        const [h2, m2] = teacher.shift_end_time.split(':');
+                        d1.setHours(Number(h1), Number(m1)); d2.setHours(Number(h2), Number(m2));
+                        return `${d1.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})} - ${d2.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})}`;
+                      })()
+                    : 'Default School Time'
+                  }
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -638,11 +664,6 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
               </div>
               <form onSubmit={(e) => {
                 handlePaySalary(e).then(() => {
-                  // Update local view state optimistically or rely on parent refetch
-                  // To be safe, we just close modal, and router.refresh() handles new data.
-                  // We'll also clear selectedMonthView to force a fresh click, or let it be.
-                  // The easiest way is to let the user re-click or update state.
-                  // For simplicity, we just close the modal.
                   setActiveModal(null)
                 })
               }} className="space-y-4">
@@ -671,8 +692,17 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
                   <input required type="date" value={modalData.date} onChange={e => setModalData({...modalData, date: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Note (Optional)</label>
-                  <input value={modalData.note} onChange={e => setModalData({...modalData, note: e.target.value})} placeholder="e.g. Advance, Bonus" className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                  <label className="text-sm font-medium mb-1 block">Payment Mode</label>
+                  <select value={modalData.mode || 'Cash'} onChange={e => setModalData({...modalData, mode: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent">
+                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Cheque">Cheque</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Note / Transaction ID (Optional)</label>
+                  <input value={modalData.note} onChange={e => setModalData({...modalData, note: e.target.value})} placeholder="e.g. UTR Number, Advance" className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
                 </div>
                 <button 
                   type="submit" 
@@ -719,6 +749,16 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
                   {modalData.monthName ? `Expected Salary for ${modalData.monthName} (₹)` : 'Monthly Salary (₹)'}
                 </label>
                 <input required type="number" value={modalData.salary} onChange={e => setModalData({...modalData, salary: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">In-Time (Optional)</label>
+                  <input type="time" value={modalData.shift_start_time || ''} onChange={e => setModalData({...modalData, shift_start_time: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Out-Time (Optional)</label>
+                  <input type="time" value={modalData.shift_end_time || ''} onChange={e => setModalData({...modalData, shift_end_time: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                </div>
               </div>
               <button type="submit" disabled={loading} className="w-full h-11 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium">
                 {loading ? 'Saving...' : 'Save'}
@@ -1036,8 +1076,17 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
                 <input required type="date" value={modalData.date} onChange={e => setModalData({...modalData, date: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Note (Optional)</label>
-                <input value={modalData.note} onChange={e => setModalData({...modalData, note: e.target.value})} placeholder="e.g. Cash payment" className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                <label className="text-sm font-medium mb-1 block">Payment Mode</label>
+                <select value={modalData.mode || 'Cash'} onChange={e => setModalData({...modalData, mode: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent">
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Cheque">Cheque</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Note / Transaction ID (Optional)</label>
+                <input value={modalData.note} onChange={e => setModalData({...modalData, note: e.target.value})} placeholder="e.g. UTR Number, Cash payment" className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
               </div>
               <button type="submit" disabled={loading} className="w-full h-11 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium">
                 {loading ? 'Processing...' : 'Confirm Payment'}
@@ -1082,6 +1131,16 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
                   {modalData.monthName ? `Expected Salary for ${modalData.monthName} (₹)` : 'Monthly Salary (₹)'}
                 </label>
                 <input required type="number" value={modalData.salary} onChange={e => setModalData({...modalData, salary: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">In-Time (Optional)</label>
+                  <input type="time" value={modalData.shift_start_time || ''} onChange={e => setModalData({...modalData, shift_start_time: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Out-Time (Optional)</label>
+                  <input type="time" value={modalData.shift_end_time || ''} onChange={e => setModalData({...modalData, shift_end_time: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                </div>
               </div>
               <button type="submit" disabled={loading} className="w-full h-11 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium">
                 {loading ? 'Saving...' : 'Save'}

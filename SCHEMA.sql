@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS public.teachers (
     email TEXT,
     auth_user_id UUID REFERENCES auth.users(id),
     role TEXT DEFAULT 'teacher',
+    shift_start_time TIME,
+    shift_end_time TIME,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -67,6 +69,7 @@ CREATE TABLE IF NOT EXISTS public.teacher_payments (
     amount NUMERIC NOT NULL,
     month INT NOT NULL,
     year INT NOT NULL,
+    mode TEXT DEFAULT 'Cash',
     note TEXT,
     paid_at TIMESTAMPTZ DEFAULT now()
 );

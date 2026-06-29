@@ -5,6 +5,8 @@ import {
   TextInput, Dimensions, SafeAreaView, Platform
 } from 'react-native';
 import * as Location from 'expo-location';
+import * as FileSystem from 'expo-file-system';
+import { decode } from 'base64-arraybuffer';
 import * as TaskManager from 'expo-task-manager';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { 
@@ -389,23 +391,18 @@ export default function DashboardScreen({ navigation }) {
         return;
       }
       
-      // 1. Prepare File for Upload (Native RN Way)
-      console.log('Step 1: Preparing file object...');
+      // 1. Prepare File for Upload (Reliable RN ArrayBuffer Way)
+      console.log('Step 1: Preparing file as base64...');
       const fileName = `${teacher.id}_${dayjs().format('YYYY-MM-DD_HH-mm-ss')}.jpg`;
       const filePath = `selfies/${fileName}`;
       
-      // In React Native, we don't need a real Blob, we use this object structure
-      const fileBody = {
-        uri: selfie,
-        name: fileName,
-        type: 'image/jpeg',
-      };
+      const base64 = await FileSystem.readAsStringAsync(selfie, { encoding: 'base64' });
       
       // 2. Upload to Storage
       console.log('Step 2: Uploading to Supabase Storage [V5]...');
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('attendance-selfies')
-        .upload(filePath, fileBody, { 
+        .upload(filePath, decode(base64), { 
           contentType: 'image/jpeg',
           upsert: true 
         });

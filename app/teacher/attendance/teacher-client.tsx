@@ -207,7 +207,7 @@ export default function TeacherAttendanceClient({
       if (uploadError) throw new Error('Upload Fail')
 
       const now = dayjs()
-      const startTimeStr = schoolSettings?.school_start_time || '09:30:00'
+      const startTimeStr = teacher.shift_start_time || schoolSettings?.school_start_time || '09:30:00'
       const startTime = dayjs(`${now.format('YYYY-MM-DD')} ${startTimeStr}`)
       const isLate = now.isAfter(startTime)
 
@@ -267,7 +267,7 @@ export default function TeacherAttendanceClient({
         }
 
         const now = dayjs()
-        const endTimeStr = schoolSettings?.school_end_time || '15:40:00'
+        const endTimeStr = teacher.shift_end_time || schoolSettings?.school_end_time || '15:40:00'
         const endTime = dayjs(`${now.format('YYYY-MM-DD')} ${endTimeStr}`)
         const isEarlyExit = now.isBefore(endTime)
 
