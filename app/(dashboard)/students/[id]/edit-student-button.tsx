@@ -24,6 +24,7 @@ interface Props {
     status: string
     academic_year: string
     diary_page_number: string
+    vehicle_id?: string
   }
 }
 
@@ -32,6 +33,16 @@ export default function EditStudentButton({ student }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [vehicles, setVehicles] = useState<any[]>([])
+
+  // Fetch vehicles when modal opens
+  const handleOpen = async () => {
+    setOpen(true)
+    const supabase = createClient()
+    const { data } = await supabase.from('vehicles').select('id, name, type').order('name')
+    if (data) setVehicles(data)
+  }
+
   const [form, setForm] = useState({
     name: student.name || '',
     class: student.class || '',
@@ -44,6 +55,7 @@ export default function EditStudentButton({ student }: Props) {
     status: student.status || 'active',
     academic_year: student.academic_year || '',
     diary_page_number: student.diary_page_number || '',
+    vehicle_id: student.vehicle_id || '',
   })
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
@@ -73,6 +85,7 @@ export default function EditStudentButton({ student }: Props) {
         status: form.status,
         academic_year: form.academic_year.trim(),
         diary_page_number: form.diary_page_number.trim(),
+        vehicle_id: form.vehicle_id || null,
       })
       .eq('id', student.id)
 
@@ -95,7 +108,7 @@ export default function EditStudentButton({ student }: Props) {
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-950 transition"
       >
         <Pencil className="w-4 h-4" />
@@ -185,6 +198,24 @@ export default function EditStudentButton({ student }: Props) {
                   onChange={handleChange}
                   className="h-11"
                 />
+              </div>
+
+              {/* Vehicle Assignment */}
+              <div className="space-y-1.5">
+                <Label>Assign Vehicle (Optional)</Label>
+                <select
+                  name="vehicle_id"
+                  value={form.vehicle_id}
+                  onChange={handleChange}
+                  className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                >
+                  <option value="">No Vehicle (Self/Walk)</option>
+                  {vehicles.map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.name} ({v.type})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -45,7 +45,7 @@ export default async function middleware(request: NextRequest) {
 
   if (user) {
     // Use native fetch to bypass RLS with Service Key without breaking Edge runtime in Turbopack
-    let isTeacher = false;
+    let userRole = 'admin';
     try {
       const res = await fetch(`${supabaseUrl}/rest/v1/teachers?select=role&auth_user_id=eq.${user.id}`, {
         headers: {
@@ -54,24 +54,31 @@ export default async function middleware(request: NextRequest) {
         }
       });
       const data = await res.json();
-      isTeacher = data?.[0]?.role === 'teacher';
+      if (data && data.length > 0) {
+        userRole = data[0].role;
+      }
     } catch (err) {
       console.error('Error fetching teacher role in middleware:', err);
     }
 
     if (isPublicPage) {
-      return NextResponse.redirect(new URL(isTeacher ? '/teacher/attendance' : '/dashboard', request.url))
+      if (userRole === 'teacher') return NextResponse.redirect(new URL('/teacher/attendance', request.url))
+      if (userRole === 'attendance_staff') return NextResponse.redirect(new URL('/student-attendance', request.url))
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     if (!pathname.startsWith('/api')) {
-      if (isTeacher) {
-        // Teachers can ONLY access /teacher/* routes
+      if (userRole === 'teacher') {
         if (!pathname.startsWith('/teacher')) {
           return NextResponse.redirect(new URL('/teacher/attendance', request.url))
         }
+      } else if (userRole === 'attendance_staff') {
+        if (!pathname.startsWith('/student-attendance')) {
+          return NextResponse.redirect(new URL('/student-attendance', request.url))
+        }
       } else {
-        // Admins can access everything EXCEPT /teacher/*
-        if (pathname.startsWith('/teacher')) {
+        // Admins can access everything EXCEPT /teacher/* and /student-attendance/*
+        if (pathname.startsWith('/teacher') || pathname.startsWith('/student-attendance')) {
           return NextResponse.redirect(new URL('/dashboard', request.url))
         }
       }

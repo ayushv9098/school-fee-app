@@ -103,14 +103,14 @@ export default function StudentsPage() {
   const [search, setSearch] = useState('')
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
-  const [selectedStudentStatus, setSelectedStudentStatus] = useState('')
+  const [selectedStudentStatus, setSelectedStudentStatus] = useState('active')
   const [selectedYear, setSelectedYear] = useState('')
   const [loading, setLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [schoolName, setSchoolName] = useState('School Fee Report')
 
-  // Use session year as default if selectedYear is not manually set
-  const currentYearFilter = selectedYear || sessionYear
+  // Use session year as default if selectedYear is not manually set, but allow 'all' to show all years
+  const currentYearFilter = selectedYear === 'all' ? null : (selectedYear || sessionYear)
 
   // Available academic years (we could fetch this dynamically, but for now let's list common ones)
   const ACADEMIC_YEARS = ['2024-25', '2025-26', '2026-27']
@@ -277,11 +277,11 @@ export default function StudentsPage() {
           </select>
           
           <select
-            value={selectedYear}
+            value={selectedYear || sessionYear}
             onChange={e => setSelectedYear(e.target.value)}
             className="h-11 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
-            <option value="">All Years</option>
+            <option value="all">All Years</option>
             {ACADEMIC_YEARS.map(y => (
               <option key={y} value={y}>{y}</option>
             ))}

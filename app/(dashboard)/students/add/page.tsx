@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { CLASSES } from '@/lib/constants'
@@ -18,6 +18,16 @@ export default function AddStudentPage() {
   const { academicYear: sessionYear } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [vehicles, setVehicles] = useState<any[]>([])
+
+  useEffect(() => {
+    async function fetchVehicles() {
+      const supabase = createClient()
+      const { data } = await supabase.from('vehicles').select('id, name, type').order('name')
+      if (data) setVehicles(data)
+    }
+    fetchVehicles()
+  }, [])
 
   const [form, setForm] = useState({
     name: '',
@@ -31,6 +41,7 @@ export default function AddStudentPage() {
     academic_year: sessionYear || '2025-26',
     diary_page_number: '',
     is_free: false,
+    vehicle_id: '',
   })
 
   function handleChange(
@@ -78,6 +89,7 @@ export default function AddStudentPage() {
       academic_year: form.academic_year,
       diary_page_number: form.diary_page_number.trim(),
       user_id: user?.id,
+      vehicle_id: form.vehicle_id || null,
     })
 
     if (error) {
@@ -202,6 +214,25 @@ export default function AddStudentPage() {
                   onChange={handleChange}
                   className="h-11"
                 />
+              </div>
+
+              {/* Vehicle Assignment */}
+              <div className="space-y-1.5">
+                <Label htmlFor="vehicle_id">Assign Vehicle (Optional)</Label>
+                <select
+                  id="vehicle_id"
+                  name="vehicle_id"
+                  value={form.vehicle_id}
+                  onChange={handleChange}
+                  className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                >
+                  <option value="">No Vehicle (Self/Walk)</option>
+                  {vehicles.map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.name} ({v.type})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

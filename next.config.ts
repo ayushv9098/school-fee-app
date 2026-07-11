@@ -39,9 +39,6 @@ const nextConfig: NextConfig = {
     SUPABASE_URL: envFile.SUPABASE_URL ?? envFile.NEXT_PUBLIC_SUPABASE_URL,
     SUPABASE_ANON_KEY: envFile.SUPABASE_ANON_KEY ?? envFile.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
-  turbopack: {
-    root: projectRoot,
-  },
 }
 
 export default nextConfig

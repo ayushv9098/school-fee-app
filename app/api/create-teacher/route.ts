@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
-    const { email, password, name, subject, mobile, address, monthly_salary, shift_start_time, shift_end_time, user_id } = await req.json()
+    const { email, password, name, subject, mobile, address, monthly_salary, shift_start_time, shift_end_time, user_id, role } = await req.json()
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: 'Name, Email, and Password are required' }, { status: 400 })
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         monthly_salary: Number(monthly_salary),
         shift_start_time: shift_start_time || null,
         shift_end_time: shift_end_time || null,
-        role: 'teacher'
+        role: role || 'teacher'
       })
       .select()
       .single()
