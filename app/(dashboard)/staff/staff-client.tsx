@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { formatCurrency } from '@/lib/calculations'
 import { createClient } from '@/lib/supabase/client'
+import { useSession } from '@/lib/session-context'
 import { Plus, User, Pencil, Trash2, Search, X, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 
@@ -47,6 +48,7 @@ interface TeacherPayment {
 }
 
 export default function StaffClient({ initialTeachers, initialTeacherPayments, onRefresh }: { initialTeachers: Teacher[], initialTeacherPayments: TeacherPayment[], onRefresh?: () => void }) {
+  const { academicYear } = useSession()
   const router = useRouter()
   const supabase = createClient()
   const [search, setSearch] = useState('')
@@ -115,7 +117,8 @@ export default function StaffClient({ initialTeachers, initialTeacherPayments, o
           address: modalData.address || null,
           monthly_salary: Number(modalData.salary),
           shift_start_time: modalData.shift_start_time || null,
-          shift_end_time: modalData.shift_end_time || null
+          shift_end_time: modalData.shift_end_time || null,
+          academic_year: academicYear
         })
       })
 

@@ -20,7 +20,7 @@ export default function StaffPage() {
       const supabase = createClient()
 
       const [teachers, teacherPayments] = await Promise.all([
-        supabase.from('teachers').select('*').neq('role', 'attendance_staff').order('name'),
+        supabase.from('teachers').select('*').neq('role', 'attendance_staff').eq('academic_year', academicYear).order('name'),
         supabase.from('teacher_payments').select('*').or(`academic_year.eq.${academicYear},academic_year.is.null`).order('paid_at', { ascending: false })
       ])
 
