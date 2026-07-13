@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
-    const { email, password, name, subject, mobile, address, monthly_salary, shift_start_time, shift_end_time, user_id, role } = await req.json()
+    const { email, password, name, subject, mobile, address, monthly_salary, shift_start_time, shift_end_time, user_id, role, academic_year } = await req.json()
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: 'Name, Email, and Password are required' }, { status: 400 })
@@ -20,7 +20,11 @@ export async function POST(req: Request) {
       email,
       password,
       email_confirm: true, // Automatically confirm email so they can log in instantly
-      user_metadata: { name }
+      user_metadata: { 
+        name, 
+        role: role || 'teacher', 
+        academic_year: academic_year || '2025-26' 
+      }
     })
 
     if (authError) {
@@ -42,7 +46,8 @@ export async function POST(req: Request) {
         monthly_salary: Number(monthly_salary),
         shift_start_time: shift_start_time || null,
         shift_end_time: shift_end_time || null,
-        role: role || 'teacher'
+        role: role || 'teacher',
+        academic_year: academic_year || '2025-26'
       })
       .select()
       .single()

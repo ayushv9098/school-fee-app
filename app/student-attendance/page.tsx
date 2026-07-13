@@ -160,6 +160,13 @@ export default function StudentAttendanceDashboard() {
     router.push('/login')
   }
 
+  const getSessionYear = (user: any) => {
+    if (user?.user_metadata?.role === 'attendance_staff') {
+      return user.user_metadata.academic_year || '2025-26'
+    }
+    return localStorage.getItem('selectedAcademicYear') || '2025-26'
+  }
+
   // Init: fetch user, classes, vehicles
   useEffect(() => {
     async function init() {
@@ -175,7 +182,9 @@ export default function StudentAttendanceDashboard() {
         if (data?.school_name) setSchoolName(data.school_name)
       })
 
-      const sessionYear = localStorage.getItem('selectedAcademicYear') || '2025-26'
+      const sessionYear = user?.user_metadata?.role === 'attendance_staff'
+        ? user.user_metadata.academic_year || '2025-26'
+        : localStorage.getItem('selectedAcademicYear') || '2025-26'
 
       const [studentsRes, vehiclesRes] = await Promise.all([
         supabase.from('students').select('*').eq('status', 'active').eq('academic_year', sessionYear).order('name'),
@@ -205,7 +214,7 @@ export default function StudentAttendanceDashboard() {
     if (!selectedClass) { setClassStudents([]); return }
     async function fetch() {
       setLoading(true)
-      const sessionYear = localStorage.getItem('selectedAcademicYear') || '2025-26'
+      const sessionYear = getSessionYear(currentUser)
       const { data: stdData } = await supabase
         .from('students')
         .select('*')
@@ -231,14 +240,14 @@ export default function StudentAttendanceDashboard() {
       setLoading(false)
     }
     fetch()
-  }, [selectedClass])
+  }, [selectedClass, currentUser])
 
   // Fetch vehicle students
   useEffect(() => {
     if (!selectedVehicle) { setVehicleStudents([]); return }
     async function fetch() {
       setLoading(true)
-      const sessionYear = localStorage.getItem('selectedAcademicYear') || '2025-26'
+      const sessionYear = getSessionYear(currentUser)
       const { data: stdData } = await supabase
         .from('students')
         .select('*')
@@ -264,7 +273,7 @@ export default function StudentAttendanceDashboard() {
       setLoading(false)
     }
     fetch()
-  }, [selectedVehicle])
+  }, [selectedVehicle, currentUser])
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -273,7 +282,7 @@ export default function StudentAttendanceDashboard() {
       return
     }
     setAddingStudent(true)
-    const sessionYear = localStorage.getItem('selectedAcademicYear') || '2025-26'
+    const sessionYear = getSessionYear(currentUser)
     
     const { data, error } = await supabase.from('students').insert({
       name: addForm.name.trim(),
@@ -558,7 +567,7 @@ export default function StudentAttendanceDashboard() {
     }
 
     // Refresh vehicle students
-    const sessionYear = localStorage.getItem('selectedAcademicYear') || '2025-26'
+    const sessionYear = getSessionYear(currentUser)
     const { data: stdData } = await supabase
       .from('students')
       .select('*')

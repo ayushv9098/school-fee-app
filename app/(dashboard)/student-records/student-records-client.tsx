@@ -91,6 +91,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
         .from('teachers')
         .select('*')
         .eq('role', 'attendance_staff')
+        .eq('academic_year', sessionYear)
         .order('name')
       setAttendanceStaff(staff || [])
 
@@ -208,6 +209,8 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
+      const sessionYear = localStorage.getItem('selectedAcademicYear') || '2025-26'
+
       const res = await fetch('/api/create-teacher', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -219,7 +222,8 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
           mobile: form.mobile || null,
           monthly_salary: 0,
           role: 'attendance_staff',
-          user_id: user.id
+          user_id: user.id,
+          academic_year: sessionYear
         })
       })
       const data = await res.json()
