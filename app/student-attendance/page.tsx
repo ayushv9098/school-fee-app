@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { LogOut, Bus, Users, CheckCircle2, XCircle, Loader2, MapPin, ChevronDown, ChevronLeft, ChevronRight, Info, X, Search, Plus, GraduationCap, Pencil, ClipboardList, FileDown, Clock } from 'lucide-react'
+import { LogOut, Bus, Users, CheckCircle2, XCircle, Loader2, MapPin, ChevronDown, ChevronLeft, ChevronRight, Info, X, Search, Plus, GraduationCap, Pencil, ClipboardList, FileDown, Clock, CalendarCheck } from 'lucide-react'
 import { CLASSES } from '@/lib/constants'
 import dayjs from 'dayjs'
 import { pdf, Document, Page as PdfPage, Text, View, StyleSheet } from '@react-pdf/renderer'
@@ -105,7 +105,7 @@ const AttendanceReportPDF = ({ recordData, recordType, recordSelection, recordMo
 export default function StudentAttendanceDashboard() {
   const router = useRouter()
   const supabase = createClient()
-  const todayDate = dayjs().format('YYYY-MM-DD')
+  const [todayDate, setTodayDate] = useState(dayjs().format('YYYY-MM-DD'))
 
   const [activeSection, setActiveSection] = useState<'class' | 'vehicle'>('class')
   const [currentUser, setCurrentUser] = useState<any>(null)
@@ -234,6 +234,16 @@ export default function StudentAttendanceDashboard() {
     init()
   }, [])
 
+  // Fetch today's attendance when date changes
+  useEffect(() => {
+    if (!currentUser) return
+    async function fetchTodayAttendance() {
+      const { data } = await supabase.from('student_attendance').select('*').eq('date', todayDate)
+      setTodayAttendance(data || [])
+    }
+    fetchTodayAttendance()
+  }, [todayDate, currentUser])
+
   // Fetch class students
   useEffect(() => {
     if (!selectedClass) { setClassStudents([]); return }
@@ -265,7 +275,7 @@ export default function StudentAttendanceDashboard() {
       setLoading(false)
     }
     fetch()
-  }, [selectedClass, currentUser])
+  }, [selectedClass, currentUser, todayDate])
 
   // Fetch vehicle students
   useEffect(() => {
@@ -298,7 +308,7 @@ export default function StudentAttendanceDashboard() {
       setLoading(false)
     }
     fetch()
-  }, [selectedVehicle, currentUser])
+  }, [selectedVehicle, currentUser, todayDate])
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -639,13 +649,15 @@ export default function StudentAttendanceDashboard() {
 
   // Stats & Filters Calculations
   const totalClassStds = allStudents.length
-  const schoolPresent = todayAttendance.filter(a => a.type === 'class' && a.status === 'present').length
-  const schoolAbsent = todayAttendance.filter(a => a.type === 'class' && a.status === 'absent').length
+  const mySchoolTodayAttendance = todayAttendance.filter(a => allStudents.some(s => s.id === a.student_id))
+
+  const schoolPresent = mySchoolTodayAttendance.filter(a => a.type === 'class' && a.status === 'present').length
+  const schoolAbsent = mySchoolTodayAttendance.filter(a => a.type === 'class' && a.status === 'absent').length
   const schoolNotMarked = totalClassStds - schoolPresent - schoolAbsent
 
   const totalVehicleStds = allStudents.filter(s => s.vehicle_id).length
-  const vehiclePresent = todayAttendance.filter(a => a.type === 'vehicle' && a.status === 'present').length
-  const vehicleAbsent = todayAttendance.filter(a => a.type === 'vehicle' && a.status === 'absent').length
+  const vehiclePresent = mySchoolTodayAttendance.filter(a => a.type === 'vehicle' && a.status === 'present').length
+  const vehicleAbsent = mySchoolTodayAttendance.filter(a => a.type === 'vehicle' && a.status === 'absent').length
   const vehicleNotMarked = totalVehicleStds - vehiclePresent - vehicleAbsent
 
   const totalVehicleStudents = vehicleStudents.length
@@ -977,7 +989,7 @@ export default function StudentAttendanceDashboard() {
             <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
               Attendance Portal
             </h1>
-            <p className="text-sm text-zinc-500 mt-1">{dayjs(todayDate).format('dddd, DD MMMM YYYY')}</p>
+            <p className="text-sm text-zinc-500 mt-1">{dayjs().format('dddd, DD MMMM YYYY')}</p>
           </div>
           <button
             onClick={() => { setRecordsOpen(true); setRecordSelection('') }}
@@ -1004,6 +1016,36 @@ export default function StudentAttendanceDashboard() {
               Logout
             </button>
           )}
+        </div>      </div>
+
+      {/* Date Selector Row */}
+      <div className="px-4 md:px-8 pt-4 flex justify-start">
+        <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-2 w-fit shadow-sm">
+          <button
+            onClick={() => setTodayDate(dayjs(todayDate).subtract(1, 'day').format('YYYY-MM-DD'))}
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all active:scale-90"
+          >
+            <ChevronLeft size={18} className="text-zinc-500 dark:text-zinc-400" />
+          </button>
+          <div className="relative flex items-center gap-1.5">
+            <CalendarCheck size={16} className="text-violet-650 dark:text-violet-400" />
+            <input
+              type="date"
+              value={todayDate}
+              onChange={e => setTodayDate(e.target.value)}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+            <span className="text-sm font-bold text-violet-600 dark:text-violet-400 hover:underline cursor-pointer">
+              {dayjs(todayDate).format('DD MMM YYYY')}
+            </span>
+          </div>
+          <button
+            onClick={() => setTodayDate(dayjs(todayDate).add(1, 'day').format('YYYY-MM-DD'))}
+            disabled={todayDate === dayjs().format('YYYY-MM-DD')}
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all active:scale-90 disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ChevronRight size={18} className="text-zinc-500 dark:text-zinc-400" />
+          </button>
         </div>
       </div>
 
@@ -1015,7 +1057,7 @@ export default function StudentAttendanceDashboard() {
             className={`flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold rounded-xl transition-all ${
               activeSection === 'class'
                 ? 'bg-white dark:bg-zinc-900 text-violet-600 shadow-sm'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+                : 'text-zinc-650 dark:text-zinc-400 hover:text-zinc-900'
             }`}
           >
             <Users size={18} />
@@ -1026,7 +1068,7 @@ export default function StudentAttendanceDashboard() {
             className={`flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold rounded-xl transition-all ${
               activeSection === 'vehicle'
                 ? 'bg-white dark:bg-zinc-900 text-emerald-600 shadow-sm'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+                : 'text-zinc-650 dark:text-zinc-400 hover:text-zinc-900'
             }`}
           >
             <Bus size={18} />
