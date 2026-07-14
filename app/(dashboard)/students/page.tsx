@@ -99,6 +99,7 @@ import { useSession } from '@/lib/session-context'
 export default function StudentsPage() {
   const router = useRouter()
   const { academicYear: sessionYear } = useSession()
+  const [mounted, setMounted] = useState(false)
   const [students, setStudents] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [selectedClass, setSelectedClass] = useState('')
@@ -116,6 +117,7 @@ export default function StudentsPage() {
   const ACADEMIC_YEARS = ['2024-25', '2025-26', '2026-27']
 
   useEffect(() => {
+    setMounted(true)
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
@@ -220,10 +222,12 @@ export default function StudentsPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Students</h1>
-            <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px] font-bold border border-emerald-100 uppercase tracking-wider">
-              <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-              {currentYearFilter}
-            </span>
+            {mounted && currentYearFilter && (
+              <span className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px] font-bold border border-emerald-100 uppercase tracking-wider">
+                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                {currentYearFilter}
+              </span>
+            )}
           </div>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">{students.length} total students</p>
         </div>

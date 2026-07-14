@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useSession } from '@/lib/session-context'
 import StaffClient from './staff-client'
 import { Loader2 } from 'lucide-react'
+import dayjs from 'dayjs'
 
 export default function StaffPage() {
   const { academicYear } = useSession()
@@ -18,15 +19,18 @@ export default function StaffPage() {
         setLoading(true)
       }
       const supabase = createClient()
+      const today = dayjs().format('YYYY-MM-DD')
 
-      const [teachers, teacherPayments] = await Promise.all([
+      const [teachers, teacherPayments, todayAttendance] = await Promise.all([
         supabase.from('teachers').select('*').neq('role', 'attendance_staff').eq('academic_year', academicYear).order('name'),
-        supabase.from('teacher_payments').select('*').or(`academic_year.eq.${academicYear},academic_year.is.null`).order('paid_at', { ascending: false })
+        supabase.from('teacher_payments').select('*').or(`academic_year.eq.${academicYear},academic_year.is.null`).order('paid_at', { ascending: false }),
+        supabase.from('attendance').select('*').eq('date', today)
       ])
 
       setData({
         teachers: teachers.data || [],
-        teacherPayments: teacherPayments.data || []
+        teacherPayments: teacherPayments.data || [],
+        todayAttendance: todayAttendance.data || []
       })
       setLoading(false)
     }
@@ -46,6 +50,7 @@ export default function StaffPage() {
     <StaffClient
       initialTeachers={data.teachers}
       initialTeacherPayments={data.teacherPayments}
+      todayAttendance={data.todayAttendance || []}
       onRefresh={() => setRefreshKey(prev => prev + 1)}
     />
   )

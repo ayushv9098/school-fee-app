@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { LogOut, Bus, Users, CheckCircle2, XCircle, Loader2, MapPin, ChevronDown, ChevronLeft, ChevronRight, Info, X, Search, Plus, GraduationCap, Pencil, ClipboardList, FileDown } from 'lucide-react'
+import { LogOut, Bus, Users, CheckCircle2, XCircle, Loader2, MapPin, ChevronDown, ChevronLeft, ChevronRight, Info, X, Search, Plus, GraduationCap, Pencil, ClipboardList, FileDown, Clock } from 'lucide-react'
 import { CLASSES } from '@/lib/constants'
 import dayjs from 'dayjs'
 import { pdf, Document, Page as PdfPage, Text, View, StyleSheet } from '@react-pdf/renderer'
@@ -126,10 +126,21 @@ export default function StudentAttendanceDashboard() {
   const [saving, setSaving] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<Student | null>(null)
   const [allStudents, setAllStudents] = useState<Student[]>([])
+  const [todayAttendance, setTodayAttendance] = useState<any[]>([])
   const [assignModalOpen, setAssignModalOpen] = useState(false)
   const [assignSearch, setAssignSearch] = useState('')
   const [savingAssign, setSavingAssign] = useState(false)
   const [tempAssignedIds, setTempAssignedIds] = useState<Set<string>>(new Set())
+
+  const [statusFilter, setStatusFilter] = useState<'all' | 'present' | 'absent' | 'remaining'>('all')
+  const [viewMode, setViewMode] = useState<'dashboard' | 'details'>('dashboard')
+  const [detailsSearch, setDetailsSearch] = useState('')
+  const [selectedVillageFilter, setSelectedVillageFilter] = useState<string | null>(null)
+
+  useEffect(() => {
+    setStatusFilter('all')
+    setSelectedVillageFilter(null)
+  }, [activeSection, selectedClass, selectedVehicle])
 
   // Quick Add Student State
   const [addStudentOpen, setAddStudentOpen] = useState(false)
@@ -178,7 +189,19 @@ export default function StudentAttendanceDashboard() {
       setCurrentUser(user)
       
       // Fetch school settings
-      supabase.from('school_settings').select('school_name').eq('user_id', user.id).maybeSingle().then(({ data }) => {
+      let ownerId = user.id
+      if (user?.user_metadata?.role === 'attendance_staff') {
+        const { data: teacher } = await supabase
+          .from('teachers')
+          .select('user_id')
+          .eq('auth_user_id', user.id)
+          .maybeSingle()
+        if (teacher?.user_id) {
+          ownerId = teacher.user_id
+        }
+      }
+
+      supabase.from('school_settings').select('school_name').eq('user_id', ownerId).maybeSingle().then(({ data }) => {
         if (data?.school_name) setSchoolName(data.school_name)
       })
 
@@ -186,9 +209,10 @@ export default function StudentAttendanceDashboard() {
         ? user.user_metadata.academic_year || '2025-26'
         : localStorage.getItem('selectedAcademicYear') || '2025-26'
 
-      const [studentsRes, vehiclesRes] = await Promise.all([
-        supabase.from('students').select('*').eq('status', 'active').eq('academic_year', sessionYear).order('name'),
-        supabase.from('vehicles').select('id, name, type').order('name')
+      const [studentsRes, vehiclesRes, todayAttendanceRes] = await Promise.all([
+        supabase.from('students').select('*').eq('user_id', ownerId).eq('status', 'active').eq('academic_year', sessionYear).order('name'),
+        supabase.from('vehicles').select('id, name, type').eq('user_id', ownerId).order('name'),
+        supabase.from('student_attendance').select('*').eq('date', todayDate)
       ])
 
       if (studentsRes.data) {
@@ -204,6 +228,7 @@ export default function StudentAttendanceDashboard() {
         setClasses(unique)
       }
       setVehicles(vehiclesRes.data || [])
+      setTodayAttendance(todayAttendanceRes.data || [])
       setLoading(false)
     }
     init()
@@ -491,6 +516,24 @@ export default function StudentAttendanceDashboard() {
       else next[studentId] = newStatus
       return next
     })
+
+    setTodayAttendance(prev => {
+      const index = prev.findIndex(a => a.student_id === studentId && a.type === type)
+      if (newStatus === 'none') {
+        if (index > -1) {
+          return prev.filter((_, idx) => idx !== index)
+        }
+      } else {
+        if (index > -1) {
+          const updated = [...prev]
+          updated[index] = { ...updated[index], status: newStatus }
+          return updated
+        } else {
+          return [...prev, { student_id: studentId, date: todayDate, status: newStatus, type }]
+        }
+      }
+      return prev
+    })
   }
 
   const markAllPresent = async (type: 'class' | 'vehicle') => {
@@ -505,6 +548,19 @@ export default function StudentAttendanceDashboard() {
       }
     }
     setFn(newAtt)
+
+    setTodayAttendance(prev => {
+      let updated = [...prev]
+      for (const std of students) {
+        const index = updated.findIndex(a => a.student_id === std.id && a.type === type)
+        if (index > -1) {
+          updated[index] = { ...updated[index], status: 'present' }
+        } else {
+          updated.push({ student_id: std.id, date: todayDate, status: 'present', type })
+        }
+      }
+      return updated
+    })
   }
 
   const submitAttendance = async (type: 'class' | 'vehicle') => {
@@ -581,14 +637,90 @@ export default function StudentAttendanceDashboard() {
     setAssignModalOpen(false)
   }
 
-  // Vehicle summary
+  // Stats & Filters Calculations
+  const totalClassStds = allStudents.length
+  const schoolPresent = todayAttendance.filter(a => a.type === 'class' && a.status === 'present').length
+  const schoolAbsent = todayAttendance.filter(a => a.type === 'class' && a.status === 'absent').length
+  const schoolNotMarked = totalClassStds - schoolPresent - schoolAbsent
+
+  const totalVehicleStds = allStudents.filter(s => s.vehicle_id).length
+  const vehiclePresent = todayAttendance.filter(a => a.type === 'vehicle' && a.status === 'present').length
+  const vehicleAbsent = todayAttendance.filter(a => a.type === 'vehicle' && a.status === 'absent').length
+  const vehicleNotMarked = totalVehicleStds - vehiclePresent - vehicleAbsent
+
   const totalVehicleStudents = vehicleStudents.length
   const totalVehiclePresent = Object.values(vehicleAttendance).filter(s => s === 'present').length
-  const villageCount = vehicleStudents.reduce((acc, std) => {
+
+  const villageBreakdown = vehicleStudents.reduce((acc, std) => {
     const loc = std.address?.trim() || 'Unknown'
-    acc[loc] = (acc[loc] || 0) + 1
+    if (!acc[loc]) {
+      acc[loc] = { total: 0, present: 0 }
+    }
+    acc[loc].total += 1
+    const status = vehicleAttendance[std.id]
+    if (status === 'present') {
+      acc[loc].present += 1
+    }
     return acc
-  }, {} as Record<string, number>)
+  }, {} as Record<string, { total: number, present: number }>)
+
+  const allVehicleVillageBreakdown = allStudents.filter(s => s.vehicle_id).reduce((acc, std) => {
+    const loc = std.address?.trim() || 'Unknown'
+    if (!acc[loc]) {
+      acc[loc] = { total: 0, present: 0 }
+    }
+    acc[loc].total += 1
+    const status = todayAttendance.find(a => a.student_id === std.id && a.type === 'vehicle')?.status
+    if (status === 'present') {
+      acc[loc].present += 1
+    }
+    return acc
+  }, {} as Record<string, { total: number, present: number }>)
+
+  const displayedClassStudents = (selectedClass ? classStudents : allStudents).filter(student => {
+    const status = classAttendance[student.id]
+    if (statusFilter === 'present') return status === 'present'
+    if (statusFilter === 'absent') return status === 'absent'
+    if (statusFilter === 'remaining') return !status
+    return true
+  })
+
+  const displayedVehicleStudents = (selectedVehicle ? vehicleStudents : allStudents.filter(s => s.vehicle_id)).filter(student => {
+    const status = vehicleAttendance[student.id]
+    if (statusFilter === 'present') return status === 'present'
+    if (statusFilter === 'absent') return status === 'absent'
+    if (statusFilter === 'remaining') return !status
+    return true
+  }).filter(student => {
+    if (selectedVillageFilter) {
+      return (student.address?.trim() || 'Unknown') === selectedVillageFilter
+    }
+    return true
+  })
+
+  const searchedClassStudents = displayedClassStudents.filter(student => {
+    if (!detailsSearch.trim()) return true
+    const query = detailsSearch.toLowerCase()
+    return (
+      student.name.toLowerCase().includes(query) ||
+      student.class.toLowerCase().includes(query) ||
+      student.mobile?.toLowerCase().includes(query) ||
+      student.guardian_name?.toLowerCase().includes(query) ||
+      (student.address && student.address.toLowerCase().includes(query))
+    )
+  })
+
+  const searchedVehicleStudents = displayedVehicleStudents.filter(student => {
+    if (!detailsSearch.trim()) return true
+    const query = detailsSearch.toLowerCase()
+    return (
+      student.name.toLowerCase().includes(query) ||
+      student.class.toLowerCase().includes(query) ||
+      student.mobile?.toLowerCase().includes(query) ||
+      student.guardian_name?.toLowerCase().includes(query) ||
+      (student.address && student.address.toLowerCase().includes(query))
+    )
+  })
 
   const renderStudentRow = (student: Student, index: number, att: Record<string, string>, type: 'class' | 'vehicle') => {
     const status = att[student.id]
@@ -639,6 +771,198 @@ export default function StudentAttendanceDashboard() {
             <XCircle size={20} />
           </button>
         </div>
+      </div>
+    )
+  }
+
+  if (viewMode === 'details') {
+    const currentStudents = activeSection === 'class' ? searchedClassStudents : searchedVehicleStudents
+    const prefix = activeSection === 'class' ? 'School' : 'Vehicle'
+    let title = statusFilter === 'present' 
+      ? `${prefix} Attendance: Present Today` 
+      : statusFilter === 'absent' 
+      ? `${prefix} Attendance: Absent Today` 
+      : statusFilter === 'remaining' 
+      ? `${prefix} Attendance: Remaining` 
+      : `${prefix} Attendance: Total Students`
+
+    if (selectedClass) {
+      title = `Class ${selectedClass} Students`
+    } else if (selectedVehicle) {
+      const vName = vehicles.find(v => v.id === selectedVehicle)?.name || 'Vehicle'
+      title = `${vName.toUpperCase()} Vehicle Students`
+    }
+
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 px-4 py-4 flex items-center gap-4">
+          <button 
+            onClick={() => {
+              setViewMode('dashboard')
+              setDetailsSearch('')
+              setSelectedClass('')
+              setSelectedVehicle('')
+              setStatusFilter('all')
+            }}
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all active:scale-95"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-lg font-bold truncate">{title}</h1>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Total: {currentStudents.length} Students</p>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
+          
+          {/* Action header card for class details */}
+          {selectedClass && currentStudents.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+              <p className="text-sm text-zinc-500 font-medium">
+                Marking attendance for Class <b>{selectedClass}</b>.
+              </p>
+              <button
+                onClick={() => markAllPresent('class')}
+                disabled={saving}
+                className="h-10 px-4 bg-violet-600 hover:bg-violet-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 w-full sm:w-auto"
+              >
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                Mark All Present
+              </button>
+            </div>
+          )}
+
+          {/* Action header card for vehicle details */}
+          {selectedVehicle && currentStudents.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                <p className="text-sm text-zinc-500 font-medium">
+                  Marking attendance for this vehicle.
+                </p>
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => {
+                      setTempAssignedIds(new Set(vehicleStudents.map(s => s.id)))
+                      setAssignSearch('')
+                      setAssignModalOpen(true)
+                    }}
+                    className="h-10 px-4 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium rounded-xl flex items-center justify-center transition-colors"
+                  >
+                    <Users size={16} className="mr-2" />
+                    Manage Students
+                  </button>
+                  <button
+                    onClick={() => markAllPresent('vehicle')}
+                    disabled={saving}
+                    className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                    Mark All Present
+                  </button>
+                </div>
+              </div>
+
+              {/* Vehicle summary breakdown */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-zinc-500">Total Assigned</p>
+                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{totalVehicleStudents}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-emerald-500">Present Today</p>
+                    <p className="text-3xl font-bold text-emerald-600">{totalVehiclePresent}</p>
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                  <p className="text-sm font-semibold text-zinc-500 mb-3 flex items-center gap-1"><MapPin size={14}/> Village/Area</p>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {Object.entries(villageBreakdown).map(([village, stats]) => {
+                      const isSelected = selectedVillageFilter === village
+                      return (
+                        <button
+                          key={village}
+                          onClick={() => setSelectedVillageFilter(isSelected ? null : village)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 ${
+                            isSelected
+                              ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+                              : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 hover:border-zinc-300'
+                          }`}
+                        >
+                          <span>{village}</span>
+                          <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                            isSelected ? 'bg-white/20 text-white' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-650 dark:text-zinc-400'
+                          }`}>
+                            {stats.present}/{stats.total}
+                          </span>
+                        </button>
+                      )
+                    })}
+                    {selectedVillageFilter && (
+                      <button
+                        onClick={() => setSelectedVillageFilter(null)}
+                        className="px-2.5 py-1 text-xs text-rose-600 hover:text-rose-700 font-semibold transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Search Filter */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <input
+              placeholder="Search by name, mobile, class, guardian, address..."
+              value={detailsSearch}
+              onChange={e => setDetailsSearch(e.target.value)}
+              className="w-full h-11 pl-9 pr-10 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+            />
+            {detailsSearch && (
+              <button
+                onClick={() => setDetailsSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-400"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* List of students */}
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+            {currentStudents.length === 0 ? (
+              <div className="p-12 text-center text-zinc-500">
+                No students found matching your criteria.
+              </div>
+            ) : (
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {currentStudents.map((s, i) => renderStudentRow(s, i, activeSection === 'class' ? classAttendance : vehicleAttendance, activeSection))}
+              </div>
+            )}
+          </div>
+
+          {/* Submit Attendance Button */}
+          {((selectedClass && activeSection === 'class') || (selectedVehicle && activeSection === 'vehicle')) && currentStudents.length > 0 && (
+            <div className="flex justify-center pt-4">
+              <button 
+                onClick={() => submitAttendance(activeSection)}
+                disabled={saving}
+                className={`w-full sm:w-auto px-8 py-3 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all hover:shadow-md disabled:opacity-50 ${
+                  activeSection === 'class' ? 'bg-violet-600 hover:bg-violet-700' : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
+              >
+                {saving ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
+                Submit {activeSection === 'class' ? 'Class' : 'Transport'} Attendance
+              </button>
+            </div>
+          )}
+        </main>
       </div>
     )
   }
@@ -717,6 +1041,94 @@ export default function StudentAttendanceDashboard() {
           {/* ===== CLASS SECTION ===== */}
           {activeSection === 'class' && (
             <>
+              {/* Cards Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <button 
+                  onClick={() => { setStatusFilter('all'); setViewMode('details'); }}
+                  className="w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Total Students</span>
+                    <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                      <Users size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalClassStds}</p>
+                </button>
+
+                <button 
+                  onClick={() => { setStatusFilter('present'); setViewMode('details'); }}
+                  className="w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Present</span>
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{schoolPresent}</p>
+                </button>
+
+                <button 
+                  onClick={() => { setStatusFilter('absent'); setViewMode('details'); }}
+                  className="w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Absent</span>
+                    <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center text-rose-600 dark:text-rose-455">
+                      <XCircle size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-rose-600 dark:text-rose-455">{schoolAbsent}</p>
+                </button>
+
+                <button 
+                  onClick={() => { setStatusFilter('remaining'); setViewMode('details'); }}
+                  className="w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Remaining</span>
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                      <Clock size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-455">{schoolNotMarked}</p>
+                </button>
+              </div>
+
+              {/* Class Breakdown Scroll list */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-2">
+                <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Class Breakdown (Click to filter):</p>
+                <div className="flex gap-2 overflow-x-auto pb-3 custom-scrollbar">
+                  {classes.map(c => {
+                    const classStds = allStudents.filter(s => s.class === c)
+                    const present = todayAttendance.filter(a => a.type === 'class' && a.status === 'present' && classStds.some(s => s.id === a.student_id)).length
+                    const isSelected = selectedClass === c
+                    return (
+                      <button 
+                        key={c}
+                        onClick={() => {
+                          setSelectedClass(c)
+                          setStatusFilter('all')
+                          setViewMode('details')
+                        }}
+                        className={`flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border flex items-center gap-2 ${
+                          isSelected
+                            ? 'bg-violet-600 border-violet-600 text-white shadow-sm'
+                            : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 hover:border-zinc-300'
+                        }`}
+                      >
+                        <span>{c}</span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                          isSelected ? 'bg-white/20 text-white' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-650 dark:text-zinc-400'
+                        }`}>
+                          {present}/{classStds.length}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
               <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1">
                   <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1 block">Select Class</label>
@@ -745,11 +1157,11 @@ export default function StudentAttendanceDashboard() {
                 <div className="flex justify-center p-12"><Loader2 size={32} className="animate-spin text-violet-600" /></div>
               ) : selectedClass ? (
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-                  {classStudents.length === 0 ? (
-                    <div className="p-8 text-center text-zinc-500">No active students found in this class.</div>
+                  {displayedClassStudents.length === 0 ? (
+                    <div className="p-8 text-center text-zinc-500">No active students found in this class or matching filter.</div>
                   ) : (
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                      {classStudents.map((s, i) => renderStudentRow(s, i, classAttendance, 'class'))}
+                      {displayedClassStudents.map((s, i) => renderStudentRow(s, i, classAttendance, 'class'))}
                     </div>
                   )}
                 </div>
@@ -777,6 +1189,131 @@ export default function StudentAttendanceDashboard() {
           {/* ===== VEHICLE SECTION ===== */}
           {activeSection === 'vehicle' && (
             <>
+              {/* Vehicle Cards Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <button 
+                  onClick={() => { setStatusFilter('all'); setViewMode('details'); }}
+                  className="w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Total Students</span>
+                    <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                      <Bus size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalVehicleStds}</p>
+                </button>
+
+                <button 
+                  onClick={() => { setStatusFilter('present'); setViewMode('details'); }}
+                  className="w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Present</span>
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{vehiclePresent}</p>
+                </button>
+
+                <button 
+                  onClick={() => { setStatusFilter('absent'); setViewMode('details'); }}
+                  className="w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Absent</span>
+                    <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center text-rose-600 dark:text-rose-450">
+                      <XCircle size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-rose-600 dark:text-rose-455">{vehicleAbsent}</p>
+                </button>
+
+                <button 
+                  onClick={() => { setStatusFilter('remaining'); setViewMode('details'); }}
+                  className="w-full text-left bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Remaining</span>
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-600 dark:text-amber-450">
+                      <Clock size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-455">{vehicleNotMarked}</p>
+                </button>
+              </div>
+
+              {/* Vehicle Breakdown Scroll list */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-2">
+                <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Vehicle Breakdown (Click to filter):</p>
+                <div className="flex gap-2 overflow-x-auto pb-3 custom-scrollbar">
+                  {vehicles.map(v => {
+                    const vehicleStds = allStudents.filter(s => s.vehicle_id === v.id)
+                    const present = todayAttendance.filter(a => a.type === 'vehicle' && a.status === 'present' && vehicleStds.some(s => s.id === a.student_id)).length
+                    const isSelected = selectedVehicle === v.id
+                    return (
+                      <button 
+                        key={v.id}
+                        onClick={() => {
+                          setSelectedVehicle(v.id)
+                          setStatusFilter('all')
+                          setViewMode('details')
+                        }}
+                        className={`flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border flex items-center gap-2 ${
+                          isSelected
+                            ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+                            : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 hover:border-zinc-300'
+                        }`}
+                      >
+                        <span>{v.name}</span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                          isSelected ? 'bg-white/20 text-white' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-650 dark:text-zinc-400'
+                        }`}>
+                          {present}/{vehicleStds.length}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Village Breakdown Scroll list (across all vehicles) */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-2">
+                <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Village Breakdown (Click to filter):</p>
+                <div className="flex gap-2 overflow-x-auto pb-3 custom-scrollbar">
+                  {Object.entries(allVehicleVillageBreakdown).map(([village, stats]) => {
+                    const isSelected = selectedVillageFilter === village
+                    return (
+                      <button 
+                        key={village}
+                        onClick={() => setSelectedVillageFilter(isSelected ? null : village)}
+                        className={`flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border flex items-center gap-2 ${
+                          isSelected
+                            ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+                            : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 hover:border-zinc-300'
+                        }`}
+                      >
+                        <span>{village}</span>
+                        <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                          isSelected ? 'bg-white/20 text-white' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-655 dark:text-zinc-400'
+                        }`}>
+                          {stats.present}/{stats.total}
+                        </span>
+                      </button>
+                    )
+                  })}
+                  {selectedVillageFilter && (
+                    <button 
+                      onClick={() => setSelectedVillageFilter(null)}
+                      className="px-2.5 py-1 text-xs text-rose-600 hover:text-rose-700 font-semibold transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1">
                   <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1 block">Select Vehicle</label>
@@ -831,12 +1368,36 @@ export default function StudentAttendanceDashboard() {
                   </div>
                   <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
                     <p className="text-sm font-semibold text-zinc-500 mb-3 flex items-center gap-1"><MapPin size={14}/> Village/Area</p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(villageCount).map(([village, count]) => (
-                        <span key={village} className="px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-xs font-medium rounded-md">
-                          {village}: <b className="text-zinc-900 dark:text-zinc-100">{count}</b>
-                        </span>
-                      ))}
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {Object.entries(villageBreakdown).map(([village, stats]) => {
+                        const isSelected = selectedVillageFilter === village
+                        return (
+                          <button
+                            key={village}
+                            onClick={() => setSelectedVillageFilter(isSelected ? null : village)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 ${
+                              isSelected
+                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+                                : 'bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 hover:border-zinc-300'
+                            }`}
+                          >
+                            <span>{village}</span>
+                            <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                              isSelected ? 'bg-white/20 text-white' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-655 dark:text-zinc-400'
+                            }`}>
+                              {stats.present}/{stats.total}
+                            </span>
+                          </button>
+                        )
+                      })}
+                      {selectedVillageFilter && (
+                        <button
+                          onClick={() => setSelectedVillageFilter(null)}
+                          className="px-2.5 py-1 text-xs text-rose-600 hover:text-rose-700 font-semibold transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -846,11 +1407,11 @@ export default function StudentAttendanceDashboard() {
                 <div className="flex justify-center p-12"><Loader2 size={32} className="animate-spin text-emerald-600" /></div>
               ) : selectedVehicle ? (
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-                  {vehicleStudents.length === 0 ? (
-                    <div className="p-8 text-center text-zinc-500">No students are assigned to this vehicle yet.</div>
+                  {displayedVehicleStudents.length === 0 ? (
+                    <div className="p-8 text-center text-zinc-500">No students are assigned to this vehicle yet or matching filter.</div>
                   ) : (
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                      {vehicleStudents.map((s, i) => renderStudentRow(s, i, vehicleAttendance, 'vehicle'))}
+                      {displayedVehicleStudents.map((s, i) => renderStudentRow(s, i, vehicleAttendance, 'vehicle'))}
                     </div>
                   )}
                 </div>

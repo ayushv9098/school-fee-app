@@ -47,7 +47,23 @@ interface TeacherPayment {
   year: number
 }
 
-export default function StaffClient({ initialTeachers, initialTeacherPayments, onRefresh }: { initialTeachers: Teacher[], initialTeacherPayments: TeacherPayment[], onRefresh?: () => void }) {
+interface AttendanceRecord {
+  id: string
+  teacher_id: string
+  status: string
+}
+
+export default function StaffClient({ 
+  initialTeachers, 
+  initialTeacherPayments, 
+  todayAttendance = [], 
+  onRefresh 
+}: { 
+  initialTeachers: Teacher[], 
+  initialTeacherPayments: TeacherPayment[], 
+  todayAttendance?: AttendanceRecord[], 
+  onRefresh?: () => void 
+}) {
   const { academicYear } = useSession()
   const router = useRouter()
   const supabase = createClient()
@@ -230,6 +246,9 @@ export default function StaffClient({ initialTeachers, initialTeacherPayments, o
             return 'bg-violet-500'
           }
 
+          const attRecord = todayAttendance.find(a => a.teacher_id === teacher.id)
+          const attendanceStatus = attRecord ? attRecord.status : 'not_marked'
+
           return (
             <Link key={teacher.id} href={`/staff/${teacher.id}`}>
               <Card className="group relative overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-violet-500 dark:hover:border-violet-600 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 rounded-2xl shadow-sm">
@@ -252,9 +271,51 @@ export default function StaffClient({ initialTeachers, initialTeacherPayments, o
                         </div>
                       </div>
                       
-                      <Badge variant={statusVariant}>
-                        {statusText}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <Badge variant={statusVariant}>
+                          {statusText}
+                        </Badge>
+                        {(() => {
+                          switch (attendanceStatus) {
+                            case 'present':
+                              return (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30 uppercase tracking-wide">
+                                  Present
+                                </span>
+                              )
+                            case 'absent':
+                              return (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30 uppercase tracking-wide">
+                                  Absent
+                                </span>
+                              )
+                            case 'late':
+                              return (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30 uppercase tracking-wide">
+                                  Late
+                                </span>
+                              )
+                            case 'half_day':
+                              return (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/30 uppercase tracking-wide">
+                                  Half Day
+                                </span>
+                              )
+                            case 'on_leave':
+                              return (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/30 uppercase tracking-wide">
+                                  On Leave
+                                </span>
+                              )
+                            default:
+                              return (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 uppercase tracking-wide">
+                                  Not Marked
+                                </span>
+                              )
+                          }
+                        })()}
+                      </div>
                     </div>
 
                     {/* Progress indicator */}

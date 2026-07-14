@@ -28,6 +28,11 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const { academicYear, setAcademicYear, availableYears } = useSession()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   async function handleLogout() {
     const supabase = createClient()
@@ -65,15 +70,19 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
       <div className="p-4 border-b border-zinc-50">
         <label className="text-[10px] uppercase font-bold text-zinc-400 mb-1 block px-1">Session / Year</label>
-        <select 
-          value={academicYear}
-          onChange={(e) => onYearChange(e.target.value)}
-          className="w-full h-9 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all active:scale-95"
-        >
-          {availableYears.map(year => (
-            <option key={year} value={year}>{year}</option>
-          ))}
-        </select>
+        {mounted ? (
+          <select 
+            value={academicYear}
+            onChange={(e) => onYearChange(e.target.value)}
+            className="w-full h-9 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all active:scale-95"
+          >
+            {availableYears.map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        ) : (
+          <div className="w-full h-9 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-lg" />
+        )}
       </div>
 
       <nav className="flex-1 p-4 space-y-1">
