@@ -488,9 +488,9 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     <div className="max-h-[500px] overflow-y-auto p-4 space-y-4">
                       {Object.values(vehicleBreakdown).sort((a, b) => a.name.localeCompare(b.name)).map((v) => (
                         <div key={v.name} className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-                          <div className="bg-zinc-50 dark:bg-zinc-900/50 p-3 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-800">
-                            <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">{v.name}</h4>
-                            <div className="text-sm">
+                          <div className="bg-zinc-50 dark:bg-zinc-900/50 p-3 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-800 gap-2">
+                            <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 flex-1">{v.name}</h4>
+                            <div className="text-sm whitespace-nowrap shrink-0">
                               <span className="font-medium text-emerald-600">{v.boarded}</span>
                               <span className="text-zinc-500"> / {v.total} Present</span>
                             </div>
@@ -502,16 +502,16 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                                 <div key={idx} className="flex flex-col">
                                   <button 
                                     onClick={() => setExpandedVehicleVillages(p => ({...p, [vKey]: !p[vKey]}))}
-                                    className="p-3 pl-5 flex justify-between items-center hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors cursor-pointer w-full text-left"
+                                    className="p-3 pl-5 flex justify-between items-center hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors cursor-pointer w-full text-left gap-2"
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <ChevronRight size={14} className={`text-zinc-400 transition-transform ${expandedVehicleVillages[vKey] ? 'rotate-90' : ''}`} />
-                                      <MapPin size={14} className="text-zinc-400" />
+                                    <div className="flex items-center gap-2 mr-2">
+                                      <ChevronRight size={14} className={`text-zinc-400 transition-transform ${expandedVehicleVillages[vKey] ? 'rotate-90' : ''} shrink-0`} />
+                                      <MapPin size={14} className="text-zinc-400 shrink-0" />
                                       <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{villageName}</p>
                                     </div>
-                                    <div className="text-sm font-medium">
+                                    <div className="text-sm font-medium whitespace-nowrap shrink-0">
                                       <span className="text-emerald-600">{stats.present}</span>
-                                      <span className="text-zinc-400 font-normal"> / {stats.total} Present</span>
+                                      <span className="text-zinc-400 font-normal"> / {stats.total}</span>
                                     </div>
                                   </button>
 
