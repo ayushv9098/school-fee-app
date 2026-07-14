@@ -411,8 +411,8 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                                 <ChevronRight size={16} className={`text-zinc-400 transition-transform ${expandedClasses[cls] ? 'rotate-90' : ''}`} />
                                 {cls}
                               </td>
-                              <td className="p-3 text-right">{stats.present}</td>
-                              <td className="p-3 text-right">{stats.absent}</td>
+                              <td className="p-3 text-right text-emerald-600 dark:text-emerald-500 font-semibold">{stats.present}</td>
+                              <td className="p-3 text-right text-rose-600 dark:text-rose-500 font-semibold">{stats.absent}</td>
                               <td className="p-3 pr-5 text-right text-zinc-500">{stats.total}</td>
                             </tr>
                             {expandedClasses[cls] && (
@@ -467,14 +467,14 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-xs font-medium text-emerald-600 mb-1">Present</p>
-                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalBoarded}</p>
+                    <p className="text-xs font-medium text-zinc-500 mb-1">Present</p>
+                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{totalBoarded}</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-xs font-medium text-rose-500 mb-1">Absent</p>
-                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalNotBoarded}</p>
+                    <p className="text-xs font-medium text-zinc-500 mb-1">Absent</p>
+                    <p className="text-2xl font-bold text-rose-600 dark:text-rose-500">{totalNotBoarded}</p>
                   </CardContent>
                 </Card>
               </div>
