@@ -1797,7 +1797,38 @@ export default function StudentAttendanceDashboard() {
                 </div>
               </div>
 
-              {/* Village Grid list */}
+              {/* Village Breakdown Table */}
+              {transportVillages.length > 0 && (
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
+                  <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
+                    <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Village Breakdown</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-zinc-50/50 dark:bg-zinc-900/30 text-zinc-500 text-xs font-semibold uppercase">
+                          <th className="p-3 pl-5 text-left">Village</th>
+                          <th className="p-3 text-right">Total</th>
+                          <th className="p-3 pr-5 text-right">Today Present</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transportVillages.sort((a, b) => a.localeCompare(b)).map((village) => {
+                          const total = getVillageTotalCount(village)
+                          const activeCount = getVillageActiveCount(village)
+                          return (
+                            <tr key={village} className="border-t border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
+                              <td className="p-3 pl-5 font-medium text-zinc-900 dark:text-zinc-100">{village}</td>
+                              <td className="p-3 text-right text-zinc-500">{total}</td>
+                              <td className="p-3 pr-5 text-right text-emerald-600 dark:text-emerald-500 font-semibold">{activeCount}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
               {transportVillages.length === 0 ? (
                 <div className="text-center p-12 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl text-zinc-500">
                   No transport students or villages found.
