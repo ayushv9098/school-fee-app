@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { 
   Calendar, Users, Bus, MapPin, ChevronLeft, ChevronRight, 
-  KeySquare, Plus, UserCircle, X, Trash2, Search, Loader2, MessageCircle 
+  KeySquare, Plus, UserCircle, X, Trash2, Search, Loader2, MessageCircle,
+  GraduationCap
 } from 'lucide-react'
 import dayjs from 'dayjs'
 import { toast } from 'sonner'
@@ -59,6 +60,9 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
   const [expandedClasses, setExpandedClasses] = useState<Record<string, boolean>>({})
   const [expandedVehicleVillages, setExpandedVehicleVillages] = useState<Record<string, boolean>>({})
   const [recordClassFilter, setRecordClassFilter] = useState<string>('all')
+  const [classStatusFilter, setClassStatusFilter] = useState<'all' | 'present' | 'absent' | 'unmarked'>('all')
+  const [vehicleStatusFilter, setVehicleStatusFilter] = useState<'all' | 'present' | 'absent'>('all')
+  const [reportViewMode, setReportViewMode] = useState<'dashboard' | 'class-details' | 'vehicle-details'>('dashboard')
 
   useEffect(() => {
     async function fetchData() {
@@ -327,7 +331,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
 
       {/* --- TAB CONTENT: DAILY REPORTS --- */}
-      {activeTab === 'reports' && (
+      {activeTab === 'reports' && reportViewMode === 'dashboard' && (
         <div className="space-y-6 animate-in fade-in duration-300">
           
           <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2 w-fit">
@@ -359,35 +363,88 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">Class Attendance</h3>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs font-medium text-zinc-500 mb-1">Total</p>
-                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{students.length}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs font-medium text-zinc-500 mb-1">Present</p>
-                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{totalPresentClass}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs font-medium text-zinc-500 mb-1">Absent</p>
-                    <p className="text-2xl font-bold text-rose-600 dark:text-rose-500">{totalAbsentClass}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs font-medium text-zinc-500 mb-1">Unmarked</p>
-                    <p className="text-2xl font-bold text-amber-500 dark:text-amber-400">{totalNotMarkedClass}</p>
-                  </CardContent>
-                </Card>
+                <button
+                  onClick={() => {
+                    setClassStatusFilter('all')
+                    setReportViewMode('class-details')
+                  }}
+                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
+                    classStatusFilter === 'all'
+                      ? 'border-violet-650 dark:border-violet-400 ring-2 ring-violet-600/20 dark:ring-violet-400/20 shadow-sm bg-violet-50/10 dark:bg-violet-950/10'
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <Card className="border-0 shadow-none bg-transparent">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs font-semibold text-zinc-500 mb-1">Total</p>
+                      <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{students.length}</p>
+                    </CardContent>
+                  </Card>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setClassStatusFilter('present')
+                    setReportViewMode('class-details')
+                  }}
+                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
+                    classStatusFilter === 'present'
+                      ? 'border-emerald-600 dark:border-emerald-500 ring-2 ring-emerald-600/20 dark:ring-emerald-500/20 shadow-sm bg-emerald-50/10 dark:bg-emerald-950/10'
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <Card className="border-0 shadow-none bg-transparent">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs font-semibold text-zinc-500 mb-1">Present</p>
+                      <p className="text-2xl font-bold text-emerald-650 dark:text-emerald-500">{totalPresentClass}</p>
+                    </CardContent>
+                  </Card>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setClassStatusFilter('absent')
+                    setReportViewMode('class-details')
+                  }}
+                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
+                    classStatusFilter === 'absent'
+                      ? 'border-rose-600 dark:border-rose-500 ring-2 ring-rose-600/20 dark:ring-rose-500/20 shadow-sm bg-rose-50/10 dark:bg-rose-950/10'
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <Card className="border-0 shadow-none bg-transparent">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs font-semibold text-zinc-500 mb-1">Absent</p>
+                      <p className="text-2xl font-bold text-rose-650 dark:text-rose-500">{totalAbsentClass}</p>
+                    </CardContent>
+                  </Card>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setClassStatusFilter('unmarked')
+                    setReportViewMode('class-details')
+                  }}
+                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
+                    classStatusFilter === 'unmarked'
+                      ? 'border-amber-500 dark:border-amber-400 ring-2 ring-amber-500/20 dark:ring-amber-400/20 shadow-sm bg-amber-50/10 dark:bg-amber-950/10'
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <Card className="border-0 shadow-none bg-transparent">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs font-semibold text-zinc-500 mb-1">Unmarked</p>
+                      <p className="text-2xl font-bold text-amber-600 dark:text-amber-500">{totalNotMarkedClass}</p>
+                    </CardContent>
+                  </Card>
+                </button>
               </div>
 
               <Card>
                 <CardHeader className="pb-3 border-b border-zinc-100 dark:border-zinc-800/50">
-                  <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Breakdown by Class</CardTitle>
+                  <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                    Breakdown by Class {classStatusFilter !== 'all' && `(${classStatusFilter.toUpperCase()})`}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="max-h-[500px] overflow-y-auto relative">
@@ -401,7 +458,19 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                         </tr>
                       </thead>
                       <tbody>
-                        {Object.entries(classBreakdown).sort(([a], [b]) => getClassOrder(a) - getClassOrder(b)).map(([cls, stats]) => (
+                        {Object.entries(classBreakdown)
+                          .filter(([_, stats]) => {
+                            if (classStatusFilter === 'all') return true
+                            if (classStatusFilter === 'present') return stats.present > 0
+                            if (classStatusFilter === 'absent') return stats.absent > 0
+                            if (classStatusFilter === 'unmarked') {
+                              const unmarked = stats.total - stats.present - stats.absent
+                              return unmarked > 0
+                            }
+                            return true
+                          })
+                          .sort(([a], [b]) => getClassOrder(a) - getClassOrder(b))
+                          .map(([cls, stats]) => (
                           <Fragment key={cls}>
                             <tr 
                               onClick={() => setExpandedClasses(p => ({...p, [cls]: !p[cls]}))}
@@ -419,7 +488,10 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                               <tr className="bg-zinc-50/50 dark:bg-zinc-900/20">
                                 <td colSpan={4} className="p-0">
                                   <div className="px-5 py-2 divide-y divide-zinc-100 dark:divide-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800/50">
-                                    {stats.students.sort((a,b) => a.name.localeCompare(b.name)).map(s => (
+                                    {stats.students
+                                      .filter(s => classStatusFilter === 'all' || s.status === classStatusFilter)
+                                      .sort((a,b) => a.name.localeCompare(b.name))
+                                      .map(s => (
                                       <button 
                                         key={s.id} 
                                         onClick={() => {
@@ -441,7 +513,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                                         </Badge>
                                       </button>
                                     ))}
-                                    {stats.students.length === 0 && (
+                                    {stats.students.filter(s => classStatusFilter === 'all' || s.status === classStatusFilter).length === 0 && (
                                       <div className="py-2 text-center text-sm text-zinc-500">No students.</div>
                                     )}
                                   </div>
@@ -464,92 +536,160 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">Transport Attendance</h3>
               
-              <div className="grid grid-cols-2 gap-3">
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs font-medium text-zinc-500 mb-1">Present</p>
-                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{totalBoarded}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs font-medium text-zinc-500 mb-1">Absent</p>
-                    <p className="text-2xl font-bold text-rose-600 dark:text-rose-500">{totalNotBoarded}</p>
-                  </CardContent>
-                </Card>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  onClick={() => {
+                    setVehicleStatusFilter('all')
+                    setReportViewMode('vehicle-details')
+                  }}
+                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
+                    vehicleStatusFilter === 'all'
+                      ? 'border-violet-650 dark:border-violet-400 ring-2 ring-violet-600/20 dark:ring-violet-400/20 shadow-sm bg-violet-50/10 dark:bg-violet-950/10'
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <Card className="border-0 shadow-none bg-transparent">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs font-semibold text-zinc-500 mb-1">Total</p>
+                      <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{vehicleStudents.length}</p>
+                    </CardContent>
+                  </Card>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setVehicleStatusFilter('present')
+                    setReportViewMode('vehicle-details')
+                  }}
+                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
+                    vehicleStatusFilter === 'present'
+                      ? 'border-emerald-600 dark:border-emerald-500 ring-2 ring-emerald-600/20 dark:ring-emerald-500/20 shadow-sm bg-emerald-50/10 dark:bg-emerald-950/10'
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <Card className="border-0 shadow-none bg-transparent">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs font-semibold text-zinc-500 mb-1">Present</p>
+                      <p className="text-2xl font-bold text-emerald-655 dark:text-emerald-500">{totalBoarded}</p>
+                    </CardContent>
+                  </Card>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setVehicleStatusFilter('absent')
+                    setReportViewMode('vehicle-details')
+                  }}
+                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
+                    vehicleStatusFilter === 'absent'
+                      ? 'border-rose-600 dark:border-rose-500 ring-2 ring-rose-600/20 dark:ring-rose-500/20 shadow-sm bg-rose-50/10 dark:bg-rose-950/10'
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <Card className="border-0 shadow-none bg-transparent">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs font-semibold text-zinc-500 mb-1">Absent</p>
+                      <p className="text-2xl font-bold text-rose-655 dark:text-rose-500">{totalNotBoarded}</p>
+                    </CardContent>
+                  </Card>
+                </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader className="pb-3 border-b border-zinc-100 dark:border-zinc-800/50">
-                    <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300">By Vehicle</CardTitle>
+                    <CardTitle className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                      By Vehicle {vehicleStatusFilter !== 'all' && `(${vehicleStatusFilter.toUpperCase()})`}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
                     <div className="max-h-[500px] overflow-y-auto p-4 space-y-4">
-                      {Object.values(vehicleBreakdown).sort((a, b) => a.name.localeCompare(b.name)).map((v) => (
-                        <div key={v.name} className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-                          <div className="bg-zinc-50 dark:bg-zinc-900/50 p-3 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-800 gap-2">
-                            <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 flex-1">{v.name}</h4>
-                            <div className="text-sm whitespace-nowrap shrink-0">
-                              <span className="font-medium text-emerald-600">{v.boarded}</span>
-                              <span className="text-zinc-500"> / {v.total} Present</span>
-                            </div>
-                          </div>
-                          <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
-                            {Object.entries(v.villages).sort(([a], [b]) => a.localeCompare(b)).map(([villageName, stats], idx) => {
-                              const vKey = `${v.name}-${villageName}`;
-                              return (
-                                <div key={idx} className="flex flex-col">
-                                  <button 
-                                    onClick={() => setExpandedVehicleVillages(p => ({...p, [vKey]: !p[vKey]}))}
-                                    className="p-3 pl-5 flex justify-between items-center hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors cursor-pointer w-full text-left gap-2"
-                                  >
-                                    <div className="flex items-center gap-2 mr-2">
-                                      <ChevronRight size={14} className={`text-zinc-400 transition-transform ${expandedVehicleVillages[vKey] ? 'rotate-90' : ''} shrink-0`} />
-                                      <MapPin size={14} className="text-zinc-400 shrink-0" />
-                                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{villageName}</p>
-                                    </div>
-                                    <div className="text-sm font-medium whitespace-nowrap shrink-0">
-                                      <span className="text-emerald-600">{stats.present}</span>
-                                      <span className="text-zinc-400 font-normal"> / {stats.total}</span>
-                                    </div>
-                                  </button>
+                      {Object.values(vehicleBreakdown)
+                        .filter(v => {
+                          if (vehicleStatusFilter === 'all') return true
+                          if (vehicleStatusFilter === 'present') return v.boarded > 0
+                          if (vehicleStatusFilter === 'absent') return (v.total - v.boarded) > 0
+                          return true
+                        })
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((v) => {
+                          const filteredVillages = Object.entries(v.villages).filter(([_, stats]) => {
+                            if (vehicleStatusFilter === 'all') return true
+                            if (vehicleStatusFilter === 'present') return stats.present > 0
+                            if (vehicleStatusFilter === 'absent') return (stats.total - stats.present) > 0
+                            return true
+                          })
 
-                                  {expandedVehicleVillages[vKey] && (
-                                    <div className="bg-zinc-50/50 dark:bg-zinc-900/20 divide-y divide-zinc-100 dark:divide-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800/50">
-                                      {stats.students.sort((a,b) => a.name.localeCompare(b.name)).map(s => (
-                                        <button 
-                                          key={s.id} 
-                                          onClick={() => {
-                                            const fullStudent = students.find(st => st.id === s.id)
-                                            if (fullStudent) {
-                                              handleSelectStudent(fullStudent)
-                                              setActiveTab('student-record')
-                                            }
-                                          }}
-                                          className="w-full p-2 pl-12 pr-5 flex justify-between items-center hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors text-left"
-                                        >
-                                          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{s.name}</span>
-                                          <Badge variant="outline" className={
-                                            s.status === 'present' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800' :
-                                            s.status === 'absent' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950 dark:border-rose-800' :
-                                            'bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-700'
-                                          }>
-                                            {s.status === 'present' ? 'Present' : s.status === 'absent' ? 'Absent' : 'Unmarked'}
-                                          </Badge>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
+                          if (filteredVillages.length === 0) return null
+
+                          return (
+                            <div key={v.name} className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+                              <div className="bg-zinc-50 dark:bg-zinc-900/50 p-3 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-800 gap-2">
+                                <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 flex-1">{v.name}</h4>
+                                <div className="text-sm whitespace-nowrap shrink-0">
+                                  <span className="font-medium text-emerald-600">{v.boarded}</span>
+                                  <span className="text-zinc-500"> / {v.total} Present</span>
                                 </div>
-                              );
-                            })}
-                            {Object.keys(v.villages).length === 0 && (
-                              <div className="p-4 text-center text-sm text-zinc-500">No villages assigned.</div>
-                            )}
+                              </div>
+                              <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                                {filteredVillages.sort(([a], [b]) => a.localeCompare(b)).map(([villageName, stats], idx) => {
+                                  const vKey = `${v.name}-${villageName}`;
+                                  return (
+                                    <div key={idx} className="flex flex-col">
+                                      <button 
+                                        onClick={() => setExpandedVehicleVillages(p => ({...p, [vKey]: !p[vKey]}))}
+                                        className="p-3 pl-5 flex justify-between items-center hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors cursor-pointer w-full text-left gap-2"
+                                      >
+                                        <div className="flex items-center gap-2 mr-2">
+                                          <ChevronRight size={14} className={`text-zinc-400 transition-transform ${expandedVehicleVillages[vKey] ? 'rotate-90' : ''} shrink-0`} />
+                                          <MapPin size={14} className="text-zinc-400 shrink-0" />
+                                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{villageName}</p>
+                                        </div>
+                                        <div className="text-sm font-medium whitespace-nowrap shrink-0">
+                                          <span className="text-emerald-600">{stats.present}</span>
+                                          <span className="text-zinc-400 font-normal"> / {stats.total}</span>
+                                        </div>
+                                      </button>
+
+                                      {expandedVehicleVillages[vKey] && (
+                                        <div className="bg-zinc-50/50 dark:bg-zinc-900/20 divide-y divide-zinc-100 dark:divide-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800/50">
+                                          {stats.students
+                                            .filter(s => vehicleStatusFilter === 'all' || s.status === vehicleStatusFilter)
+                                            .sort((a,b) => a.name.localeCompare(b.name))
+                                            .map(s => (
+                                            <button 
+                                              key={s.id} 
+                                              onClick={() => {
+                                                const fullStudent = students.find(st => st.id === s.id)
+                                                if (fullStudent) {
+                                                  handleSelectStudent(fullStudent)
+                                                  setActiveTab('student-record')
+                                                }
+                                              }}
+                                              className="w-full p-2 pl-12 pr-5 flex justify-between items-center hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors text-left"
+                                            >
+                                              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{s.name}</span>
+                                              <Badge variant="outline" className={
+                                                s.status === 'present' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800' :
+                                                s.status === 'absent' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950 dark:border-rose-800' :
+                                                'bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-700'
+                                              }>
+                                                {s.status === 'present' ? 'Present' : s.status === 'absent' ? 'Absent' : 'Unmarked'}
+                                              </Badge>
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                                {filteredVillages.length === 0 && (
+                                  <div className="p-4 text-center text-sm text-zinc-500">No villages assigned.</div>
+                                )}
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
                       {Object.keys(vehicleBreakdown).length === 0 && (
                         <p className="text-center text-sm text-zinc-500 py-6">No vehicles or students found.</p>
                       )}
@@ -580,6 +720,198 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* Class Attendance Details View */}
+      {activeTab === 'reports' && reportViewMode === 'class-details' && (
+        <div className="space-y-6 animate-in slide-in-from-right duration-350 pb-20">
+          {/* Header */}
+          <div className="flex items-center gap-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl shadow-sm">
+            <button 
+              onClick={() => {
+                setReportViewMode('dashboard')
+                setClassStatusFilter('all')
+              }}
+              className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all active:scale-95 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div>
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                Class Attendance: {
+                  classStatusFilter === 'present' ? 'Present Today' :
+                  classStatusFilter === 'absent' ? 'Absent Today' :
+                  classStatusFilter === 'unmarked' ? 'Unmarked Students' :
+                  'All Students'
+                }
+              </h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-450 mt-0.5">
+                Date: {dayjs(selectedDate).format('DD MMMM YYYY')}
+              </p>
+            </div>
+          </div>
+
+          {/* List of classes grouped as separate cards */}
+          <div className="space-y-4 max-w-4xl">
+            {Object.entries(classBreakdown)
+              .filter(([_, stats]) => {
+                if (classStatusFilter === 'all') return stats.total > 0
+                if (classStatusFilter === 'present') return stats.present > 0
+                if (classStatusFilter === 'absent') return stats.absent > 0
+                if (classStatusFilter === 'unmarked') {
+                  const unmarked = stats.total - stats.present - stats.absent
+                  return unmarked > 0
+                }
+                return true
+              })
+              .sort(([a], [b]) => getClassOrder(a) - getClassOrder(b))
+              .map(([cls, stats]) => {
+                const list = stats.students.filter(s => classStatusFilter === 'all' || s.status === classStatusFilter)
+                
+                return (
+                  <div key={cls} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden animate-in fade-in duration-200">
+                    {/* Class Card Header */}
+                    <div className="bg-zinc-50 dark:bg-zinc-900/50 px-4 py-3.5 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                          <GraduationCap size={14} />
+                        </div>
+                        <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Class {cls}</span>
+                      </div>
+                      <span className="text-sm font-semibold bg-violet-100 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300 px-3 py-1 rounded-full border border-violet-200/50 dark:border-violet-800/30">
+                        {stats.present} / {stats.total} Present
+                      </span>
+                    </div>
+                    {/* List of matching students in this class */}
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                      {list.sort((a,b) => a.name.localeCompare(b.name)).map(s => (
+                        <div 
+                          key={s.id}
+                          className="px-5 py-3 flex justify-between items-center hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors"
+                        >
+                          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{s.name}</span>
+                          <Badge variant="outline" className={
+                            s.status === 'present' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800' :
+                            s.status === 'absent' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950 dark:border-rose-800' :
+                            'bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-700'
+                          }>
+                            {s.status === 'present' ? 'Present' : s.status === 'absent' ? 'Absent' : 'Unmarked'}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+          </div>
+        </div>
+      )}
+
+      {/* Vehicle Attendance Details View */}
+      {activeTab === 'reports' && reportViewMode === 'vehicle-details' && (
+        <div className="space-y-6 animate-in slide-in-from-right duration-350 pb-20">
+          {/* Header */}
+          <div className="flex items-center gap-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl shadow-sm">
+            <button 
+              onClick={() => {
+                setReportViewMode('dashboard')
+                setVehicleStatusFilter('all')
+              }}
+              className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all active:scale-95 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div>
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                Transport Attendance: {
+                  vehicleStatusFilter === 'present' ? 'Present Today' :
+                  vehicleStatusFilter === 'absent' ? 'Absent Today' :
+                  'All Transport'
+                }
+              </h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-450 mt-0.5">
+                Date: {dayjs(selectedDate).format('DD MMMM YYYY')}
+              </p>
+            </div>
+          </div>
+
+          {/* List of vehicles grouped as separate cards */}
+          <div className="space-y-6 max-w-4xl">
+            {Object.values(vehicleBreakdown)
+              .filter(v => {
+                if (vehicleStatusFilter === 'all') return v.total > 0
+                if (vehicleStatusFilter === 'present') return v.boarded > 0
+                if (vehicleStatusFilter === 'absent') return (v.total - v.boarded) > 0
+                return true
+              })
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((v) => {
+                const filteredVillages = Object.entries(v.villages).filter(([_, stats]) => {
+                  if (vehicleStatusFilter === 'all') return stats.total > 0
+                  if (vehicleStatusFilter === 'present') return stats.present > 0
+                  if (vehicleStatusFilter === 'absent') return (stats.total - stats.present) > 0
+                  return true
+                })
+
+                if (filteredVillages.length === 0) return null
+
+                return (
+                  <div key={v.name} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden animate-in fade-in duration-200">
+                    {/* Vehicle Card Header */}
+                    <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-800 gap-2">
+                      <h3 className="font-bold text-zinc-900 dark:text-zinc-100 flex-1">{v.name}</h3>
+                      <div className="text-sm font-semibold shrink-0">
+                        <span className="text-emerald-600">{v.boarded}</span>
+                        <span className="text-zinc-500"> / {v.total} Present</span>
+                      </div>
+                    </div>
+
+                    {/* List of villages inside the vehicle */}
+                    <div className="p-4 space-y-4 bg-zinc-50/20 dark:bg-zinc-950/10">
+                      {filteredVillages.sort(([a], [b]) => a.localeCompare(b)).map(([villageName, stats], idx) => {
+                        const list = stats.students.filter(s => vehicleStatusFilter === 'all' || s.status === vehicleStatusFilter)
+                        
+                        return (
+                          <div key={idx} className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-150 dark:border-zinc-800 shadow-sm overflow-hidden">
+                            {/* Village Header inside Vehicle */}
+                            <div className="bg-zinc-50/50 dark:bg-zinc-900/30 px-4 py-3 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-rose-100/70 dark:bg-rose-950/50 flex items-center justify-center text-rose-700 dark:text-rose-300">
+                                  <MapPin size={13} />
+                                </div>
+                                <span className="font-bold text-sm text-zinc-850 dark:text-zinc-100">{villageName}</span>
+                              </div>
+                              <span className="text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                                {stats.present} / {stats.total} Present
+                              </span>
+                            </div>
+                            {/* Student List in this Village */}
+                            <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                              {list.sort((a,b) => a.name.localeCompare(b.name)).map(s => (
+                                <div 
+                                  key={s.id}
+                                  className="px-5 py-2.5 flex justify-between items-center hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors"
+                                >
+                                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{s.name}</span>
+                                  <Badge variant="outline" className={
+                                    s.status === 'present' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800' :
+                                    s.status === 'absent' ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950 dark:border-rose-800' :
+                                    'bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-700'
+                                  }>
+                                    {s.status === 'present' ? 'Present' : s.status === 'absent' ? 'Absent' : 'Unmarked'}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+          </div>
         </div>
       )}
 
