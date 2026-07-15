@@ -613,35 +613,6 @@ export default function StudentAttendanceDashboard() {
   const vehicleAbsent = mySchoolTodayAttendance.filter(a => a.type === 'vehicle' && a.status === 'absent').length
   const vehicleNotMarked = totalVehicleStds - vehiclePresent - vehicleAbsent
 
-  const totalVehicleStudents = vehicleStudents.length
-  const totalVehiclePresent = Object.values(vehicleAttendance).filter(s => s === 'present').length
-
-  const villageBreakdown = vehicleStudents.reduce((acc, std) => {
-    const loc = std.address?.trim() || 'Unknown'
-    if (!acc[loc]) {
-      acc[loc] = { total: 0, present: 0 }
-    }
-    acc[loc].total += 1
-    const status = vehicleAttendance[std.id]
-    if (status === 'present') {
-      acc[loc].present += 1
-    }
-    return acc
-  }, {} as Record<string, { total: number, present: number }>)
-
-  const allVehicleVillageBreakdown = allStudents.filter(s => s.vehicle_id).reduce((acc, std) => {
-    const loc = std.address?.trim() || 'Unknown'
-    if (!acc[loc]) {
-      acc[loc] = { total: 0, present: 0 }
-    }
-    acc[loc].total += 1
-    const status = todayAttendance.find(a => a.student_id === std.id && a.type === 'vehicle')?.status
-    if (status === 'present') {
-      acc[loc].present += 1
-    }
-    return acc
-  }, {} as Record<string, { total: number, present: number }>)
-
   const effectiveClassAtt = useMemo(() => {
     const map = todayAttendance.reduce((acc, a) => {
       if (a.type === 'class') acc[a.student_id] = a.status
@@ -657,6 +628,35 @@ export default function StudentAttendanceDashboard() {
     }, {} as Record<string, string>)
     return { ...map, ...vehicleAttendance }
   }, [vehicleAttendance, todayAttendance])
+
+  const totalVehicleStudents = vehicleStudents.length
+  const totalVehiclePresent = Object.values(effectiveVehicleAtt).filter(s => s === 'present').length
+
+  const villageBreakdown = vehicleStudents.reduce((acc, std) => {
+    const loc = std.address?.trim() || 'Unknown'
+    if (!acc[loc]) {
+      acc[loc] = { total: 0, present: 0 }
+    }
+    acc[loc].total += 1
+    const status = effectiveVehicleAtt[std.id]
+    if (status === 'present') {
+      acc[loc].present += 1
+    }
+    return acc
+  }, {} as Record<string, { total: number, present: number }>)
+
+  const allVehicleVillageBreakdown = allStudents.filter(s => s.vehicle_id).reduce((acc, std) => {
+    const loc = std.address?.trim() || 'Unknown'
+    if (!acc[loc]) {
+      acc[loc] = { total: 0, present: 0 }
+    }
+    acc[loc].total += 1
+    const status = effectiveVehicleAtt[std.id]
+    if (status === 'present') {
+      acc[loc].present += 1
+    }
+    return acc
+  }, {} as Record<string, { total: number, present: number }>)
 
   const displayedClassStudents = (selectedClass ? classStudents : allStudents).filter(student => {
     const status = effectiveClassAtt[student.id]
@@ -999,17 +999,113 @@ export default function StudentAttendanceDashboard() {
           </div>
 
           {/* List of students */}
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-            {currentStudents.length === 0 ? (
-              <div className="p-12 text-center text-zinc-500">
-                No students found matching your criteria.
-              </div>
-            ) : (
-              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {currentStudents.map((s, i) => renderStudentRow(s, i, activeSection === 'class' ? effectiveClassAtt : effectiveVehicleAtt, activeSection))}
-              </div>
-            )}
-          </div>
+          {currentStudents.length === 0 ? (
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden p-12 text-center text-zinc-500">
+              No students found matching your criteria.
+            </div>
+          ) : activeSection === 'vehicle' ? (
+            // Grouped by Village for Vehicles (Separate Cards)
+            (() => {
+              const studentsByVillage = currentStudents.reduce((acc, student) => {
+                const village = student.address?.trim() || 'Unknown Village'
+                if (!acc[village]) acc[village] = []
+                acc[village].push(student)
+                return acc
+              }, {} as Record<string, Student[]>)
+
+              const sortedVillages = Object.keys(studentsByVillage).sort((a, b) => {
+                if (a === 'Unknown Village') return 1
+                if (b === 'Unknown Village') return -1
+                return a.localeCompare(b)
+              })
+
+              return (
+                <div className="space-y-4">
+                  {sortedVillages.map(village => {
+                    const list = studentsByVillage[village]
+                    const scopeStudents = selectedVehicle 
+                      ? vehicleStudents 
+                      : allStudents.filter(s => s.vehicle_id)
+                    
+                    const villageScopeStudents = scopeStudents.filter(s => (s.address?.trim() || 'Unknown Village') === village)
+                    const villagePresent = villageScopeStudents.filter(s => effectiveVehicleAtt[s.id] === 'present').length
+                    const villageTotal = villageScopeStudents.length
+
+                    return (
+                      <div key={village} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                        {/* Village Section Header */}
+                        <div className="bg-zinc-50 dark:bg-zinc-900/50 px-4 py-3.5 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-rose-100/70 dark:bg-rose-950/50 flex items-center justify-center text-rose-700 dark:text-rose-300">
+                              <MapPin size={14} />
+                            </div>
+                            <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{village}</span>
+                          </div>
+                          <span className="text-sm font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 px-3 py-1 rounded-full border border-emerald-200/50 dark:border-emerald-800/30">
+                            {villagePresent} / {villageTotal} Present
+                          </span>
+                        </div>
+                        {/* List of students in this village */}
+                        <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                          {list.map((s, idx) => renderStudentRow(s, idx, effectiveVehicleAtt, 'vehicle'))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()
+          ) : (
+            // Grouped by Class for School (Separate Cards)
+            (() => {
+              const studentsByClass = currentStudents.reduce((acc, student) => {
+                const cls = student.class || 'Unknown Class'
+                if (!acc[cls]) acc[cls] = []
+                acc[cls].push(student)
+                return acc
+              }, {} as Record<string, Student[]>)
+
+              const sortedClasses = Object.keys(studentsByClass).sort((a, b) => {
+                const idxA = CLASSES.indexOf(a)
+                const idxB = CLASSES.indexOf(b)
+                if (idxA === -1) return 1
+                if (idxB === -1) return -1
+                return idxA - idxB
+              })
+
+              return (
+                <div className="space-y-4">
+                  {sortedClasses.map(cls => {
+                    const list = studentsByClass[cls]
+                    const classScopeStudents = allStudents.filter(s => s.class === cls)
+                    const classPresent = classScopeStudents.filter(s => effectiveClassAtt[s.id] === 'present').length
+                    const classTotal = classScopeStudents.length
+
+                    return (
+                      <div key={cls} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                        {/* Class Section Header */}
+                        <div className="bg-zinc-50 dark:bg-zinc-900/50 px-4 py-3.5 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                              <GraduationCap size={14} />
+                            </div>
+                            <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Class {cls}</span>
+                          </div>
+                          <span className="text-sm font-semibold bg-violet-100 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300 px-3 py-1 rounded-full border border-violet-200/50 dark:border-violet-800/30">
+                            {classPresent} / {classTotal} Present
+                          </span>
+                        </div>
+                        {/* List of students in this class */}
+                        <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+                          {list.map((s, idx) => renderStudentRow(s, idx, effectiveClassAtt, 'class'))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()
+          )}
 
           {/* Submit Attendance Button */}
           {((selectedClass && activeSection === 'class') || (selectedVehicle && activeSection === 'vehicle')) && currentStudents.length > 0 && (
