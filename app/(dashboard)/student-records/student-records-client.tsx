@@ -368,11 +368,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     setClassStatusFilter('all')
                     setReportViewMode('class-details')
                   }}
-                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
-                    classStatusFilter === 'all'
-                      ? 'border-violet-650 dark:border-violet-400 ring-2 ring-violet-600/20 dark:ring-violet-400/20 shadow-sm bg-violet-50/10 dark:bg-violet-950/10'
-                      : 'border-zinc-200 dark:border-zinc-800'
-                  }`}
+                  className="w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md"
                 >
                   <Card className="border-0 shadow-none bg-transparent">
                     <CardContent className="p-4 text-center">
@@ -387,16 +383,12 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     setClassStatusFilter('present')
                     setReportViewMode('class-details')
                   }}
-                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
-                    classStatusFilter === 'present'
-                      ? 'border-emerald-600 dark:border-emerald-500 ring-2 ring-emerald-600/20 dark:ring-emerald-500/20 shadow-sm bg-emerald-50/10 dark:bg-emerald-950/10'
-                      : 'border-zinc-200 dark:border-zinc-800'
-                  }`}
+                  className="w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md"
                 >
                   <Card className="border-0 shadow-none bg-transparent">
                     <CardContent className="p-4 text-center">
                       <p className="text-xs font-semibold text-zinc-500 mb-1">Present</p>
-                      <p className="text-2xl font-bold text-emerald-650 dark:text-emerald-500">{totalPresentClass}</p>
+                      <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{totalPresentClass}</p>
                     </CardContent>
                   </Card>
                 </button>
@@ -406,16 +398,12 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     setClassStatusFilter('absent')
                     setReportViewMode('class-details')
                   }}
-                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
-                    classStatusFilter === 'absent'
-                      ? 'border-rose-600 dark:border-rose-500 ring-2 ring-rose-600/20 dark:ring-rose-500/20 shadow-sm bg-rose-50/10 dark:bg-rose-950/10'
-                      : 'border-zinc-200 dark:border-zinc-800'
-                  }`}
+                  className="w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md"
                 >
                   <Card className="border-0 shadow-none bg-transparent">
                     <CardContent className="p-4 text-center">
                       <p className="text-xs font-semibold text-zinc-500 mb-1">Absent</p>
-                      <p className="text-2xl font-bold text-rose-650 dark:text-rose-500">{totalAbsentClass}</p>
+                      <p className="text-2xl font-bold text-rose-600 dark:text-rose-500">{totalAbsentClass}</p>
                     </CardContent>
                   </Card>
                 </button>
@@ -425,11 +413,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     setClassStatusFilter('unmarked')
                     setReportViewMode('class-details')
                   }}
-                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
-                    classStatusFilter === 'unmarked'
-                      ? 'border-amber-500 dark:border-amber-400 ring-2 ring-amber-500/20 dark:ring-amber-400/20 shadow-sm bg-amber-50/10 dark:bg-amber-950/10'
-                      : 'border-zinc-200 dark:border-zinc-800'
-                  }`}
+                  className="w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md"
                 >
                   <Card className="border-0 shadow-none bg-transparent">
                     <CardContent className="p-4 text-center">
@@ -542,11 +526,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     setVehicleStatusFilter('all')
                     setReportViewMode('vehicle-details')
                   }}
-                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
-                    vehicleStatusFilter === 'all'
-                      ? 'border-violet-650 dark:border-violet-400 ring-2 ring-violet-600/20 dark:ring-violet-400/20 shadow-sm bg-violet-50/10 dark:bg-violet-950/10'
-                      : 'border-zinc-200 dark:border-zinc-800'
-                  }`}
+                  className="w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md"
                 >
                   <Card className="border-0 shadow-none bg-transparent">
                     <CardContent className="p-4 text-center">
@@ -561,16 +541,12 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     setVehicleStatusFilter('present')
                     setReportViewMode('vehicle-details')
                   }}
-                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
-                    vehicleStatusFilter === 'present'
-                      ? 'border-emerald-600 dark:border-emerald-500 ring-2 ring-emerald-600/20 dark:ring-emerald-500/20 shadow-sm bg-emerald-50/10 dark:bg-emerald-950/10'
-                      : 'border-zinc-200 dark:border-zinc-800'
-                  }`}
+                  className="w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md"
                 >
                   <Card className="border-0 shadow-none bg-transparent">
                     <CardContent className="p-4 text-center">
                       <p className="text-xs font-semibold text-zinc-500 mb-1">Present</p>
-                      <p className="text-2xl font-bold text-emerald-655 dark:text-emerald-500">{totalBoarded}</p>
+                      <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{totalBoarded}</p>
                     </CardContent>
                   </Card>
                 </button>
@@ -580,16 +556,12 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     setVehicleStatusFilter('absent')
                     setReportViewMode('vehicle-details')
                   }}
-                  className={`w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-xl overflow-hidden border ${
-                    vehicleStatusFilter === 'absent'
-                      ? 'border-rose-600 dark:border-rose-500 ring-2 ring-rose-600/20 dark:ring-rose-500/20 shadow-sm bg-rose-50/10 dark:bg-rose-950/10'
-                      : 'border-zinc-200 dark:border-zinc-800'
-                  }`}
+                  className="w-full text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md"
                 >
                   <Card className="border-0 shadow-none bg-transparent">
                     <CardContent className="p-4 text-center">
                       <p className="text-xs font-semibold text-zinc-500 mb-1">Absent</p>
-                      <p className="text-2xl font-bold text-rose-655 dark:text-rose-500">{totalNotBoarded}</p>
+                      <p className="text-2xl font-bold text-rose-600 dark:text-rose-500">{totalNotBoarded}</p>
                     </CardContent>
                   </Card>
                 </button>
