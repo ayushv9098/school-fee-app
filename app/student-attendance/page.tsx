@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { LogOut, Bus, Users, CheckCircle2, XCircle, Loader2, MapPin, ChevronDown, ChevronLeft, ChevronRight, Info, X, Search, Plus, GraduationCap, Pencil, ClipboardList, FileDown, Clock, CalendarCheck } from 'lucide-react'
@@ -113,13 +113,11 @@ export default function StudentAttendanceDashboard() {
   // Class state
   const [classes, setClasses] = useState<string[]>([])
   const [selectedClass, setSelectedClass] = useState('')
-  const [classStudents, setClassStudents] = useState<Student[]>([])
   const [classAttendance, setClassAttendance] = useState<Record<string, string>>({})
 
   // Vehicle state
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [selectedVehicle, setSelectedVehicle] = useState('')
-  const [vehicleStudents, setVehicleStudents] = useState<Student[]>([])
   const [vehicleAttendance, setVehicleAttendance] = useState<Record<string, string>>({})
 
   const [loading, setLoading] = useState(true)
@@ -136,6 +134,9 @@ export default function StudentAttendanceDashboard() {
   const [viewMode, setViewMode] = useState<'dashboard' | 'details'>('dashboard')
   const [detailsSearch, setDetailsSearch] = useState('')
   const [selectedVillageFilter, setSelectedVillageFilter] = useState<string | null>(null)
+
+  const classStudents = useMemo(() => selectedClass ? allStudents.filter(s => s.class === selectedClass) : [], [allStudents, selectedClass])
+  const vehicleStudents = useMemo(() => selectedVehicle ? allStudents.filter(s => s.vehicle_id === selectedVehicle) : [], [allStudents, selectedVehicle])
 
   useEffect(() => {
     setStatusFilter('all')
@@ -215,6 +216,14 @@ export default function StudentAttendanceDashboard() {
         supabase.from('student_attendance').select('*').eq('date', todayDate)
       ])
 
+      console.log("init studentsRes:", studentsRes)
+      console.log("init vehiclesRes:", vehiclesRes)
+      console.log("init todayAttendanceRes:", todayAttendanceRes)
+
+      if (todayAttendanceRes.error) {
+        alert("init todayAttendanceRes error: " + todayAttendanceRes.error.message)
+      }
+
       if (studentsRes.data) {
         setAllStudents(studentsRes.data as Student[])
         const unique = Array.from(new Set(studentsRes.data.map(d => d.class)))
@@ -238,77 +247,25 @@ export default function StudentAttendanceDashboard() {
   useEffect(() => {
     if (!currentUser) return
     async function fetchTodayAttendance() {
-      const { data } = await supabase.from('student_attendance').select('*').eq('date', todayDate)
+      console.log("fetchTodayAttendance date parameter:", todayDate)
+      const { data, error } = await supabase.from('student_attendance').select('*').eq('date', todayDate)
+      console.log("fetchTodayAttendance response data:", data, "error:", error)
+      if (error) {
+        alert("fetchTodayAttendance error: " + error.message)
+      }
       setTodayAttendance(data || [])
     }
     fetchTodayAttendance()
   }, [todayDate, currentUser])
 
-  // Fetch class students
+  // Clear dirty state on selection change
   useEffect(() => {
-    if (!selectedClass) { setClassStudents([]); return }
-    async function fetch() {
-      setLoading(true)
-      const sessionYear = getSessionYear(currentUser)
-      const { data: stdData } = await supabase
-        .from('students')
-        .select('*')
-        .eq('class', selectedClass)
-        .eq('status', 'active')
-        .eq('academic_year', sessionYear)
-        .order('name')
-      setClassStudents(stdData || [])
+    setClassAttendance({})
+  }, [selectedClass])
 
-      if (stdData && stdData.length > 0) {
-        const { data: attData } = await supabase
-          .from('student_attendance')
-          .select('student_id, status')
-          .eq('date', todayDate)
-          .eq('type', 'class')
-          .in('student_id', stdData.map(s => s.id))
-        const map: Record<string, string> = {}
-        attData?.forEach(r => { map[r.student_id] = r.status })
-        setClassAttendance(map)
-      } else {
-        setClassAttendance({})
-      }
-      setLoading(false)
-    }
-    fetch()
-  }, [selectedClass, currentUser, todayDate])
-
-  // Fetch vehicle students
   useEffect(() => {
-    if (!selectedVehicle) { setVehicleStudents([]); return }
-    async function fetch() {
-      setLoading(true)
-      const sessionYear = getSessionYear(currentUser)
-      const { data: stdData } = await supabase
-        .from('students')
-        .select('*')
-        .eq('vehicle_id', selectedVehicle)
-        .eq('status', 'active')
-        .eq('academic_year', sessionYear)
-        .order('name')
-      setVehicleStudents(stdData || [])
-
-      if (stdData && stdData.length > 0) {
-        const { data: attData } = await supabase
-          .from('student_attendance')
-          .select('student_id, status')
-          .eq('date', todayDate)
-          .eq('type', 'vehicle')
-          .in('student_id', stdData.map(s => s.id))
-        const map: Record<string, string> = {}
-        attData?.forEach(r => { map[r.student_id] = r.status })
-        setVehicleAttendance(map)
-      } else {
-        setVehicleAttendance({})
-      }
-      setLoading(false)
-    }
-    fetch()
-  }, [selectedVehicle, currentUser, todayDate])
+    setVehicleAttendance({})
+  }, [selectedVehicle])
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -348,12 +305,6 @@ export default function StudentAttendanceDashboard() {
           })
         }
         
-        if (selectedClass === data.class) {
-          setClassStudents(prev => [...prev, data as Student].sort((a, b) => a.name.localeCompare(b.name)))
-        }
-        if (selectedVehicle === data.vehicle_id) {
-          setVehicleStudents(prev => [...prev, data as Student].sort((a, b) => a.name.localeCompare(b.name)))
-        }
       }
       alert("Student added successfully!")
     }
@@ -402,8 +353,6 @@ export default function StudentAttendanceDashboard() {
         ).sort((a, b) => a.name.localeCompare(b.name))
       
       setAllStudents(prev => updateList(prev))
-      setClassStudents(prev => updateList(prev))
-      setVehicleStudents(prev => updateList(prev))
       
       alert("Student updated successfully!")
     }
@@ -576,7 +525,7 @@ export default function StudentAttendanceDashboard() {
   const submitAttendance = async (type: 'class' | 'vehicle') => {
     setSaving(true)
     const students = type === 'class' ? classStudents : vehicleStudents
-    const att = type === 'class' ? classAttendance : vehicleAttendance
+    const att = type === 'class' ? effectiveClassAtt : effectiveVehicleAtt
     
     // We need to fetch the current DB state to see what needs deleting
     const { data: dbAtt } = await supabase.from('student_attendance')
@@ -611,6 +560,14 @@ export default function StudentAttendanceDashboard() {
       const { error } = await supabase.from('student_attendance').upsert(toInsert, { onConflict: 'student_id,date,type' })
       if (error) alert('Error saving records: ' + error.message)
     }
+
+    // Refresh today's attendance state from database
+    const { data: updatedAtt } = await supabase.from('student_attendance').select('*').eq('date', todayDate)
+    setTodayAttendance(updatedAtt || [])
+
+    // Clear local dirty overrides
+    if (type === 'class') setClassAttendance({})
+    else setVehicleAttendance({})
     
     setSaving(false)
     alert('Attendance successfully saved!')
@@ -632,16 +589,12 @@ export default function StudentAttendanceDashboard() {
       await supabase.from('students').update({ vehicle_id: selectedVehicle }).in('id', toAdd)
     }
 
-    // Refresh vehicle students
-    const sessionYear = getSessionYear(currentUser)
-    const { data: stdData } = await supabase
-      .from('students')
-      .select('*')
-      .eq('vehicle_id', selectedVehicle)
-      .eq('status', 'active')
-      .eq('academic_year', sessionYear)
-      .order('name')
-    setVehicleStudents(stdData || [])
+    // Refresh vehicle students locally
+    setAllStudents(prev => prev.map(s => {
+      if (toRemove.includes(s.id)) return { ...s, vehicle_id: null }
+      if (toAdd.includes(s.id)) return { ...s, vehicle_id: selectedVehicle }
+      return s
+    }))
     
     setSavingAssign(false)
     setAssignModalOpen(false)
@@ -689,8 +642,24 @@ export default function StudentAttendanceDashboard() {
     return acc
   }, {} as Record<string, { total: number, present: number }>)
 
+  const effectiveClassAtt = useMemo(() => {
+    const map = todayAttendance.reduce((acc, a) => {
+      if (a.type === 'class') acc[a.student_id] = a.status
+      return acc
+    }, {} as Record<string, string>)
+    return { ...map, ...classAttendance }
+  }, [classAttendance, todayAttendance])
+
+  const effectiveVehicleAtt = useMemo(() => {
+    const map = todayAttendance.reduce((acc, a) => {
+      if (a.type === 'vehicle') acc[a.student_id] = a.status
+      return acc
+    }, {} as Record<string, string>)
+    return { ...map, ...vehicleAttendance }
+  }, [vehicleAttendance, todayAttendance])
+
   const displayedClassStudents = (selectedClass ? classStudents : allStudents).filter(student => {
-    const status = classAttendance[student.id]
+    const status = effectiveClassAtt[student.id]
     if (statusFilter === 'present') return status === 'present'
     if (statusFilter === 'absent') return status === 'absent'
     if (statusFilter === 'remaining') return !status
@@ -698,7 +667,7 @@ export default function StudentAttendanceDashboard() {
   })
 
   const displayedVehicleStudents = (selectedVehicle ? vehicleStudents : allStudents.filter(s => s.vehicle_id)).filter(student => {
-    const status = vehicleAttendance[student.id]
+    const status = effectiveVehicleAtt[student.id]
     if (statusFilter === 'present') return status === 'present'
     if (statusFilter === 'absent') return status === 'absent'
     if (statusFilter === 'remaining') return !status
@@ -829,7 +798,90 @@ export default function StudentAttendanceDashboard() {
 
         {/* Main Content */}
         <main className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
-          
+          {/* Status Filters for Details View */}
+          {(selectedClass || selectedVehicle) && (() => {
+            const currentFullStudents = activeSection === 'class' ? classStudents : vehicleStudents
+            const currentFullAttMap = activeSection === 'class' ? effectiveClassAtt : effectiveVehicleAtt
+            const presentCount = currentFullStudents.filter(s => currentFullAttMap[s.id] === 'present').length
+            const absentCount = currentFullStudents.filter(s => currentFullAttMap[s.id] === 'absent').length
+            const remainingCount = currentFullStudents.length - presentCount - absentCount
+            
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {/* Total Students Card */}
+                <button 
+                  onClick={() => setStatusFilter('all')}
+                  className={`w-full text-left bg-white dark:bg-zinc-900 border rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between ${
+                    statusFilter === 'all' 
+                      ? 'border-violet-600 dark:border-violet-400 ring-2 ring-violet-600/20 dark:ring-violet-400/20 scale-[1.02]' 
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Total Students</span>
+                    <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-950/30 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                      <Users size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{currentFullStudents.length}</p>
+                </button>
+
+                {/* Present Card */}
+                <button 
+                  onClick={() => setStatusFilter('present')}
+                  className={`w-full text-left bg-white dark:bg-zinc-900 border rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between ${
+                    statusFilter === 'present' 
+                      ? 'border-emerald-600 dark:border-emerald-400 ring-2 ring-emerald-600/20 dark:ring-emerald-400/20 scale-[1.02]' 
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Present</span>
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{presentCount}</p>
+                </button>
+
+                {/* Absent Card */}
+                <button 
+                  onClick={() => setStatusFilter('absent')}
+                  className={`w-full text-left bg-white dark:bg-zinc-900 border rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between ${
+                    statusFilter === 'absent' 
+                      ? 'border-rose-600 dark:border-rose-455 ring-2 ring-rose-600/20 dark:ring-rose-455/20 scale-[1.02]' 
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Absent</span>
+                    <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center text-rose-600 dark:text-rose-455">
+                      <XCircle size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-rose-600 dark:text-rose-455">{absentCount}</p>
+                </button>
+
+                {/* Remaining Card */}
+                <button 
+                  onClick={() => setStatusFilter('remaining')}
+                  className={`w-full text-left bg-white dark:bg-zinc-900 border rounded-2xl p-4 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col justify-between ${
+                    statusFilter === 'remaining' 
+                      ? 'border-amber-600 dark:border-amber-455 ring-2 ring-amber-600/20 dark:ring-amber-455/20 scale-[1.02]' 
+                      : 'border-zinc-200 dark:border-zinc-800'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2 w-full">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Remaining</span>
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                      <Clock size={16} />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-455">{remainingCount}</p>
+                </button>
+              </div>
+            )
+          })()}
           {/* Action header card for class details */}
           {selectedClass && currentStudents.length > 0 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
@@ -954,7 +1006,7 @@ export default function StudentAttendanceDashboard() {
               </div>
             ) : (
               <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {currentStudents.map((s, i) => renderStudentRow(s, i, activeSection === 'class' ? classAttendance : vehicleAttendance, activeSection))}
+                {currentStudents.map((s, i) => renderStudentRow(s, i, activeSection === 'class' ? effectiveClassAtt : effectiveVehicleAtt, activeSection))}
               </div>
             )}
           </div>
@@ -975,6 +1027,288 @@ export default function StudentAttendanceDashboard() {
             </div>
           )}
         </main>
+
+        {/* Profile Info Modal */}
+        {selectedProfile && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Info size={18} className="text-violet-600" />
+                  Student Profile
+                </h3>
+                <button 
+                  onClick={() => setSelectedProfile(null)}
+                  className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{selectedProfile.name}</p>
+                  <p className="text-sm font-medium text-violet-600 dark:text-violet-400">Class: {selectedProfile.class}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                  <div>
+                    <p className="text-xs text-zinc-500 mb-1">Guardian Name</p>
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{selectedProfile.guardian_name || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500 mb-1">Mobile</p>
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{selectedProfile.mobile || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500 mb-1">Emergency Contact</p>
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{selectedProfile.emergency_contact || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500 mb-1">Blood Group</p>
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{selectedProfile.blood_group || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500 mb-1">Date of Birth</p>
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{selectedProfile.date_of_birth ? dayjs(selectedProfile.date_of_birth).format('DD MMM YYYY') : '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-zinc-500 mb-1">Gender</p>
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 capitalize">{selectedProfile.gender || '-'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-zinc-500 mb-1">Address</p>
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{selectedProfile.address || '-'}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex gap-3">
+                <button
+                  onClick={() => {
+                    const p = selectedProfile
+                    setSelectedProfile(null)
+                    openEditModal(p)
+                  }}
+                  className="flex-1 h-10 text-sm font-medium text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  <Pencil size={14} />
+                  Edit Profile
+                </button>
+                <button 
+                  onClick={() => setSelectedProfile(null)}
+                  className="flex-1 h-10 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-100 transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Student Modal */}
+        {editStudentOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <form onSubmit={handleEditStudent} className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-lg shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+              <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Pencil size={18} className="text-emerald-600" />
+                  Edit Student Info
+                </h3>
+                <button 
+                  type="button"
+                  onClick={() => setEditStudentOpen(false)}
+                  className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-5 overflow-y-auto space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Student Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.name}
+                    onChange={e => setEditForm({...editForm, name: e.target.value})}
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Enter full name"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Class <span className="text-red-500">*</span></label>
+                    <select
+                      required
+                      value={editForm.class}
+                      onChange={e => setEditForm({...editForm, class: e.target.value})}
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">Select Class</option>
+                      {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Vehicle</label>
+                    <select
+                      value={editForm.vehicle_id}
+                      onChange={e => setEditForm({...editForm, vehicle_id: e.target.value})}
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-555"
+                    >
+                      <option value="">None (Walk-in)</option>
+                      {vehicles.map(v => <option key={v.id} value={v.id}>{v.name} ({v.type})</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Father's Name</label>
+                  <input
+                    type="text"
+                    value={editForm.guardian_name}
+                    onChange={e => setEditForm({...editForm, guardian_name: e.target.value})}
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-555"
+                    placeholder="Enter guardian name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Mobile Number</label>
+                  <input
+                    type="tel"
+                    value={editForm.mobile}
+                    onChange={e => setEditForm({...editForm, mobile: e.target.value})}
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-555"
+                    placeholder="10-digit number"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Village / Address</label>
+                  <textarea
+                    value={editForm.address}
+                    onChange={e => setEditForm({...editForm, address: e.target.value})}
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-555 resize-none h-20"
+                    placeholder="Enter address or village"
+                  />
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditStudentOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editingStudent}
+                  className="px-6 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  {editingStudent ? <Loader2 size={16} className="animate-spin" /> : null}
+                  Save Student
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Assign Students Modal */}
+        {assignModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+              <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50">
+                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Users size={18} className="text-emerald-600" />
+                  Assign Students to {vehicles.find(v => v.id === selectedVehicle)?.name}
+                </h3>
+                <button 
+                  onClick={() => setAssignModalOpen(false)}
+                  className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Search students by name, class, or village..."
+                    value={assignSearch}
+                    onChange={e => setAssignSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-900 dark:text-zinc-100"
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-y-auto p-4 flex-1">
+                <div className="grid gap-2">
+                  {allStudents
+                    .filter(s => 
+                      s.name.toLowerCase().includes(assignSearch.toLowerCase()) || 
+                      s.class.toLowerCase().includes(assignSearch.toLowerCase()) || 
+                      (s.address && s.address.toLowerCase().includes(assignSearch.toLowerCase()))
+                    )
+                    .map(s => {
+                      const isSelected = tempAssignedIds.has(s.id)
+                      return (
+                        <label 
+                          key={s.id}
+                          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                            isSelected 
+                              ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20' 
+                              : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              const newSet = new Set(tempAssignedIds)
+                              if (e.target.checked) newSet.add(s.id)
+                              else newSet.delete(s.id)
+                              setTempAssignedIds(newSet)
+                            }}
+                            className="w-4 h-4 text-emerald-600 rounded border-zinc-300 focus:ring-emerald-500"
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{s.name}</p>
+                            <p className="text-xs text-zinc-500">Class: {s.class} {s.address ? `• ${s.address}` : ''}</p>
+                          </div>
+                          {s.vehicle_id && s.vehicle_id !== selectedVehicle && (
+                            <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-1 rounded-md">
+                              In another vehicle
+                            </span>
+                          )}
+                        </label>
+                      )
+                    })}
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex justify-end gap-3">
+                <button
+                  onClick={() => setAssignModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveAssignments}
+                  disabled={savingAssign}
+                  className="px-6 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  {savingAssign ? <Loader2 size={16} className="animate-spin" /> : null}
+                  Save Assignments ({tempAssignedIds.size})
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -1203,7 +1537,7 @@ export default function StudentAttendanceDashboard() {
                     <div className="p-8 text-center text-zinc-500">No active students found in this class or matching filter.</div>
                   ) : (
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                      {displayedClassStudents.map((s, i) => renderStudentRow(s, i, classAttendance, 'class'))}
+                      {displayedClassStudents.map((s, i) => renderStudentRow(s, i, effectiveClassAtt, 'class'))}
                     </div>
                   )}
                 </div>
@@ -1453,7 +1787,7 @@ export default function StudentAttendanceDashboard() {
                     <div className="p-8 text-center text-zinc-500">No students are assigned to this vehicle yet or matching filter.</div>
                   ) : (
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                      {displayedVehicleStudents.map((s, i) => renderStudentRow(s, i, vehicleAttendance, 'vehicle'))}
+                      {displayedVehicleStudents.map((s, i) => renderStudentRow(s, i, effectiveVehicleAtt, 'vehicle'))}
                     </div>
                   )}
                 </div>
