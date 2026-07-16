@@ -103,9 +103,9 @@ const AttendanceReportPDF = ({ recordData, recordType, recordSelection, recordMo
 }
 
 const normalizeVillageName = (address: string | undefined | null) => {
-  if (!address) return 'Unknown'
+  if (!address) return 'Parents or Self'
   const trimmed = address.trim()
-  if (!trimmed) return 'Unknown'
+  if (!trimmed) return 'Parents or Self'
   
   let normalized = trimmed
     .toLowerCase()
