@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { LogOut, Bus, Users, CheckCircle2, XCircle, Loader2, MapPin, ChevronDown, ChevronLeft, ChevronRight, Info, X, Search, Plus, GraduationCap, Pencil, ClipboardList, FileDown, Clock, CalendarCheck } from 'lucide-react'
+import { LogOut, Bus, Users, CheckCircle2, XCircle, Loader2, MapPin, ChevronDown, ChevronLeft, ChevronRight, Info, X, Search, Plus, GraduationCap, Pencil, ClipboardList, FileDown, Clock, CalendarCheck, AlertTriangle } from 'lucide-react'
 import { CLASSES } from '@/lib/constants'
 import dayjs from 'dayjs'
 import { pdf, Document, Page as PdfPage, Text, View, StyleSheet } from '@react-pdf/renderer'
@@ -158,6 +158,9 @@ export default function StudentAttendanceDashboard() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<Student | null>(null)
+  const [warningModal, setWarningModal] = useState<{ isOpen: boolean; message: string } | null>(null)
+  const [successModal, setSuccessModal] = useState<{ isOpen: boolean; message: string } | null>(null)
+  const [showUnmarkedBlink, setShowUnmarkedBlink] = useState(false)
   const [allStudents, setAllStudents] = useState<Student[]>([])
   const [todayAttendance, setTodayAttendance] = useState<any[]>([])
   const [assignModalOpen, setAssignModalOpen] = useState(false)
@@ -621,7 +624,14 @@ export default function StudentAttendanceDashboard() {
     })
 
     if (unmarkedStudents.length > 0) {
-      alert(`Attendance save nahi ki ja sakti. Kripya sabhi baccho ko Present ya Absent mark karein. (${unmarkedStudents.length} bacche khali hain)`)
+      setWarningModal({
+        isOpen: true,
+        message: `Attendance save nahi ki ja sakti. Kripya sabhi baccho ko Present ya Absent mark karein. (${unmarkedStudents.length} bacche khali hain)`
+      })
+      setShowUnmarkedBlink(true)
+      setTimeout(() => {
+        setShowUnmarkedBlink(false)
+      }, 4000)
       return
     }
 
@@ -675,7 +685,10 @@ export default function StudentAttendanceDashboard() {
     else setVehicleAttendance({})
     
     setSaving(false)
-    alert('Attendance successfully saved!')
+    setSuccessModal({
+      isOpen: true,
+      message: 'Attendance successfully saved!'
+    })
   }
 
   const saveAssignments = async () => {
@@ -866,7 +879,10 @@ export default function StudentAttendanceDashboard() {
     setVehicleAttendance({})
 
     setSavingTransport(false)
-    alert('Transport attendance successfully saved!')
+    setSuccessModal({
+      isOpen: true,
+      message: 'Transport attendance successfully saved!'
+    })
   }
 
   const displayedClassStudents = (selectedClass ? classStudents : allStudents).filter(student => {
@@ -916,8 +932,18 @@ export default function StudentAttendanceDashboard() {
 
   const renderStudentRow = (student: Student, index: number, att: Record<string, string>, type: 'class' | 'vehicle') => {
     const status = att[student.id]
+    const isUnmarked = !status || status === 'none'
+    const isBlinking = showUnmarkedBlink && isUnmarked
+
     return (
-      <div key={student.id} className="p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+      <div 
+        key={student.id} 
+        className={`p-4 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/50 transition-all duration-300 ${
+          isBlinking 
+            ? 'animate-soft-red border-l-4 border-rose-500'
+            : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+        }`}
+      >
         <div className="flex items-center gap-4">
           <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500">
             {index + 1}
@@ -1622,6 +1648,15 @@ export default function StudentAttendanceDashboard() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      <style>{`
+        @keyframes softRedBlink {
+          0%, 100% { background-color: transparent; }
+          50% { background-color: rgba(239, 68, 68, 0.45); }
+        }
+        .animate-soft-red {
+          animation: softRedBlink 1.5s infinite ease-in-out;
+        }
+      `}</style>
 
       {/* Top Bar */}
       <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 md:px-8 py-4 space-y-3">
@@ -2566,6 +2601,49 @@ export default function StudentAttendanceDashboard() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      {/* Warning Modal for Unmarked Students */}
+      {warningModal && warningModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200">
+          <div className="bg-rose-50 dark:bg-rose-950/40 rounded-2xl w-full max-w-xs p-5 shadow-xl border border-rose-200 dark:border-rose-800/60 text-center animate-in zoom-in-95 duration-200">
+            <h3 className="text-base font-bold text-rose-800 dark:text-rose-200 mb-2">
+              Alert
+            </h3>
+            
+            <p className="text-xs text-rose-600 dark:text-rose-400 mb-5 leading-normal">
+              {warningModal.message}
+            </p>
+            
+            <button 
+              onClick={() => setWarningModal(null)}
+              className="w-full h-9 bg-rose-600 dark:bg-rose-500 text-white rounded-lg text-xs font-semibold hover:bg-rose-700 dark:hover:bg-rose-600 active:scale-[0.98] transition-all duration-150 flex items-center justify-center shadow-sm"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {successModal && successModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200">
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl w-full max-w-xs p-5 shadow-xl border border-emerald-200 dark:border-emerald-800/60 text-center animate-in zoom-in-95 duration-200">
+            <h3 className="text-base font-bold text-emerald-800 dark:text-emerald-200 mb-2">
+              Success
+            </h3>
+            
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-5 leading-normal">
+              {successModal.message}
+            </p>
+            
+            <button 
+              onClick={() => setSuccessModal(null)}
+              className="w-full h-9 bg-emerald-600 dark:bg-emerald-500 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 dark:hover:bg-emerald-600 active:scale-[0.98] transition-all duration-150 flex items-center justify-center shadow-sm"
+            >
+              Got it
+            </button>
           </div>
         </div>
       )}
