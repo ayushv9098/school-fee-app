@@ -703,7 +703,7 @@ export default function StudentAttendanceDashboard() {
 
   const handleVillageCountChange = (villageName: string, count: number) => {
     const total = getVillageTotalCount(villageName)
-    const cleanCount = Math.max(0, Math.min(total, count))
+    const cleanCount = Math.max(0, count)
     setVillagePresentOverrides(prev => ({
       ...prev,
       [villageName]: cleanCount
@@ -1808,18 +1808,15 @@ export default function StudentAttendanceDashboard() {
                       <thead>
                         <tr className="bg-zinc-50/50 dark:bg-zinc-900/30 text-zinc-500 text-xs font-semibold uppercase">
                           <th className="p-3 pl-5 text-left">Village</th>
-                          <th className="p-3 text-right">Total</th>
                           <th className="p-3 pr-5 text-right">Today Present</th>
                         </tr>
                       </thead>
                       <tbody>
                         {transportVillages.sort((a, b) => a.localeCompare(b)).map((village) => {
-                          const total = getVillageTotalCount(village)
                           const activeCount = getVillageActiveCount(village)
                           return (
                             <tr key={village} className="border-t border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
                               <td className="p-3 pl-5 font-medium text-zinc-900 dark:text-zinc-100">{village}</td>
-                              <td className="p-3 text-right text-zinc-500">{total}</td>
                               <td className="p-3 pr-5 text-right text-emerald-600 dark:text-emerald-500 font-semibold">{activeCount}</td>
                             </tr>
                           )
@@ -1851,28 +1848,27 @@ export default function StudentAttendanceDashboard() {
                             </div>
                             <span className="font-bold text-sm text-zinc-850 dark:text-zinc-150">{village}</span>
                           </div>
-                          <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-650 dark:text-zinc-400">
-                            Total: {total} Stds
-                          </span>
                         </div>
 
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="grid grid-cols-3 items-center gap-2">
                           <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                             Present Today:
                           </span>
-                          <div className="flex items-center gap-3">
+                          <div className="flex justify-center">
                             <input 
                               type="number"
                               min={0}
-                              max={total}
+
                               value={focusedVillage === village && activeCount === 0 ? '' : activeCount}
                               onFocus={() => setFocusedVillage(village)}
                               onBlur={() => setFocusedVillage(null)}
                               onChange={(e) => handleVillageCountChange(village, parseInt(e.target.value) || 0)}
                               className="w-20 h-10 px-3 text-center bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-semibold text-zinc-900 dark:text-zinc-100"
                             />
-                            <span className="text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 px-2.5 py-1 rounded-full">
-                              {activeCount} / {total} Present
+                          </div>
+                          <div className="flex justify-end">
+                            <span className="text-sm font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 px-2.5 py-1 rounded-full">
+                              {activeCount}
                             </span>
                           </div>
                         </div>
