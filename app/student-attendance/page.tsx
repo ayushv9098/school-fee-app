@@ -102,6 +102,34 @@ const AttendanceReportPDF = ({ recordData, recordType, recordSelection, recordMo
   )
 }
 
+const normalizeVillageName = (address: string | undefined | null) => {
+  if (!address) return 'Unknown'
+  const trimmed = address.trim()
+  if (!trimmed) return 'Unknown'
+  
+  let normalized = trimmed
+    .toLowerCase()
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+    
+  if (normalized === 'Doultpur' || normalized === 'Daulatpur') {
+    normalized = 'Doulatpur'
+  } else if (normalized === 'Kundiyan' || normalized === 'Kundiya Dhanga') {
+    normalized = 'Kundiya'
+  } else if (normalized === 'Semli' || normalized === 'Semli Bari Khet' || normalized === 'Semlibari') {
+    normalized = 'Semli Bari'
+  } else if (normalized === 'Karadiya Srujana Piprrava') {
+    normalized = 'Karadiya'
+  } else if (normalized.startsWith('Pilwani')) {
+    normalized = 'Pilwani'
+  } else if (normalized.includes('Sonkatch')) {
+    normalized = 'Sonkatch'
+  }
+  
+  return normalized
+}
+
 export default function StudentAttendanceDashboard() {
   const router = useRouter()
   const supabase = createClient()
@@ -109,6 +137,7 @@ export default function StudentAttendanceDashboard() {
 
   const [activeSection, setActiveSection] = useState<'class' | 'vehicle'>('class')
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [ownerId, setOwnerId] = useState<string | null>(null)
 
   // Class state
   const [classes, setClasses] = useState<string[]>([])
@@ -142,12 +171,12 @@ export default function StudentAttendanceDashboard() {
   const vehicleStudents = useMemo(() => selectedVehicle ? allStudents.filter(s => s.vehicle_id === selectedVehicle) : [], [allStudents, selectedVehicle])
 
   const transportStudents = useMemo(() => {
-    return allStudents.filter(s => s.vehicle_id)
+    return allStudents
   }, [allStudents])
 
   const transportVillages = useMemo(() => {
-    const villages = Array.from(new Set(transportStudents.map(s => s.address?.trim() || 'Unknown')))
-    return villages.filter(v => v !== 'Unknown').sort((a, b) => a.localeCompare(b))
+    const villages = Array.from(new Set(transportStudents.map(s => normalizeVillageName(s.address))))
+    return villages.sort((a, b) => a.localeCompare(b))
   }, [transportStudents])
 
   useEffect(() => {
@@ -202,7 +231,7 @@ export default function StudentAttendanceDashboard() {
       setCurrentUser(user)
       
       // Fetch school settings
-      let ownerId = user.id
+      let ownerIdVal = user.id
       if (user?.user_metadata?.role === 'attendance_staff') {
         const { data: teacher } = await supabase
           .from('teachers')
@@ -210,11 +239,12 @@ export default function StudentAttendanceDashboard() {
           .eq('auth_user_id', user.id)
           .maybeSingle()
         if (teacher?.user_id) {
-          ownerId = teacher.user_id
+          ownerIdVal = teacher.user_id
         }
       }
+      setOwnerId(ownerIdVal)
 
-      supabase.from('school_settings').select('school_name').eq('user_id', ownerId).maybeSingle().then(({ data }) => {
+      supabase.from('school_settings').select('school_name').eq('user_id', ownerIdVal).maybeSingle().then(({ data }) => {
         if (data?.school_name) setSchoolName(data.school_name)
       })
 
@@ -223,8 +253,8 @@ export default function StudentAttendanceDashboard() {
         : localStorage.getItem('selectedAcademicYear') || '2025-26'
 
       const [studentsRes, vehiclesRes, todayAttendanceRes] = await Promise.all([
-        supabase.from('students').select('*').eq('user_id', ownerId).eq('status', 'active').eq('academic_year', sessionYear).order('name'),
-        supabase.from('vehicles').select('id, name, type').eq('user_id', ownerId).order('name'),
+        supabase.from('students').select('*').eq('user_id', ownerIdVal).eq('status', 'active').eq('academic_year', sessionYear).order('name'),
+        supabase.from('vehicles').select('id, name, type').eq('user_id', ownerIdVal).order('name'),
         supabase.from('student_attendance').select('*').eq('date', todayDate)
       ])
 
@@ -297,7 +327,7 @@ export default function StudentAttendanceDashboard() {
       vehicle_id: addForm.vehicle_id || null,
       total_fee: 0,
       academic_year: sessionYear,
-      user_id: currentUser?.id
+      user_id: ownerId || currentUser?.id
     }).select().single()
 
     if (error) {
@@ -683,12 +713,12 @@ export default function StudentAttendanceDashboard() {
   }, {} as Record<string, { total: number, present: number }>)
 
   const getVillageTotalCount = (villageName: string) => {
-    return transportStudents.filter(s => s.address?.trim() === villageName).length
+    return transportStudents.filter(s => normalizeVillageName(s.address) === villageName).length
   }
 
   const getVillagePresentCount = (villageName: string) => {
     return transportStudents.filter(s => {
-      if (s.address?.trim() !== villageName) return false
+      if (normalizeVillageName(s.address) !== villageName) return false
       const status = effectiveVehicleAtt[s.id]
       return status === 'present'
     }).length
@@ -733,7 +763,7 @@ export default function StudentAttendanceDashboard() {
 
     for (const village of transportVillages) {
       const villageStds = transportStudents
-        .filter(s => s.address?.trim() === village)
+        .filter(s => normalizeVillageName(s.address) === village)
         .sort((a, b) => a.name.localeCompare(b.name))
 
       const presentCount = getVillageActiveCount(village)

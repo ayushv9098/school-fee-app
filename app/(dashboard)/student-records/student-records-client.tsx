@@ -48,6 +48,34 @@ interface Props {
   selectedDate: string
 }
 
+const normalizeVillageName = (address: string | undefined | null) => {
+  if (!address) return 'Unknown'
+  const trimmed = address.trim()
+  if (!trimmed) return 'Unknown'
+  
+  let normalized = trimmed
+    .toLowerCase()
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+    
+  if (normalized === 'Doultpur' || normalized === 'Daulatpur') {
+    normalized = 'Doulatpur'
+  } else if (normalized === 'Kundiyan' || normalized === 'Kundiya Dhanga') {
+    normalized = 'Kundiya'
+  } else if (normalized === 'Semli' || normalized === 'Semli Bari Khet' || normalized === 'Semlibari') {
+    normalized = 'Semli Bari'
+  } else if (normalized === 'Karadiya Srujana Piprrava') {
+    normalized = 'Karadiya'
+  } else if (normalized.startsWith('Pilwani')) {
+    normalized = 'Pilwani'
+  } else if (normalized.includes('Sonkatch')) {
+    normalized = 'Sonkatch'
+  }
+  
+  return normalized
+}
+
 export default function StudentRecordsClient({ selectedDate }: Props) {
   const supabase = createClient()
   const router = useRouter()
@@ -150,7 +178,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
     })
   })
 
-  const vehicleStudents = students.filter(s => s.vehicle_id)
+  const vehicleStudents = students
   let totalBoarded = 0
   let totalNotBoarded = 0 
   const vehicleBreakdown: Record<string, { 
@@ -170,18 +198,19 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
   vehicleStudents.forEach(std => {
     const status = vehicleStatusMap.get(std.id) || 'unmarked'
     const vName = std.vehicles?.name || 'Unknown Vehicle'
-    const village = std.address?.trim() || 'Unknown'
+    const village = normalizeVillageName(std.address)
+    const vId = std.vehicle_id || 'unassigned'
     
-    if (!vehicleBreakdown[std.vehicle_id]) {
-      vehicleBreakdown[std.vehicle_id] = { name: vName, boarded: 0, total: 0, villages: {} }
+    if (!vehicleBreakdown[vId]) {
+      vehicleBreakdown[vId] = { name: vName, boarded: 0, total: 0, villages: {} }
     }
     
-    if (!vehicleBreakdown[std.vehicle_id].villages[village]) {
-      vehicleBreakdown[std.vehicle_id].villages[village] = { present: 0, total: 0, students: [] }
+    if (!vehicleBreakdown[vId].villages[village]) {
+      vehicleBreakdown[vId].villages[village] = { present: 0, total: 0, students: [] }
     }
 
-    vehicleBreakdown[std.vehicle_id].total++
-    vehicleBreakdown[std.vehicle_id].villages[village].total++
+    vehicleBreakdown[vId].total++
+    vehicleBreakdown[vId].villages[village].total++
 
     // Flat village calculations
     if (!flatVillageBreakdown[village]) {
