@@ -59,7 +59,7 @@ const normalizeVillageName = (address: string | undefined | null) => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
     
-  if (normalized === 'Doultpur' || normalized === 'Daulatpur') {
+  if (normalized === 'Doultpur' || normalized === 'Daulatpur' || normalized === 'Daultpur' || normalized === 'Doultour') {
     normalized = 'Doulatpur'
   } else if (normalized === 'Kundiyan' || normalized === 'Kundiya Dhanga') {
     normalized = 'Kundiya'
@@ -71,6 +71,8 @@ const normalizeVillageName = (address: string | undefined | null) => {
     normalized = 'Pilwani'
   } else if (normalized.includes('Sonkatch')) {
     normalized = 'Sonkatch'
+  } else if (normalized === 'Pardhikheda') {
+    normalized = 'Pardikheda'
   }
   
   return normalized
@@ -195,6 +197,23 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
     students: { id: string, name: string, status: string }[]
   }> = {}
 
+  // Load village overrides
+  const adminVillageOverrides = (() => {
+    const overrideRecs = attendanceRecords.filter(r => r.type === 'village_overrides')
+    if (overrideRecs.length > 0) {
+      overrideRecs.sort((a, b) => new Date((b as any).created_at).getTime() - new Date((a as any).created_at).getTime())
+      const latest = overrideRecs[0]
+      if (latest && latest.status) {
+        try {
+          return JSON.parse(latest.status) as Record<string, number>
+        } catch (e) {
+          console.error("Error parsing overrides on admin side:", e)
+        }
+      }
+    }
+    return null
+  })()
+
   vehicleStudents.forEach(std => {
     const status = vehicleStatusMap.get(std.id) || 'unmarked'
     const vName = std.vehicles?.name || 'Unknown Vehicle'
@@ -220,8 +239,8 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
 
     if (status === 'present') {
       totalBoarded++
-      vehicleBreakdown[std.vehicle_id].boarded++
-      vehicleBreakdown[std.vehicle_id].villages[village].present++
+      vehicleBreakdown[vId].boarded++
+      vehicleBreakdown[vId].villages[village].present++
       villageBreakdown[village] = (villageBreakdown[village] || 0) + 1
       flatVillageBreakdown[village].present++
     } else {
@@ -229,7 +248,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
       flatVillageBreakdown[village].absent++
     }
 
-    vehicleBreakdown[std.vehicle_id].villages[village].students.push({
+    vehicleBreakdown[vId].villages[village].students.push({
       id: std.id,
       name: std.name,
       status: status || 'unmarked'
@@ -241,6 +260,16 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
       status
     })
   })
+
+  if (adminVillageOverrides) {
+    Object.keys(flatVillageBreakdown).forEach(village => {
+      if (village in adminVillageOverrides) {
+        flatVillageBreakdown[village].present = adminVillageOverrides[village]
+      }
+    })
+    totalBoarded = Object.values(flatVillageBreakdown).reduce((sum, stats) => sum + stats.present, 0)
+    totalNotBoarded = Math.max(0, vehicleStudents.length - totalBoarded)
+  }
 
   // Custom class sorting logic
   const getClassOrder = (className: string) => {
@@ -617,7 +646,6 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                       <thead>
                         <tr className="bg-zinc-50/50 dark:bg-zinc-900/30 text-zinc-500 text-xs font-semibold uppercase">
                           <th className="p-3 pl-5 text-left">Village</th>
-                          <th className="p-3 text-right">Total</th>
                           <th className="p-3 pr-5 text-right">Today Present</th>
                         </tr>
                       </thead>
@@ -627,13 +655,12 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                           .map(([village, stats]) => (
                             <tr key={village} className="border-t border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
                               <td className="p-3 pl-5 font-medium text-zinc-900 dark:text-zinc-100">{village}</td>
-                              <td className="p-3 text-right text-zinc-500">{stats.total}</td>
                               <td className="p-3 pr-5 text-right text-emerald-600 dark:text-emerald-500 font-semibold">{stats.present}</td>
                             </tr>
                           ))}
                         {Object.keys(flatVillageBreakdown).length === 0 && (
                           <tr>
-                            <td colSpan={3} className="text-center text-sm text-zinc-500 py-6">No village records found.</td>
+                            <td colSpan={2} className="text-center text-sm text-zinc-500 py-6">No village records found.</td>
                           </tr>
                         )}
                       </tbody>

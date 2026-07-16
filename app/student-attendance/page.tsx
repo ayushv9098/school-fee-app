@@ -113,7 +113,7 @@ const normalizeVillageName = (address: string | undefined | null) => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
     
-  if (normalized === 'Doultpur' || normalized === 'Daulatpur') {
+  if (normalized === 'Doultpur' || normalized === 'Daulatpur' || normalized === 'Daultpur' || normalized === 'Doultour') {
     normalized = 'Doulatpur'
   } else if (normalized === 'Kundiyan' || normalized === 'Kundiya Dhanga') {
     normalized = 'Kundiya'
@@ -125,6 +125,8 @@ const normalizeVillageName = (address: string | undefined | null) => {
     normalized = 'Pilwani'
   } else if (normalized.includes('Sonkatch')) {
     normalized = 'Sonkatch'
+  } else if (normalized === 'Pardhikheda') {
+    normalized = 'Pardikheda'
   }
   
   return normalized
@@ -138,6 +140,7 @@ export default function StudentAttendanceDashboard() {
   const [activeSection, setActiveSection] = useState<'class' | 'vehicle'>('class')
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [ownerId, setOwnerId] = useState<string | null>(null)
+  const [academicYear, setAcademicYear] = useState<string>('2025-26')
 
   // Class state
   const [classes, setClasses] = useState<string[]>([])
@@ -214,10 +217,7 @@ export default function StudentAttendanceDashboard() {
   }
 
   const getSessionYear = (user: any) => {
-    if (user?.user_metadata?.role === 'attendance_staff') {
-      return user.user_metadata.academic_year || '2025-26'
-    }
-    return localStorage.getItem('selectedAcademicYear') || '2025-26'
+    return academicYear
   }
 
   // Init: fetch user, classes, vehicles
@@ -248,9 +248,23 @@ export default function StudentAttendanceDashboard() {
         if (data?.school_name) setSchoolName(data.school_name)
       })
 
-      const sessionYear = user?.user_metadata?.role === 'attendance_staff'
-        ? user.user_metadata.academic_year || '2025-26'
-        : localStorage.getItem('selectedAcademicYear') || '2025-26'
+      // Get the latest academic year from the database
+      const { data: latestStd } = await supabase
+        .from('students')
+        .select('academic_year')
+        .eq('user_id', ownerIdVal)
+        .order('academic_year', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      const latestYear = latestStd?.academic_year || '2025-26'
+      
+      let sessionYear = latestYear
+      if (user?.user_metadata?.role !== 'attendance_staff') {
+        const local = localStorage.getItem('selectedAcademicYear')
+        if (local) sessionYear = local
+      }
+      setAcademicYear(sessionYear)
 
       const [studentsRes, vehiclesRes, todayAttendanceRes] = await Promise.all([
         supabase.from('students').select('*').eq('user_id', ownerIdVal).eq('status', 'active').eq('academic_year', sessionYear).order('name'),
@@ -279,7 +293,21 @@ export default function StudentAttendanceDashboard() {
         setClasses(unique)
       }
       setVehicles(vehiclesRes.data || [])
-      setTodayAttendance(todayAttendanceRes.data || [])
+      const attData = todayAttendanceRes.data || []
+      setTodayAttendance(attData)
+      
+      const overrideRecs = attData.filter(r => r.type === 'village_overrides')
+      if (overrideRecs.length > 0) {
+        overrideRecs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        const latestOverride = overrideRecs[0]
+        if (latestOverride && latestOverride.status) {
+          try {
+            setVillagePresentOverrides(JSON.parse(latestOverride.status))
+          } catch (e) {
+            console.error("Error parsing overrides:", e)
+          }
+        }
+      }
       setLoading(false)
     }
     init()
@@ -295,7 +323,25 @@ export default function StudentAttendanceDashboard() {
       if (error) {
         alert("fetchTodayAttendance error: " + error.message)
       }
-      setTodayAttendance(data || [])
+      const attData = data || []
+      setTodayAttendance(attData)
+      
+      const overrideRecs = attData.filter(r => r.type === 'village_overrides')
+      if (overrideRecs.length > 0) {
+        overrideRecs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        const latestOverride = overrideRecs[0]
+        if (latestOverride && latestOverride.status) {
+          try {
+            setVillagePresentOverrides(JSON.parse(latestOverride.status))
+          } catch (e) {
+            setVillagePresentOverrides({})
+          }
+        } else {
+          setVillagePresentOverrides({})
+        }
+      } else {
+        setVillagePresentOverrides({})
+      }
     }
     fetchTodayAttendance()
   }, [todayDate, currentUser])
@@ -581,6 +627,10 @@ export default function StudentAttendanceDashboard() {
 
     setSaving(true)
     
+    // Fetch latest active student IDs from DB to ensure no foreign key violation
+    const { data: activeStds } = await supabase.from('students').select('id')
+    const activeStudentIds = new Set(activeStds?.map(s => s.id) || [])
+
     // We need to fetch the current DB state to see what needs deleting
     const { data: dbAtt } = await supabase.from('student_attendance')
       .select('student_id')
@@ -594,6 +644,7 @@ export default function StudentAttendanceDashboard() {
     const toDelete: string[] = []
 
     for (const std of students) {
+      if (!activeStudentIds.has(std.id)) continue
       const status = att[std.id]
       if (status) {
         toInsert.push({ student_id: std.id, date: todayDate, status, type })
@@ -732,7 +783,6 @@ export default function StudentAttendanceDashboard() {
   }
 
   const handleVillageCountChange = (villageName: string, count: number) => {
-    const total = getVillageTotalCount(villageName)
     const cleanCount = Math.max(0, count)
     setVillagePresentOverrides(prev => ({
       ...prev,
@@ -753,6 +803,10 @@ export default function StudentAttendanceDashboard() {
     const toInsert: any[] = []
     const toDelete: string[] = []
 
+    // Fetch latest active student IDs from DB to ensure no foreign key violation
+    const { data: activeStds } = await supabase.from('students').select('id')
+    const activeStudentIds = new Set(activeStds?.map(s => s.id) || [])
+
     // Fetch the current DB state for today's vehicle attendance to know what needs deleting
     const { data: dbAtt } = await supabase.from('student_attendance')
       .select('student_id')
@@ -769,6 +823,7 @@ export default function StudentAttendanceDashboard() {
       const presentCount = getVillageActiveCount(village)
 
       villageStds.forEach((std, idx) => {
+        if (!activeStudentIds.has(std.id)) return
         const status = idx < presentCount ? 'present' : 'absent'
         toInsert.push({ student_id: std.id, date: todayDate, status, type: 'vehicle' })
       })
@@ -794,10 +849,20 @@ export default function StudentAttendanceDashboard() {
       if (error) alert('Error saving records: ' + error.message)
     }
 
+    const { data: firstStd } = await supabase.from('students').select('id').order('id').limit(1).maybeSingle()
+    const dummyStudentId = firstStd?.id
+    if (dummyStudentId) {
+      await supabase.from('student_attendance').upsert({
+        student_id: dummyStudentId,
+        date: todayDate,
+        type: 'village_overrides',
+        status: JSON.stringify(villagePresentOverrides)
+      }, { onConflict: 'student_id,date,type' })
+    }
+
     const { data: updatedAtt } = await supabase.from('student_attendance').select('*').eq('date', todayDate)
     setTodayAttendance(updatedAtt || [])
 
-    setVillagePresentOverrides({})
     setVehicleAttendance({})
 
     setSavingTransport(false)
