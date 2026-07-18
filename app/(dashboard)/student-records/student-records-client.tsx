@@ -78,6 +78,14 @@ const normalizeVillageName = (address: string | undefined | null) => {
   return normalized
 }
 
+const sortStudentsByStatus = (a: { name: string; status?: string }, b: { name: string; status?: string }) => {
+  const statusOrder: Record<string, number> = { present: 1, absent: 2 }
+  const orderA = statusOrder[a.status || ''] || 3
+  const orderB = statusOrder[b.status || ''] || 3
+  if (orderA !== orderB) return orderA - orderB
+  return a.name.localeCompare(b.name)
+}
+
 export default function StudentRecordsClient({ selectedDate }: Props) {
   const supabase = createClient()
   const router = useRouter()
@@ -540,7 +548,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                                   <div className="px-5 py-2 divide-y divide-zinc-100 dark:divide-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800/50">
                                     {stats.students
                                       .filter(s => classStatusFilter === 'all' || s.status === classStatusFilter)
-                                      .sort((a,b) => a.name.localeCompare(b.name))
+                                      .sort(sortStudentsByStatus)
                                       .map(s => (
                                       <button 
                                         key={s.id} 
@@ -736,7 +744,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     </div>
                     {/* List of matching students in this class */}
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
-                      {list.sort((a,b) => a.name.localeCompare(b.name)).map(s => (
+                      {list.sort(sortStudentsByStatus).map(s => (
                         <div 
                           key={s.id}
                           className="px-5 py-3 flex justify-between items-center hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors"
@@ -821,7 +829,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
 
                     {/* Student List in this Village */}
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
-                      {list.sort((a,b) => a.name.localeCompare(b.name)).map(s => (
+                      {list.sort(sortStudentsByStatus).map(s => (
                         <button 
                           key={s.id}
                           onClick={() => {
