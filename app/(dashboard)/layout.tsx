@@ -4,7 +4,6 @@ import { DesktopSidebar, MobileSidebar } from '@/components/layout/sidebar'
 import Link from 'next/link'
 import { User, ArrowLeft, Bell } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import FloatingAIButton from '@/components/floating-ai-button'
 import NotificationsDropdown from '@/components/layout/notifications'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -24,7 +23,6 @@ export default function DashboardLayout({
             {children}
           </div>
         </main>
-        <FloatingAIButton />
       </div>
     </div>
   )
