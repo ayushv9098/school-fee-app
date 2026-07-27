@@ -14,6 +14,7 @@ import {
 import dayjs from 'dayjs'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { formatCurrency } from '@/lib/calculations'
 
 interface Student {
   id: string
@@ -22,6 +23,7 @@ interface Student {
   address: string
   vehicle_id: string
   status: string
+  previous_dues?: number
   vehicles?: {
     id: string
     name: string
@@ -109,7 +111,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
       
       const { data: rawStudents } = await supabase
         .from('students')
-        .select('id, name, class, address, vehicle_id, status')
+        .select('id, name, class, address, vehicle_id, status, previous_dues')
         .eq('status', 'active')
         .eq('academic_year', sessionYear)
 
@@ -927,6 +929,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                         <th className="text-left font-medium p-3 text-zinc-500">Student Name</th>
                         <th className="text-left font-medium p-3 text-zinc-500">Class</th>
                         <th className="text-left font-medium p-3 text-zinc-500">Village / Address</th>
+                        <th className="text-left font-medium p-3 text-zinc-500">Old Dues</th>
                         <th className="text-right font-medium p-3 pr-5 text-zinc-500">Action</th>
                       </tr>
                     </thead>
@@ -944,6 +947,9 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                           <td className="p-3 font-medium text-zinc-900 dark:text-zinc-100">{s.name}</td>
                           <td className="p-3 text-zinc-600 dark:text-zinc-400">{s.class}</td>
                           <td className="p-3 text-zinc-600 dark:text-zinc-400 truncate max-w-[150px]">{s.address || '-'}</td>
+                          <td className="p-3 text-amber-600 dark:text-amber-500 font-medium">
+                            {formatCurrency(s.previous_dues || 0)}
+                          </td>
                           <td className="p-3 pr-5 text-right">
                             <button 
                               onClick={() => handleSelectStudent(s)}
@@ -956,7 +962,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                       ))}
                       {students.filter(s => recordClassFilter === 'all' || s.class === recordClassFilter).length === 0 && (
                         <tr>
-                          <td colSpan={5} className="text-center p-6 text-zinc-500">No students found.</td>
+                          <td colSpan={6} className="text-center p-6 text-zinc-500">No students found.</td>
                         </tr>
                       )}
                     </tbody>
@@ -973,7 +979,10 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                   <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
                     {searchedStudent.name}
                   </h3>
-                  <p className="text-sm text-zinc-500">Class {searchedStudent.class} • {searchedStudent.vehicles?.name ? `Vehicle: ${searchedStudent.vehicles.name}` : 'No Vehicle Assigned'}</p>
+                  <p className="text-sm text-zinc-500">
+                    Class {searchedStudent.class} • {searchedStudent.vehicles?.name ? `Vehicle: ${searchedStudent.vehicles.name}` : 'No Vehicle Assigned'}
+                    {searchedStudent.previous_dues !== undefined && ` • Old Dues: ${formatCurrency(searchedStudent.previous_dues)}`}
+                  </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <button
