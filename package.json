@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "whatsapp": "node whatsapp-bot.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -22,9 +23,11 @@
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
     "@types/leaflet": "^1.9.21",
+    "@whiskeysockets/baileys": "^7.0.0-rc13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.20",
+    "dotenv": "^17.4.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
@@ -32,6 +35,8 @@
     "lucide-react": "^1.14.0",
     "next": "16.2.4",
     "nprogress": "^0.2.0",
+    "pino": "^10.3.1",
+    "qrcode-terminal": "^0.12.0",
     "radix-ui": "^1.4.3",
     "razorpay": "^2.9.6",
     "react": "19.2.4",

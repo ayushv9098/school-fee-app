@@ -154,6 +154,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
   const [studentHistory, setStudentHistory] = useState<AttendanceRecord[]>([])
   const [searching, setSearching] = useState(false)
   const [searchResults, setSearchResults] = useState<Student[]>([])
+  const [historyMonthFilter, setHistoryMonthFilter] = useState<string>('all')
 
   const handleDateChange = (newDate: string) => {
     router.push(`/student-records?date=${newDate}`)
@@ -364,6 +365,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
     setSearchResults([])
     setSearchedStudent(student)
     setSearching(true)
+    setHistoryMonthFilter('all')
 
     try {
       const supabase = createClient()
@@ -371,6 +373,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
         .from('student_attendance')
         .select('*')
         .eq('student_id', student.id)
+        .eq('type', 'class')
         .order('date', { ascending: false })
         .limit(30) // last 30 records
 
@@ -390,28 +393,28 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
       {activeTab !== 'logins' && activeTab !== 'student-record' && (
         <div className="shrink-0 bg-zinc-50 dark:bg-zinc-950 px-4 md:px-6 pt-4 md:pt-6 pb-4 border-b border-zinc-200 dark:border-zinc-800">
           {/* Page Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col gap-4">
-              <div>
-                <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Student Attendance</h1>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">View daily attendance reports.</p>
-              </div>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Student Attendance</h1>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">View daily attendance reports.</p>
+            </div>
+            
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => setActiveTab('logins')}
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm"
+              >
+                <KeySquare size={16} />
+                <span>Create ID</span>
+              </button>
               <button
                 onClick={() => setActiveTab('student-record')}
-                className="w-fit flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm"
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm"
               >
                 <Search size={16} />
                 Student Record
               </button>
             </div>
-            
-            <button
-              onClick={() => setActiveTab('logins')}
-              className="flex items-center justify-center gap-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 text-sm font-semibold px-3 py-2 md:px-4 md:py-2.5 rounded-xl transition shadow-sm shrink-0"
-            >
-              <KeySquare size={16} />
-              <span>Create ID</span>
-            </button>
           </div>
         </div>
       )}
@@ -746,10 +749,18 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     </div>
                     {/* List of matching students in this class */}
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
-                      {list.sort(sortStudentsByStatus).map(s => (
-                        <div 
+                      {list.sort(sortStudentsByStatus).map(s => {
+                        const fullStudent = students.find(st => st.id === s.id)
+                        return (
+                        <button 
                           key={s.id}
-                          className="px-5 py-3 flex justify-between items-center hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors"
+                          onClick={() => {
+                            if (fullStudent) {
+                              handleSelectStudent(fullStudent)
+                              setActiveTab('student-record')
+                            }
+                          }}
+                          className="w-full px-5 py-3 flex justify-between items-center hover:bg-zinc-50/30 dark:hover:bg-zinc-800/10 transition-colors cursor-pointer text-left"
                         >
                           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{s.name}</span>
                           <Badge variant="outline" className={
@@ -759,8 +770,9 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                           }>
                             {s.status === 'present' ? 'Present' : s.status === 'absent' ? 'Absent' : 'Unmarked'}
                           </Badge>
-                        </div>
-                      ))}
+                        </button>
+                        )
+                      })}
                     </div>
                   </div>
                 )
@@ -872,6 +884,8 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
             Back to Reports
           </button>
 
+          {!searchedStudent && (
+            <>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Student Record</h2>
@@ -917,6 +931,8 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
               }
             </select>
           </div>
+            </>
+          )}
 
           {!searchedStudent && (
             <Card>
@@ -925,11 +941,11 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                   <table className="w-full text-sm">
                     <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0 z-10 shadow-sm">
                       <tr>
-                        <th className="text-left font-medium p-3 pl-5 text-zinc-500">S.No</th>
+                        <th className="text-left font-medium p-3 pl-5 text-zinc-500 hidden md:table-cell">S.No</th>
                         <th className="text-left font-medium p-3 text-zinc-500">Student Name</th>
                         <th className="text-left font-medium p-3 text-zinc-500">Class</th>
-                        <th className="text-left font-medium p-3 text-zinc-500">Village / Address</th>
-                        <th className="text-left font-medium p-3 text-zinc-500">Old Dues</th>
+                        <th className="text-left font-medium p-3 text-zinc-500 hidden md:table-cell">Village / Address</th>
+
                         <th className="text-right font-medium p-3 pr-5 text-zinc-500">Action</th>
                       </tr>
                     </thead>
@@ -942,27 +958,25 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                            return a.name.localeCompare(b.name);
                         })
                         .map((s, index) => (
-                        <tr key={s.id} className="border-t border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
-                          <td className="p-3 pl-5 text-zinc-500">{index + 1}</td>
+                        <tr key={s.id} onClick={() => handleSelectStudent(s)} className="border-t border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer">
+                          <td className="p-3 pl-5 text-zinc-500 hidden md:table-cell">{index + 1}</td>
                           <td className="p-3 font-medium text-zinc-900 dark:text-zinc-100">{s.name}</td>
                           <td className="p-3 text-zinc-600 dark:text-zinc-400">{s.class}</td>
-                          <td className="p-3 text-zinc-600 dark:text-zinc-400 truncate max-w-[150px]">{s.address || '-'}</td>
-                          <td className="p-3 text-amber-600 dark:text-amber-500 font-medium">
-                            {formatCurrency(s.previous_dues || 0)}
-                          </td>
+                          <td className="p-3 text-zinc-600 dark:text-zinc-400 truncate max-w-[150px] hidden md:table-cell">{s.address || '-'}</td>
+
                           <td className="p-3 pr-5 text-right">
                             <button 
                               onClick={() => handleSelectStudent(s)}
                               className="text-xs font-medium text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100 dark:bg-violet-500/10 dark:hover:bg-violet-500/20 px-3 py-1.5 rounded-lg transition"
                             >
-                              View Record
+                              View
                             </button>
                           </td>
                         </tr>
                       ))}
                       {students.filter(s => recordClassFilter === 'all' || s.class === recordClassFilter).length === 0 && (
                         <tr>
-                          <td colSpan={6} className="text-center p-6 text-zinc-500">No students found.</td>
+                          <td colSpan={5} className="text-center p-6 text-zinc-500">No students found.</td>
                         </tr>
                       )}
                     </tbody>
@@ -980,8 +994,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     {searchedStudent.name}
                   </h3>
                   <p className="text-sm text-zinc-500">
-                    Class {searchedStudent.class} • {searchedStudent.vehicles?.name ? `Vehicle: ${searchedStudent.vehicles.name}` : 'No Vehicle Assigned'}
-                    {searchedStudent.previous_dues !== undefined && ` • Old Dues: ${formatCurrency(searchedStudent.previous_dues)}`}
+                    Class {searchedStudent.class}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -989,21 +1002,63 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                     onClick={() => {
                        const presentCount = studentHistory.filter(r => r.status === 'present').length;
                        const absentCount = studentHistory.filter(r => r.status === 'absent').length;
-                       const msg = `Namaste! Aaj ki date tak aapke bachhe ${searchedStudent.name} (Class: ${searchedStudent.class}) ka attendance record is prakar hai:\n\nPresent: ${presentCount} days\nAbsent: ${absentCount} days\n\nSchool Administration`;
+                       const today = dayjs().format('DD/MM/YYYY');
+                       const totalDays = Array.from(new Set(studentHistory.map(r => dayjs(r.date).format('YYYY-MM')))).reduce((sum, m) => sum + dayjs(m + '-01').daysInMonth(), 0);
+                       const msg = `Dear Parent,\n\nAttendance report for ${searchedStudent.name} (Class: ${searchedStudent.class}):\n\nPresent: ${presentCount} days\nAbsent: ${absentCount} days\nTotal Days: ${totalDays}\n\nDate: ${today}\n\nThank you,\nSchool Administration`;
                        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
                     }}
                     className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-sm font-medium"
                   >
-                    <MessageCircle size={16} /> WhatsApp Report
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp Report
                   </button>
-                  <button
-                    onClick={() => { setSearchedStudent(null); setStudentHistory([]) }}
-                    className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1 transition-colors"
-                  >
-                    <X size={14} /> Clear
-                  </button>
+
                 </div>
               </div>
+
+              {/* Month Filter */}
+              {!searching && studentHistory.length > 0 && (
+                <select
+                  value={historyMonthFilter}
+                  onChange={(e) => setHistoryMonthFilter(e.target.value)}
+                  className="px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm outline-none w-full text-zinc-700 dark:text-zinc-300"
+                >
+                  <option value="all">All Months</option>
+                  {(() => {
+                    const months = new Set(studentHistory.map(r => dayjs(r.date).format('YYYY-MM')))
+                    return Array.from(months).sort((a, b) => b.localeCompare(a)).map(m => (
+                      <option key={m} value={m}>{dayjs(m + '-01').format('MMMM YYYY')}</option>
+                    ))
+                  })()}
+                </select>
+              )}
+
+              {/* Attendance Summary */}
+              {!searching && studentHistory.length > 0 && (() => {
+                const filtered = historyMonthFilter === 'all' 
+                  ? studentHistory 
+                  : studentHistory.filter(r => dayjs(r.date).format('YYYY-MM') === historyMonthFilter)
+                const presentCount = filtered.filter(r => r.status === 'present').length
+                const absentCount = filtered.filter(r => r.status === 'absent').length
+                const totalDays = historyMonthFilter === 'all' 
+                  ? Array.from(new Set(studentHistory.map(r => dayjs(r.date).format('YYYY-MM')))).reduce((sum, m) => sum + dayjs(m + '-01').daysInMonth(), 0)
+                  : dayjs(historyMonthFilter + '-01').daysInMonth()
+                return (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-4 flex flex-col items-center gap-1">
+                      <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{presentCount}</span>
+                      <span className="text-xs font-semibold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-wide">Present</span>
+                    </div>
+                    <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 rounded-xl p-4 flex flex-col items-center gap-1">
+                      <span className="text-2xl font-bold text-rose-600 dark:text-rose-400">{absentCount}</span>
+                      <span className="text-xs font-semibold text-rose-600/70 dark:text-rose-400/70 uppercase tracking-wide">Absent</span>
+                    </div>
+                    <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800/50 rounded-xl p-4 flex flex-col items-center gap-1">
+                      <span className="text-2xl font-bold text-violet-600 dark:text-violet-400">{totalDays}</span>
+                      <span className="text-xs font-semibold text-violet-600/70 dark:text-violet-400/70 uppercase tracking-wide">Total Days</span>
+                    </div>
+                  </div>
+                )
+              })()}
 
               {searching ? (
                 <div className="p-12 flex justify-center border border-zinc-200 dark:border-zinc-800 rounded-2xl">
@@ -1012,7 +1067,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
               ) : (
                 <Card>
                   <CardHeader className="pb-3 border-b border-zinc-100 dark:border-zinc-800/50">
-                    <CardTitle className="text-sm font-medium">Attendance History (Last 30 records)</CardTitle>
+                    <CardTitle className="text-sm font-medium">Attendance History</CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
                     <div className="max-h-[400px] overflow-y-auto">
@@ -1020,30 +1075,33 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                         <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0 z-10 shadow-sm">
                           <tr>
                             <th className="text-left font-medium p-3 text-zinc-500">Date</th>
-                            <th className="text-left font-medium p-3 text-zinc-500">Type</th>
                             <th className="text-left font-medium p-3 text-zinc-500">Status</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {studentHistory.length === 0 ? (
-                            <tr>
-                              <td colSpan={3} className="p-6 text-center text-zinc-500">No attendance records found for this student.</td>
-                            </tr>
-                          ) : (
-                            studentHistory.map((record, i) => (
-                              <tr key={i} className="border-t border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                                <td className="p-3 text-zinc-900 dark:text-zinc-100">{dayjs(record.date).format('DD MMM YYYY, dddd')}</td>
-                                <td className="p-3 capitalize text-zinc-600 dark:text-zinc-400">{record.type}</td>
-                                <td className="p-3">
-                                  {record.status === 'present' ? (
-                                    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Present</Badge>
-                                  ) : (
-                                    <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-0">Absent</Badge>
-                                  )}
-                                </td>
+                          {(() => {
+                            const filtered = historyMonthFilter === 'all'
+                              ? studentHistory
+                              : studentHistory.filter(r => dayjs(r.date).format('YYYY-MM') === historyMonthFilter)
+                            return filtered.length === 0 ? (
+                              <tr>
+                                <td colSpan={2} className="p-6 text-center text-zinc-500">No attendance records found.</td>
                               </tr>
-                            ))
-                          )}
+                            ) : (
+                              filtered.map((record, i) => (
+                                <tr key={i} className="border-t border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                                  <td className="p-3 text-zinc-900 dark:text-zinc-100">{dayjs(record.date).format('DD MMM YYYY, dddd')}</td>
+                                  <td className="p-3">
+                                    {record.status === 'present' ? (
+                                      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Present</Badge>
+                                    ) : (
+                                      <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-0">Absent</Badge>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))
+                            )
+                          })()}
                         </tbody>
                       </table>
                     </div>

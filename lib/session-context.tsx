@@ -12,7 +12,7 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined)
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [academicYear, setAcademicYearState] = useState('2025-26')
-  const availableYears = ['2024-25', '2025-26', '2026-27']
+  const availableYears = ['2024-25', '2025-26', '2026-27', '2027-28']
 
   useEffect(() => {
     const saved = localStorage.getItem('selectedAcademicYear')
