@@ -32,7 +32,7 @@ export default function AIChat(props: Props) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Namaste! Main aapka smart assistant hoon. Aap kisi bhi student ki detail, fees, ya is website ke features ke baare mein pooch sakte hain.`
+      content: `Namaste! Main aapka smart assistant hoon. Aap kisi bhi student ki detail, fees, attendance, ya is website ke features ke baare mein pooch sakte hain.`
     }
   ])
   const [input, setInput] = useState('')
@@ -169,6 +169,7 @@ export default function AIChat(props: Props) {
               'Add payment kaise karein?',
               'Staff salary manage kaise karein?',
               'Defaulters list check karni hai.',
+              'Aaj ki attendance dikhao.',
             ].map(q => (
               <button
                 key={q}
