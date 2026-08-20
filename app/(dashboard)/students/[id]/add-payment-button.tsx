@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -120,7 +121,6 @@ export default function AddPaymentButton({
         <span>Add Payment</span>
       </button>
 
-      {/* Modal */}
       {open && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -170,7 +170,7 @@ export default function AddPaymentButton({
               {/* Fee For */}
               <div className="space-y-1.5">
                 <Label>Fee For</Label>
-                <select
+                <CustomSelect
                   value={feeFor}
                   onChange={(e) => setFeeFor(e.target.value)}
                   className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -181,7 +181,7 @@ export default function AddPaymentButton({
                   <option value="Exam Fee">Exam Fee</option>
                   <option value="Transport Fee">Transport Fee</option>
                   <option value="Other">Other</option>
-                </select>
+                </CustomSelect>
               </div>
 
               {/* Receipt Number */}
@@ -209,7 +209,7 @@ export default function AddPaymentButton({
               {/* Payment Mode */}
               <div className="space-y-1.5">
                 <Label>Payment Mode</Label>
-                <select
+                <CustomSelect
                   value={mode}
                   onChange={(e) => setMode(e.target.value)}
                   className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -219,7 +219,7 @@ export default function AddPaymentButton({
                       {m}
                     </option>
                   ))}
-                </select>
+                </CustomSelect>
               </div>
 
               {/* Note */}

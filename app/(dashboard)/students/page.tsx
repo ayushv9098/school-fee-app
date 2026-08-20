@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/calculations'
@@ -272,7 +273,7 @@ export default function StudentsPage() {
           )}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-          <select
+          <CustomSelect
             value={selectedClass}
             onChange={e => setSelectedClass(e.target.value)}
             className="h-11 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -281,9 +282,9 @@ export default function StudentsPage() {
             {CLASSES.map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
-          </select>
+          </CustomSelect>
           
-          <select
+          <CustomSelect
             value={selectedYear || sessionYear}
             onChange={e => setSelectedYear(e.target.value)}
             className="h-11 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -292,9 +293,9 @@ export default function StudentsPage() {
             {ACADEMIC_YEARS.map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
-          </select>
+          </CustomSelect>
 
-          <select
+          <CustomSelect
             value={selectedStudentStatus}
             onChange={e => setSelectedStudentStatus(e.target.value)}
             className="h-11 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -303,9 +304,9 @@ export default function StudentsPage() {
             <option value="active">Active Students</option>
             <option value="inactive">Inactive</option>
             <option value="alumni">Alumni</option>
-          </select>
+          </CustomSelect>
 
-          <select
+          <CustomSelect
             value={selectedStatus}
             onChange={e => setSelectedStatus(e.target.value)}
             className="h-11 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -314,7 +315,7 @@ export default function StudentsPage() {
             <option value="paid">Paid</option>
             <option value="partial">Partial</option>
             <option value="unpaid">Unpaid</option>
-          </select>
+          </CustomSelect>
 
           {students.length > 0 && (
             <button
@@ -473,3 +474,4 @@ export default function StudentsPage() {
     </div>
   )
 }
+

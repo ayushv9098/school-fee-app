@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -180,7 +181,7 @@ export default function VehicleAttendancePage() {
         <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex-1">
             <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1 block">Select Vehicle</label>
-            <select 
+            <CustomSelect 
               value={selectedVehicle} 
               onChange={e => setSelectedVehicle(e.target.value)}
               className="w-full sm:max-w-[300px] h-10 px-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -189,7 +190,7 @@ export default function VehicleAttendancePage() {
               {vehicles.map(v => (
                 <option key={v.id} value={v.id}>{v.name} ({v.type})</option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
 
           {selectedVehicle && students.length > 0 && (
@@ -295,3 +296,5 @@ export default function VehicleAttendancePage() {
     </div>
   )
 }
+
+

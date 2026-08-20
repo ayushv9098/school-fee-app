@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -679,6 +680,30 @@ export default function StudentAttendanceDashboard() {
     // Refresh today's attendance state from database
     const { data: updatedAtt } = await supabase.from('student_attendance').select('*').eq('date', todayDate)
     setTodayAttendance(updatedAtt || [])
+
+    // Create/Update Daily Student Attendance Summary Notification
+    if (type === 'class') {
+      const latestSchoolPresent = (updatedAtt || []).filter(a => a.type === 'class' && a.status === 'present' && allStudents.some(s => s.id === a.student_id)).length
+      const latestSchoolAbsent = (updatedAtt || []).filter(a => a.type === 'class' && a.status === 'absent' && allStudents.some(s => s.id === a.student_id)).length
+      
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        // Remove the previous summary for today to prevent duplicates
+        await supabase.from('notifications')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('type', 'student_attendance_summary')
+          .gte('created_at', dayjs().startOf('day').toISOString())
+          
+        // Insert the fresh summary
+        await supabase.from('notifications').insert({
+          user_id: user.id,
+          type: 'student_attendance_summary',
+          title: 'Daily Student Attendance',
+          message: `Total ${latestSchoolPresent} students present and ${latestSchoolAbsent} absent today.`
+        })
+      }
+    }
 
     // Clear local dirty overrides
     if (type === 'class') setClassAttendance({})
@@ -1471,7 +1496,7 @@ export default function StudentAttendanceDashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Class <span className="text-red-500">*</span></label>
-                    <select
+                    <CustomSelect
                       required
                       value={editForm.class}
                       onChange={e => setEditForm({...editForm, class: e.target.value})}
@@ -1479,18 +1504,18 @@ export default function StudentAttendanceDashboard() {
                     >
                       <option value="">Select Class</option>
                       {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    </CustomSelect>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Vehicle</label>
-                    <select
+                    <CustomSelect
                       value={editForm.vehicle_id}
                       onChange={e => setEditForm({...editForm, vehicle_id: e.target.value})}
                       className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-555"
                     >
                       <option value="">None (Walk-in)</option>
                       {vehicles.map(v => <option key={v.id} value={v.id}>{v.name} ({v.type})</option>)}
-                    </select>
+                    </CustomSelect>
                   </div>
                 </div>
 
@@ -1837,14 +1862,14 @@ export default function StudentAttendanceDashboard() {
               <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1">
                   <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1 block">Select Class</label>
-                  <select
+                  <CustomSelect
                     value={selectedClass}
                     onChange={e => setSelectedClass(e.target.value)}
                     className="w-full sm:max-w-[250px] h-10 px-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500"
                   >
                     <option value="">Choose Class</option>
                     {classes.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  </CustomSelect>
                 </div>
                 {selectedClass && classStudents.length > 0 && (
                   <button
@@ -2232,7 +2257,7 @@ export default function StudentAttendanceDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Class <span className="text-red-500">*</span></label>
-                  <select
+                  <CustomSelect
                     required
                     value={addForm.class}
                     onChange={e => setAddForm({...addForm, class: e.target.value})}
@@ -2240,18 +2265,18 @@ export default function StudentAttendanceDashboard() {
                   >
                     <option value="">Select Class</option>
                     {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  </CustomSelect>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Vehicle</label>
-                  <select
+                  <CustomSelect
                     value={addForm.vehicle_id}
                     onChange={e => setAddForm({...addForm, vehicle_id: e.target.value})}
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     <option value="">None (Walk-in)</option>
                     {vehicles.map(v => <option key={v.id} value={v.id}>{v.name} ({v.type})</option>)}
-                  </select>
+                  </CustomSelect>
                 </div>
               </div>
 
@@ -2343,7 +2368,7 @@ export default function StudentAttendanceDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Class <span className="text-red-500">*</span></label>
-                  <select
+                  <CustomSelect
                     required
                     value={editForm.class}
                     onChange={e => setEditForm({...editForm, class: e.target.value})}
@@ -2351,18 +2376,18 @@ export default function StudentAttendanceDashboard() {
                   >
                     <option value="">Select Class</option>
                     {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  </CustomSelect>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Vehicle</label>
-                  <select
+                  <CustomSelect
                     value={editForm.vehicle_id}
                     onChange={e => setEditForm({...editForm, vehicle_id: e.target.value})}
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     <option value="">None (Walk-in)</option>
                     {vehicles.map(v => <option key={v.id} value={v.id}>{v.name} ({v.type})</option>)}
-                  </select>
+                  </CustomSelect>
                 </div>
               </div>
 
@@ -2455,7 +2480,7 @@ export default function StudentAttendanceDashboard() {
                   </button>
                 </div>
 
-                <select
+                <CustomSelect
                   value={recordSelection}
                   onChange={e => setRecordSelection(e.target.value)}
                   className="w-full sm:w-64 h-10 px-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -2465,7 +2490,7 @@ export default function StudentAttendanceDashboard() {
                     ? classes.map(c => <option key={c} value={c}>{c}</option>)
                     : vehicles.map(v => <option key={v.id} value={v.id}>{v.name} ({v.type})</option>)
                   }
-                </select>
+                </CustomSelect>
 
                 {recordSelection && recordData.length > 0 && (
                   <button
@@ -2650,3 +2675,5 @@ export default function StudentAttendanceDashboard() {
     </div>
   )
 }
+
+

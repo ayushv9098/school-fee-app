@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { CustomDateInput } from '@/components/ui/custom-date-input'
 import { CheckCircle2, XCircle, Users, Plus, Calendar, Download, Camera, Loader2, X, Pencil, Trash2, Copy, ChevronLeft, ChevronRight, RotateCcw, MapPin, Map, Clock, Home, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import dayjs from 'dayjs'
@@ -662,11 +664,10 @@ export default function AttendanceClient({
                </CardTitle>
                <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm self-start md:self-auto">
                   <Calendar size={14} className="text-zinc-400 ml-2" />
-                  <input 
-                     type="date" 
+                  <CustomDateInput 
                      value={selectedDate}
                      onChange={(e) => handleDateChange(e.target.value)}
-                     className="text-xs font-bold text-zinc-700 dark:text-zinc-300 focus:outline-none pr-2 bg-transparent h-7"
+                     className="text-xs font-bold text-zinc-700 dark:text-zinc-300 focus:outline-none pr-2 bg-transparent h-7 min-w-[130px]"
                   />
                </div>
                </CardHeader>
@@ -791,7 +792,7 @@ export default function AttendanceClient({
                      
                      <div className="h-4 w-px bg-zinc-100 dark:bg-zinc-800 mx-1" />
                      
-                     <select 
+                     <CustomSelect 
                      value={selectedMonth}
                      onChange={(e) => handleMonthChange(parseInt(e.target.value))}
                      className="text-xs font-bold text-zinc-600 dark:text-zinc-400 bg-transparent px-1 focus:outline-none cursor-pointer"
@@ -799,9 +800,9 @@ export default function AttendanceClient({
                      {MONTHS.map((m, i) => (
                         <option key={m} value={i + 1}>{m}</option>
                      ))}
-                     </select>
+                     </CustomSelect>
                      
-                     <select 
+                     <CustomSelect 
                      value={selectedYear}
                      onChange={(e) => handleYearChange(parseInt(e.target.value))}
                      className="text-xs font-bold text-zinc-600 dark:text-zinc-400 bg-transparent px-1 focus:outline-none cursor-pointer"
@@ -809,7 +810,7 @@ export default function AttendanceClient({
                      {YEARS.map(y => (
                         <option key={y} value={y}>{y}</option>
                      ))}
-                     </select>
+                     </CustomSelect>
 
                      <div className="h-4 w-px bg-zinc-100 dark:bg-zinc-800 mx-1" />
 
@@ -1384,3 +1385,5 @@ export default function AttendanceClient({
     </div>
   )
 }
+
+

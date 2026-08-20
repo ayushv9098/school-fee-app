@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -826,7 +827,7 @@ export default function ExpensesClient({
                 <>
                   <div className="space-y-1.5">
                     <Label>Select Month</Label>
-                    <select 
+                    <CustomSelect 
                       value={modalData.month}
                       onChange={e => setModalData({...modalData, month: Number(e.target.value)})}
                       className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:ring-2 focus:ring-violet-500 outline-none"
@@ -834,7 +835,7 @@ export default function ExpensesClient({
                       {MONTHS.map((m, i) => (
                         <option key={m} value={i + 1}>{m}</option>
                       ))}
-                    </select>
+                    </CustomSelect>
                   </div>
                   <div className="space-y-1.5">
                     <Label>Amount (₹)</Label>
@@ -882,7 +883,7 @@ export default function ExpensesClient({
                   </div>
                   <div className="space-y-1.5">
                     <Label>Vehicle Type</Label>
-                    <select 
+                    <CustomSelect 
                       value={modalData.type}
                       onChange={e => setModalData({...modalData, type: e.target.value})}
                       className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
@@ -890,7 +891,7 @@ export default function ExpensesClient({
                       {['Magic', 'Van', 'Auto', 'Bus', 'Other'].map(t => (
                         <option key={t} value={t}>{t}</option>
                       ))}
-                    </select>
+                    </CustomSelect>
                   </div>
                 </>
               )}
@@ -989,3 +990,5 @@ export default function ExpensesClient({
     </div>
   )
 }
+
+

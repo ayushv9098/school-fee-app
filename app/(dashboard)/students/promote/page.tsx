@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -201,7 +202,7 @@ export default function PromoteStudentsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-1.5">
               <Label>Kaunsi Class Ke Bache? (From)</Label>
-              <select
+              <CustomSelect
                 value={fromClass}
                 onChange={e => setFromClass(e.target.value)}
                 className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -210,7 +211,7 @@ export default function PromoteStudentsPage() {
                 {CLASSES.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
 
             <div className="flex items-end justify-center pb-2 hidden md:flex">
@@ -219,7 +220,7 @@ export default function PromoteStudentsPage() {
 
             <div className="space-y-1.5">
               <Label>Kis Class Me Bhejna Hai? (To)</Label>
-              <select
+              <CustomSelect
                 value={toClass}
                 onChange={e => setToClass(e.target.value)}
                 className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -228,12 +229,12 @@ export default function PromoteStudentsPage() {
                 {CLASSES.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
 
             <div className="space-y-1.5">
               <Label>Naya Session (Next Year)</Label>
-              <select
+              <CustomSelect
                 value={nextYear}
                 onChange={e => setNextYear(e.target.value)}
                 className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -242,7 +243,7 @@ export default function PromoteStudentsPage() {
                 {ACADEMIC_YEARS.map(y => (
                   <option key={y} value={y}>{y}</option>
                 ))}
-              </select>
+              </CustomSelect>
             </div>
           </div>
         </CardContent>
@@ -439,3 +440,5 @@ export default function PromoteStudentsPage() {
     </div>
   )
 }
+
+

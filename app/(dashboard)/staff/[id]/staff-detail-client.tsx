@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
@@ -9,6 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/calculations'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, Printer, Plus, Trash2, Eye, Download, MessageCircle, X, Loader2, Pencil, FileText, MoreVertical } from 'lucide-react'
+import dayjs from 'dayjs'
+import { CustomDateInput } from '@/components/ui/custom-date-input'
 import { useSession } from '@/lib/session-context'
 import StaffReceiptPDF from '@/components/staff-receipt-pdf'
 import { Progress } from '@/components/ui/progress'
@@ -689,16 +692,16 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">Date</label>
-                  <input required type="date" value={modalData.date} onChange={e => setModalData({...modalData, date: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                  <CustomDateInput value={modalData.date} onChange={e => setModalData({...modalData, date: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">Payment Mode</label>
-                  <select value={modalData.mode || 'Cash'} onChange={e => setModalData({...modalData, mode: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent">
+                  <CustomSelect value={modalData.mode || 'Cash'} onChange={e => setModalData({...modalData, mode: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent">
                     <option value="Cash">Cash</option>
                     <option value="UPI">UPI</option>
                     <option value="Bank Transfer">Bank Transfer</option>
                     <option value="Cheque">Cheque</option>
-                  </select>
+                  </CustomSelect>
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-1 block">Note / Transaction ID (Optional)</label>
@@ -1073,16 +1076,16 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Payment Date</label>
-                <input required type="date" value={modalData.date} onChange={e => setModalData({...modalData, date: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
+                <CustomDateInput value={modalData.date} onChange={e => setModalData({...modalData, date: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent" />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Payment Mode</label>
-                <select value={modalData.mode || 'Cash'} onChange={e => setModalData({...modalData, mode: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent">
+                <CustomSelect value={modalData.mode || 'Cash'} onChange={e => setModalData({...modalData, mode: e.target.value})} className="w-full h-11 px-3 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-violet-500 outline-none bg-transparent">
                   <option value="Cash">Cash</option>
                   <option value="UPI">UPI</option>
                   <option value="Bank Transfer">Bank Transfer</option>
                   <option value="Cheque">Cheque</option>
-                </select>
+                </CustomSelect>
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Note / Transaction ID (Optional)</label>
@@ -1169,7 +1172,7 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
               <form onSubmit={handleAddMonth} className="space-y-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block text-zinc-700 dark:text-zinc-300">Select Month</label>
-                  <select 
+                  <CustomSelect 
                     required 
                     value={modalData.monthName} 
                     onChange={e => setModalData({ ...modalData, monthName: e.target.value })} 
@@ -1179,7 +1182,7 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
                     {availableMonths.map(m => (
                       <option key={m} value={m} className="dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">{m}</option>
                     ))}
-                  </select>
+                  </CustomSelect>
                 </div>
                 <button type="submit" className="w-full h-11 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium transition-colors shadow-sm">
                   Add Month
@@ -1208,7 +1211,7 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
               <form onSubmit={handleDeleteMonthSubmit} className="space-y-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block text-zinc-700 dark:text-zinc-300">Select Month to Remove</label>
-                  <select 
+                  <CustomSelect 
                     required 
                     value={modalData.monthName} 
                     onChange={e => setModalData({ ...modalData, monthName: e.target.value })} 
@@ -1218,7 +1221,7 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
                     {monthsList.map(m => (
                       <option key={m} value={m} className="dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">{m}</option>
                     ))}
-                  </select>
+                  </CustomSelect>
                 </div>
                 <button type="submit" className="w-full h-11 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors shadow-sm">
                   Delete Month

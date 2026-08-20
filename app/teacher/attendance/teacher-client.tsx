@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { CustomDateInput } from '@/components/ui/custom-date-input'
 import { 
   Camera, MapPin, CheckCircle, AlertTriangle, 
   Loader2, Navigation, History as HistoryIcon, 
@@ -891,9 +892,7 @@ export default function TeacherAttendanceClient({
                         <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">
                           {leaveData.type === 'half' ? 'Date' : 'Start Date'}
                         </label>
-                        <input 
-                          type="date" 
-                          required
+                        <CustomDateInput 
                           value={leaveData.startDate}
                           onChange={e => setLeaveData({ ...leaveData, startDate: e.target.value })}
                           className="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800/50 rounded-2xl px-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"
@@ -903,9 +902,7 @@ export default function TeacherAttendanceClient({
                     {leaveData.type === 'full' && (
                       <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
                           <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">End Date</label>
-                          <input 
-                            type="date" 
-                            required
+                          <CustomDateInput 
                             value={leaveData.endDate}
                             onChange={e => setLeaveData({ ...leaveData, endDate: e.target.value })}
                             className="w-full h-12 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800/50 rounded-2xl px-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all"

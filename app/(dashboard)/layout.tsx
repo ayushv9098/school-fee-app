@@ -16,12 +16,10 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-zinc-50 dark:bg-zinc-950">
       <DesktopSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden fade-in-page">
         <Header />
         <main className="flex-1 overflow-y-auto">
-          <div className="fade-in-page">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
     </div>

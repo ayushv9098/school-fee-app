@@ -68,20 +68,16 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
         )}
       </div>
 
-      <div className="p-4 border-b border-zinc-50">
-        <label className="text-[10px] uppercase font-bold text-zinc-400 mb-1 block px-1">Session / Year</label>
+      <div className="p-4 border-b border-zinc-50 dark:border-zinc-800/50 relative">
+        <label className="text-[10px] uppercase font-bold text-zinc-400 mb-1.5 block px-1">Session / Year</label>
         {mounted ? (
-          <select 
-            value={academicYear}
-            onChange={(e) => onYearChange(e.target.value)}
-            className="w-full h-9 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all active:scale-95"
-          >
-            {availableYears.map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
+          <SessionDropdown 
+            academicYear={academicYear} 
+            availableYears={availableYears} 
+            onYearChange={onYearChange} 
+          />
         ) : (
-          <div className="w-full h-9 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-lg" />
+          <div className="w-full h-10 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-xl" />
         )}
       </div>
 
@@ -117,6 +113,50 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           Logout
         </button>
       </div>
+    </div>
+  )
+}
+
+function SessionDropdown({ academicYear, availableYears, onYearChange }: { academicYear: string, availableYears: string[], onYearChange: (y: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false)
+  
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        className="w-full h-10 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 flex items-center justify-between text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+      >
+        <span>{academicYear}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      
+      {isOpen && (
+        <div 
+          className="absolute top-full left-0 right-0 mt-1.5 p-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 overflow-hidden"
+        >
+          {availableYears.map(year => (
+            <button
+              key={year}
+              onClick={() => {
+                onYearChange(year)
+                setIsOpen(false)
+              }}
+              className={cn(
+                "w-full flex items-center justify-between px-2.5 py-2 text-sm rounded-lg transition-colors text-left",
+                academicYear === year 
+                  ? "bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 font-medium" 
+                  : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-100"
+              )}
+            >
+              {year}
+              {academicYear === year && (
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

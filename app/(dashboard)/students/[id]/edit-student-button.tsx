@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -146,7 +147,7 @@ export default function EditStudentButton({ student }: Props) {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Class *</Label>
-                  <select
+                  <CustomSelect
                     name="class"
                     value={form.class}
                     onChange={handleChange}
@@ -156,7 +157,7 @@ export default function EditStudentButton({ student }: Props) {
                     {CLASSES.map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
-                  </select>
+                  </CustomSelect>
                 </div>
               </div>
 
@@ -203,7 +204,7 @@ export default function EditStudentButton({ student }: Props) {
               {/* Vehicle Assignment */}
               <div className="space-y-1.5">
                 <Label>Assign Vehicle (Optional)</Label>
-                <select
+                <CustomSelect
                   name="vehicle_id"
                   value={form.vehicle_id}
                   onChange={handleChange}
@@ -215,7 +216,7 @@ export default function EditStudentButton({ student }: Props) {
                       {v.name} ({v.type})
                     </option>
                   ))}
-                </select>
+                </CustomSelect>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -256,7 +257,7 @@ export default function EditStudentButton({ student }: Props) {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Student Status</Label>
-                  <select
+                  <CustomSelect
                     name="status"
                     value={form.status}
                     onChange={handleChange}
@@ -265,7 +266,7 @@ export default function EditStudentButton({ student }: Props) {
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                     <option value="alumni">Alumni / Pass-out</option>
-                  </select>
+                  </CustomSelect>
                 </div>
               </div>
 

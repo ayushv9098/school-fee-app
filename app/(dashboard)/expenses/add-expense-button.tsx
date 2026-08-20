@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -135,7 +136,7 @@ export default function AddExpenseButton() {
 
               <div className="space-y-1.5">
                 <Label>Category</Label>
-                <select
+                <CustomSelect
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full h-11 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -145,7 +146,7 @@ export default function AddExpenseButton() {
                       {c}
                     </option>
                   ))}
-                </select>
+                </CustomSelect>
               </div>
 
               <div className="space-y-1.5">
@@ -201,3 +202,5 @@ export default function AddExpenseButton() {
     </>
   )
 }
+
+

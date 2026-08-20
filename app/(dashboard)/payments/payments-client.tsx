@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -127,7 +128,7 @@ export default function PaymentsClient({
       {/* Date Selectors */}
       <div className="flex gap-3 flex-wrap">
         {filter !== 'year' && filter !== 'week' && (
-          <select
+          <CustomSelect
             value={selectedMonth}
             onChange={e => setSelectedMonth(e.target.value)}
             className="h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -135,10 +136,10 @@ export default function PaymentsClient({
             {months.map(m => (
               <option key={m.value} value={m.value}>{m.label}</option>
             ))}
-          </select>
+          </CustomSelect>
         )}
         {filter === 'week' && (
-          <select
+          <CustomSelect
             value={selectedWeek}
             onChange={e => setSelectedWeek(e.target.value)}
             className="h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -146,9 +147,9 @@ export default function PaymentsClient({
             {weeks.map(w => (
               <option key={w} value={w}>Week {w}</option>
             ))}
-          </select>
+          </CustomSelect>
         )}
-        <select
+        <CustomSelect
           value={selectedYear}
           onChange={e => setSelectedYear(e.target.value)}
           className="h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -156,7 +157,7 @@ export default function PaymentsClient({
           {years.map(y => (
             <option key={y} value={y}>{y}</option>
           ))}
-        </select>
+        </CustomSelect>
       </div>
 
       {/* Summary Cards */}
@@ -247,3 +248,4 @@ export default function PaymentsClient({
     </div>
   )
 }
+

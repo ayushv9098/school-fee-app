@@ -12,9 +12,11 @@ import {
   GraduationCap, CheckCircle2, XCircle
 } from 'lucide-react'
 import dayjs from 'dayjs'
+import { CustomDateInput } from '@/components/ui/custom-date-input'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/calculations'
+import { cn } from '@/lib/utils'
 
 interface Student {
   id: string
@@ -147,6 +149,12 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '', mobile: '' })
+
+  // --- Delete Staff Modal State ---
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [staffToDelete, setStaffToDelete] = useState<{id: string, name: string} | null>(null)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // --- Student Search State ---
   const [searchQuery, setSearchQuery] = useState('')
@@ -333,16 +341,32 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
     }
   }
 
-  const handleDeleteStaff = async (id: string, name: string) => {
-    if(!confirm(`Are you sure you want to delete ${name}'s login?`)) return
+  const handleDeleteStaff = (id: string, name: string) => {
+    setStaffToDelete({ id, name })
+    setDeleteConfirmText('')
+    setDeleteModalOpen(true)
+  }
+
+  const confirmDeleteStaff = async () => {
+    if (!staffToDelete) return
+    if (deleteConfirmText !== 'DELETE') {
+      toast.error('Please type DELETE to confirm')
+      return
+    }
+
+    setIsDeleting(true)
     try {
       const supabase = createClient()
-      const { error } = await supabase.from('teachers').delete().eq('id', id)
+      const { error } = await supabase.from('teachers').delete().eq('id', staffToDelete.id)
       if (error) throw error
       toast.success('Login deleted successfully')
+      setDeleteModalOpen(false)
+      setStaffToDelete(null)
       router.refresh()
     } catch (err: any) {
       toast.error('Failed to delete login: ' + err.message)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -432,8 +456,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
             >
               <ChevronLeft size={18} />
             </button>
-            <input 
-              type="date"
+            <CustomDateInput 
               value={selectedDate}
               onChange={e => handleDateChange(e.target.value)}
               className="bg-transparent text-sm font-medium outline-none text-zinc-900 dark:text-zinc-100"
@@ -919,17 +942,17 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
               )}
             </div>
             
-            <select
+            <CustomDropdown
               value={recordClassFilter}
-              onChange={(e) => setRecordClassFilter(e.target.value)}
-              className="px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm outline-none w-full sm:w-48 text-zinc-700 dark:text-zinc-300"
-            >
-              <option value="all">All Classes</option>
-              {Array.from(new Set(students.map(s => s.class)))
-                .sort((a, b) => getClassOrder(a) - getClassOrder(b))
-                .map(c => <option key={c} value={c}>{c}</option>)
-              }
-            </select>
+              onChange={setRecordClassFilter}
+              placeholder="All Classes"
+              options={[
+                { label: 'All Classes', value: 'all' },
+                ...Array.from(new Set(students.map(s => s.class)))
+                  .sort((a, b) => getClassOrder(a) - getClassOrder(b))
+                  .map(c => ({ label: c, value: c }))
+              ]}
+            />
           </div>
             </>
           )}
@@ -938,15 +961,14 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
             <Card>
               <CardContent className="p-0">
                 <div className="max-h-[600px] overflow-y-auto relative">
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm table-fixed">
                     <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0 z-10 shadow-sm">
                       <tr>
-                        <th className="text-left font-medium p-3 pl-5 text-zinc-500 hidden md:table-cell">S.No</th>
-                        <th className="text-left font-medium p-3 text-zinc-500">Student Name</th>
-                        <th className="text-left font-medium p-3 text-zinc-500">Class</th>
-                        <th className="text-left font-medium p-3 text-zinc-500 hidden md:table-cell">Village / Address</th>
-
-                        <th className="text-right font-medium p-3 pr-5 text-zinc-500">Action</th>
+                        <th className="text-left font-medium p-2 sm:p-3 pl-3 sm:pl-5 text-zinc-500 hidden md:table-cell w-16">S.No</th>
+                        <th className="text-left font-medium p-2 sm:p-3 pl-3 sm:pl-5 text-zinc-500 w-[55%] sm:w-auto">Student Name</th>
+                        <th className="text-left font-medium p-2 sm:p-3 text-zinc-500 w-[25%] sm:w-auto">Class</th>
+                        <th className="text-left font-medium p-2 sm:p-3 text-zinc-500 hidden md:table-cell">Village / Address</th>
+                        <th className="text-right font-medium p-2 sm:p-3 pr-3 sm:pr-5 text-zinc-500 w-[20%] sm:w-auto">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -959,15 +981,18 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                         })
                         .map((s, index) => (
                         <tr key={s.id} onClick={() => handleSelectStudent(s)} className="border-t border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer">
-                          <td className="p-3 pl-5 text-zinc-500 hidden md:table-cell">{index + 1}</td>
-                          <td className="p-3 font-medium text-zinc-900 dark:text-zinc-100">{s.name}</td>
-                          <td className="p-3 text-zinc-600 dark:text-zinc-400">{s.class}</td>
-                          <td className="p-3 text-zinc-600 dark:text-zinc-400 truncate max-w-[150px] hidden md:table-cell">{s.address || '-'}</td>
+                          <td className="p-2 sm:p-3 pl-3 sm:pl-5 text-zinc-500 hidden md:table-cell">{index + 1}</td>
+                          <td className="p-2 sm:p-3 pl-3 sm:pl-5 font-medium text-zinc-900 dark:text-zinc-100 break-words">{s.name}</td>
+                          <td className="p-2 sm:p-3 text-zinc-600 dark:text-zinc-400 truncate">{s.class}</td>
+                          <td className="p-2 sm:p-3 text-zinc-600 dark:text-zinc-400 truncate hidden md:table-cell">{s.address || '-'}</td>
 
-                          <td className="p-3 pr-5 text-right">
+                          <td className="p-2 sm:p-3 pr-3 sm:pr-5 text-right">
                             <button 
-                              onClick={() => handleSelectStudent(s)}
-                              className="text-xs font-medium text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100 dark:bg-violet-500/10 dark:hover:bg-violet-500/20 px-3 py-1.5 rounded-lg transition"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectStudent(s);
+                              }}
+                              className="text-xs font-medium text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100 dark:bg-violet-500/10 dark:hover:bg-violet-500/20 px-2 py-1.5 sm:px-3 rounded-lg transition"
                             >
                               View
                             </button>
@@ -1017,19 +1042,17 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
 
               {/* Month Filter */}
               {!searching && studentHistory.length > 0 && (
-                <select
+                <CustomDropdown
                   value={historyMonthFilter}
-                  onChange={(e) => setHistoryMonthFilter(e.target.value)}
-                  className="px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm outline-none w-full text-zinc-700 dark:text-zinc-300"
-                >
-                  <option value="all">All Months</option>
-                  {(() => {
-                    const months = new Set(studentHistory.map(r => dayjs(r.date).format('YYYY-MM')))
-                    return Array.from(months).sort((a, b) => b.localeCompare(a)).map(m => (
-                      <option key={m} value={m}>{dayjs(m + '-01').format('MMMM YYYY')}</option>
-                    ))
-                  })()}
-                </select>
+                  onChange={setHistoryMonthFilter}
+                  placeholder="All Months"
+                  options={[
+                    { label: 'All Months', value: 'all' },
+                    ...Array.from(new Set(studentHistory.map(r => dayjs(r.date).format('YYYY-MM'))))
+                      .sort((a, b) => b.localeCompare(a))
+                      .map(m => ({ label: dayjs(m + '-01').format('MMMM YYYY'), value: m }))
+                  ]}
+                />
               )}
 
               {/* Attendance Summary */}
@@ -1223,9 +1246,120 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
               </div>
             </form>
           </div>
+    </div>
+  )}
+
+  {/* Delete Modal */}
+  {deleteModalOpen && staffToDelete && (
+    <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md shadow-lg overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800/50">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-950/30 flex items-center justify-center text-red-600 dark:text-red-400">
+              <Trash2 className="w-4 h-4" />
+            </div>
+            <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">Delete Staff Login</h2>
+          </div>
+          <button 
+            onClick={() => {
+              setDeleteModalOpen(false)
+              setStaffToDelete(null)
+            }} 
+            className="p-1 rounded-md hover:bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Are you sure you want to delete the login for <b className="text-zinc-900 dark:text-zinc-100">{staffToDelete.name}</b>? This action cannot be undone.
+          </p>
+
+          <div className="space-y-2 pt-2">
+            <Label className="text-xs uppercase font-bold text-red-600/80 dark:text-red-400/80 block">
+              Type DELETE to confirm
+            </Label>
+            <Input 
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              className="font-semibold tracking-widest uppercase focus-visible:ring-red-500"
+              autoFocus
+            />
+          </div>
+
+          <div className="pt-2 flex gap-3">
+            <button
+              onClick={() => {
+                setDeleteModalOpen(false)
+                setStaffToDelete(null)
+              }}
+              disabled={isDeleting}
+              className="flex-1 h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDeleteStaff}
+              disabled={isDeleting || deleteConfirmText !== 'DELETE'}
+              className="flex-1 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isDeleting ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Deleting...</>
+              ) : (
+                'Yes, Delete'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+
+</div>
+  )
+}
+
+function CustomDropdown({ value, options, onChange, placeholder }: { value: string, options: {label: string, value: string}[], onChange: (v: string) => void, placeholder: string }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const selected = options.find(o => o.value === value)
+
+  return (
+    <div className="relative w-full sm:w-auto">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        className="w-full sm:min-w-[12rem] px-3 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm flex items-center justify-between outline-none text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors focus:ring-2 focus:ring-violet-500/50"
+      >
+        <span className="truncate mr-2">{selected ? selected.label : placeholder}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute top-full right-0 sm:left-0 mt-1.5 p-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-[60] overflow-hidden max-h-64 overflow-y-auto min-w-[12rem] w-full sm:w-auto">
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => {
+                onChange(opt.value)
+                setIsOpen(false)
+              }}
+              className={cn(
+                "w-full flex items-center justify-between px-2.5 py-2 text-sm rounded-lg transition-colors text-left",
+                value === opt.value 
+                  ? "bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 font-medium" 
+                  : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-100"
+              )}
+            >
+              {opt.label}
+              {value === opt.value && (
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              )}
+            </button>
+          ))}
         </div>
       )}
-
     </div>
   )
 }

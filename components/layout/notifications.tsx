@@ -9,10 +9,68 @@ import { cn } from '@/lib/utils'
 
 dayjs.extend(relativeTime)
 
+const EVENT_DATES: Record<string, string> = {
+  // 2024
+  '2024-03-25': 'Holi',
+  '2024-08-19': 'Raksha Bandhan',
+  '2024-08-26': 'Janmashtami',
+  '2024-10-12': 'Dussehra',
+  '2024-11-01': 'Diwali',
+  // 2025
+  '2025-03-14': 'Holi',
+  '2025-08-09': 'Raksha Bandhan',
+  '2025-08-15': 'Independence Day & Janmashtami',
+  '2025-10-02': 'Gandhi Jayanti & Dussehra',
+  '2025-10-20': 'Diwali',
+  // 2026
+  '2026-03-03': 'Holi',
+  '2026-08-28': 'Raksha Bandhan',
+  '2026-09-04': 'Janmashtami',
+  '2026-10-20': 'Dussehra',
+  '2026-11-08': 'Diwali',
+}
+
+const FIXED_EVENTS: Record<string, string> = {
+  '01-01': 'New Year',
+  '01-26': 'Republic Day',
+  '08-15': 'Independence Day',
+  '10-02': 'Gandhi Jayanti',
+  '12-25': 'Christmas',
+}
+
 export default function NotificationsDropdown() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const supabase = createClient()
+
+  async function checkAndInsertEventNotification(userId: string) {
+    const today = dayjs().format('YYYY-MM-DD')
+    const todayMMDD = dayjs().format('MM-DD')
+    
+    // Prioritize specific year mappings (handles overlaps), then fallback to fixed annual dates
+    const eventName = EVENT_DATES[today] || FIXED_EVENTS[todayMMDD]
+
+    if (eventName) {
+      // Check if we already inserted it today for this user
+      const { data } = await supabase.from('notifications')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('type', 'event_notification')
+        .gte('created_at', dayjs().startOf('day').toISOString())
+        .limit(1)
+        
+      if (!data || data.length === 0) {
+         await supabase.from('notifications').insert({
+           user_id: userId,
+           type: 'event_notification',
+           title: `Happy ${eventName}!`,
+           message: `Wishing you a very Happy ${eventName}. Warm greetings from AV Infra.`
+         })
+         return true
+      }
+    }
+    return false
+  }
 
   useEffect(() => {
     fetchNotifications()
@@ -40,9 +98,20 @@ export default function NotificationsDropdown() {
   }, [])
 
   async function fetchNotifications() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    // Delete notifications older than 24 hours for the current user
+    await supabase.from('notifications')
+      .delete()
+      .lt('created_at', dayjs().subtract(24, 'hour').toISOString())
+
+    await checkAndInsertEventNotification(user.id)
+
     const { data } = await supabase
       .from('notifications')
       .select('*')
+      .gte('created_at', dayjs().subtract(24, 'hour').toISOString())
       .order('created_at', { ascending: false })
       .limit(10)
     

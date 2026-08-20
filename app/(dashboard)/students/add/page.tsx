@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -151,7 +152,7 @@ export default function AddStudentPage() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="class">Class *</Label>
-                  <select
+                  <CustomSelect
                     id="class"
                     name="class"
                     value={form.class}
@@ -164,7 +165,7 @@ export default function AddStudentPage() {
                         {c}
                       </option>
                     ))}
-                  </select>
+                  </CustomSelect>
                 </div>
               </div>
 
@@ -219,7 +220,7 @@ export default function AddStudentPage() {
               {/* Vehicle Assignment */}
               <div className="space-y-1.5">
                 <Label htmlFor="vehicle_id">Assign Vehicle (Optional)</Label>
-                <select
+                <CustomSelect
                   id="vehicle_id"
                   name="vehicle_id"
                   value={form.vehicle_id}
@@ -232,7 +233,7 @@ export default function AddStudentPage() {
                       {v.name} ({v.type})
                     </option>
                   ))}
-                </select>
+                </CustomSelect>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -355,3 +356,4 @@ export default function AddStudentPage() {
     </div>
   )
 }
+

@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -165,7 +166,7 @@ export default function ClassAttendancePage() {
         <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex-1">
             <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1 block">Select Class</label>
-            <select 
+            <CustomSelect 
               value={selectedClass} 
               onChange={e => setSelectedClass(e.target.value)}
               className="w-full sm:max-w-[250px] h-10 px-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500"
@@ -174,7 +175,7 @@ export default function ClassAttendancePage() {
               {classes.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
 
           {selectedClass && students.length > 0 && (
@@ -257,3 +258,5 @@ export default function ClassAttendancePage() {
     </div>
   )
 }
+
+

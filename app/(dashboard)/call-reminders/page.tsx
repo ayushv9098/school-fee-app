@@ -1,4 +1,5 @@
 'use client'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -178,7 +179,7 @@ export default function CallRemindersPage() {
               </div>
               <div className="relative w-full sm:w-40">
                 <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-                <select
+                <CustomSelect
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
                   className="w-full h-10 pl-9 pr-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 text-zinc-900 dark:text-zinc-100"
@@ -186,7 +187,7 @@ export default function CallRemindersPage() {
                   {classes.map((c) => (
                     <option key={c} value={c}>{c === 'all' ? 'All Classes' : `Class ${c}`}</option>
                   ))}
-                </select>
+                </CustomSelect>
               </div>
             </div>
 
@@ -282,3 +283,5 @@ export default function CallRemindersPage() {
     </div>
   )
 }
+
+
