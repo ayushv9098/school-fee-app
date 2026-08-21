@@ -1,20 +1,30 @@
-import React, { useState, useRef, useEffect, Children } from 'react'
+import React, { useState, useRef, useEffect, Children, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
-export function CustomSelect({ value, onChange, children, className, ...props }: any) {
+interface CustomSelectProps {
+  value?: string | number
+  onChange?: (e: { target: { value: string } }) => void
+  children?: ReactNode
+  className?: string
+  style?: React.CSSProperties
+  [key: string]: unknown
+}
+
+export function CustomSelect({ value, onChange, children, className, ...props }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Extract options deeply from children
   const options: { value: string, label: string }[] = []
   
-  const extractOptions = (nodes: any) => {
-    Children.forEach(nodes, child => {
+  const extractOptions = (nodes: ReactNode) => {
+    Children.forEach(nodes, (child) => {
        if (!child) return
-       if (child.type === 'option') {
-          options.push({ value: child.props.value, label: child.props.children })
-       } else if (child.props && child.props.children) {
-          extractOptions(child.props.children)
+       const el = child as React.ReactElement<{ value: string; children: string }>
+       if (el.type === 'option') {
+          options.push({ value: el.props.value, label: el.props.children })
+       } else if (el.props && el.props.children) {
+          extractOptions((el.props as { children: ReactNode }).children)
        } else if (Array.isArray(child)) {
           extractOptions(child)
        }
