@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 
 interface CustomSelectProps {
   value?: string | number
-  onChange?: (e: { target: { value: string } }) => void
+  onChange?: (e: any) => void
   children?: ReactNode
   className?: string
   style?: React.CSSProperties
