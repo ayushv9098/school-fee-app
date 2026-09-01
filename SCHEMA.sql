@@ -248,6 +248,7 @@ ALTER TABLE public.staff_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leaves ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.holidays ENABLE ROW LEVEL SECURITY;
 
 -- student_fee_summary inherits RLS from students and payments tables.
 
@@ -267,3 +268,5 @@ CREATE POLICY "Users can only access their own school settings" ON public.school
 CREATE POLICY "Users can only access their own leaves" ON public.leaves FOR ALL USING (auth.uid() = admin_id OR auth.uid() IN (SELECT auth_user_id FROM public.teachers WHERE id = teacher_id));
 CREATE POLICY "Users can only access their own notifications" ON public.notifications FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can only access their own subscriptions" ON public.subscriptions FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can only access their own holidays" ON public.holidays FOR ALL USING (auth.uid() = user_id OR auth.uid() IN (SELECT user_id FROM public.teachers WHERE auth_user_id = auth.uid()));
+

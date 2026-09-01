@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { 
   Calendar, Users, Bus, MapPin, ChevronLeft, ChevronRight, 
   KeySquare, Plus, UserCircle, X, Trash2, Search, Loader2, MessageCircle,
-  GraduationCap, CheckCircle2, XCircle
+  GraduationCap, CheckCircle2, XCircle, PartyPopper
 } from 'lucide-react'
 import dayjs from 'dayjs'
 import { CustomDateInput } from '@/components/ui/custom-date-input'
@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/calculations'
 import { cn } from '@/lib/utils'
+import { getDayType, getMonthDatesMeta, HolidayItem } from '@/lib/holidays'
 
 interface Student {
   id: string
@@ -141,11 +142,17 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
         .order('name')
       setAttendanceStaff(staff || [])
 
+      const { data: hols } = await supabase
+        .from('holidays')
+        .select('*')
+      if (hols) setHolidays(hols)
+
       setLoadingData(false)
     }
     fetchData()
   }, [selectedDate, supabase])
 
+  const [holidays, setHolidays] = useState<HolidayItem[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '', mobile: '' })
@@ -399,7 +406,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
         .eq('student_id', student.id)
         .eq('type', 'class')
         .order('date', { ascending: false })
-        .limit(30) // last 30 records
+        .limit(365)
 
       if (error) throw error
       setStudentHistory(data || [])
@@ -1011,128 +1018,209 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
             </Card>
           )}
 
-          {searchedStudent && (
-            <div className="space-y-4">
-              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                    {searchedStudent.name}
-                  </h3>
-                  <p className="text-sm text-zinc-500">
-                    Class {searchedStudent.class}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => {
-                       const presentCount = studentHistory.filter(r => r.status === 'present').length;
-                       const absentCount = studentHistory.filter(r => r.status === 'absent').length;
-                       const today = dayjs().format('DD/MM/YYYY');
-                       const totalDays = Array.from(new Set(studentHistory.map(r => dayjs(r.date).format('YYYY-MM')))).reduce((sum, m) => sum + dayjs(m + '-01').daysInMonth(), 0);
-                       const msg = `Dear Parent,\n\nAttendance report for ${searchedStudent.name} (Class: ${searchedStudent.class}):\n\nPresent: ${presentCount} days\nAbsent: ${absentCount} days\nTotal Days: ${totalDays}\n\nDate: ${today}\n\nThank you,\nSchool Administration`;
-                       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-                    }}
-                    className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 transition shadow-sm font-medium"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp Report
-                  </button>
+          {searchedStudent && (() => {
+            const recordedMonths = Array.from(
+              new Set(
+                studentHistory
+                  .filter(r => r.date && (r.status === 'present' || r.status === 'absent'))
+                  .map(r => dayjs(r.date).format('YYYY-MM'))
+              )
+            ).sort((a, b) => b.localeCompare(a))
 
-                </div>
-              </div>
+            const currentMonth = dayjs().format('YYYY-MM')
+            const availableMonths = recordedMonths.length > 0 ? recordedMonths : [currentMonth]
 
-              {/* Month Filter */}
-              {!searching && studentHistory.length > 0 && (
-                <CustomDropdown
-                  value={historyMonthFilter}
-                  onChange={setHistoryMonthFilter}
-                  placeholder="All Months"
-                  options={[
-                    { label: 'All Months', value: 'all' },
-                    ...Array.from(new Set(studentHistory.map(r => dayjs(r.date).format('YYYY-MM'))))
-                      .sort((a, b) => b.localeCompare(a))
-                      .map(m => ({ label: dayjs(m + '-01').format('MMMM YYYY'), value: m }))
-                  ]}
-                />
-              )}
+            // Generate month options with All Months + only months with attendance marked
+            const monthOptions = [
+              { label: 'All Months', value: 'all' },
+              ...availableMonths.map(m => ({
+                label: dayjs(m + '-01').format('MMMM YYYY'),
+                value: m
+              }))
+            ]
 
-              {/* Attendance Summary */}
-              {!searching && studentHistory.length > 0 && (() => {
-                const filtered = historyMonthFilter === 'all' 
-                  ? studentHistory 
-                  : studentHistory.filter(r => dayjs(r.date).format('YYYY-MM') === historyMonthFilter)
-                const presentCount = filtered.filter(r => r.status === 'present').length
-                const absentCount = filtered.filter(r => r.status === 'absent').length
-                const totalDays = historyMonthFilter === 'all' 
-                  ? Array.from(new Set(studentHistory.map(r => dayjs(r.date).format('YYYY-MM')))).reduce((sum, m) => sum + dayjs(m + '-01').daysInMonth(), 0)
-                  : dayjs(historyMonthFilter + '-01').daysInMonth()
-                return (
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-4 flex flex-col items-center gap-1">
-                      <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{presentCount}</span>
-                      <span className="text-xs font-semibold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-wide">Present</span>
-                    </div>
-                    <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 rounded-xl p-4 flex flex-col items-center gap-1">
-                      <span className="text-2xl font-bold text-rose-600 dark:text-rose-400">{absentCount}</span>
-                      <span className="text-xs font-semibold text-rose-600/70 dark:text-rose-400/70 uppercase tracking-wide">Absent</span>
-                    </div>
-                    <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800/50 rounded-xl p-4 flex flex-col items-center gap-1">
-                      <span className="text-2xl font-bold text-violet-600 dark:text-violet-400">{totalDays}</span>
-                      <span className="text-xs font-semibold text-violet-600/70 dark:text-violet-400/70 uppercase tracking-wide">Total Days</span>
-                    </div>
+            const isAllMonths = historyMonthFilter === 'all'
+            let displayDates: ReturnType<typeof getMonthDatesMeta> = []
+
+            if (isAllMonths) {
+              const monthsToLoad = recordedMonths.length > 0 ? [...recordedMonths].reverse() : [currentMonth]
+              for (const mStr of monthsToLoad) {
+                const [y, m] = mStr.split('-')
+                displayDates.push(...getMonthDatesMeta(parseInt(y), parseInt(m), holidays))
+              }
+              displayDates = displayDates
+                .filter(d => !dayjs(d.date).isAfter(dayjs(), 'day'))
+                .sort((a, b) => a.date.localeCompare(b.date))
+            } else {
+              const [yearStr, monthStr] = historyMonthFilter.split('-')
+              const yearNum = parseInt(yearStr) || dayjs().year()
+              const monthNum = parseInt(monthStr) || dayjs().month() + 1
+              displayDates = getMonthDatesMeta(yearNum, monthNum, holidays)
+                .sort((a, b) => a.date.localeCompare(b.date))
+            }
+                
+            const totalMonthDays = displayDates.length
+            const workingDates = displayDates.filter(d => !d.isSunday && !d.isHoliday)
+            const totalWorkingDays = workingDates.length
+            const presentCount = isAllMonths
+              ? studentHistory.filter(r => r.status === 'present').length
+              : studentHistory.filter(r => r.status === 'present' && dayjs(r.date).format('YYYY-MM') === historyMonthFilter).length
+            const absentCount = isAllMonths
+              ? studentHistory.filter(r => r.status === 'absent').length
+              : studentHistory.filter(r => r.status === 'absent' && dayjs(r.date).format('YYYY-MM') === historyMonthFilter).length
+            const holidaysAndSundaysCount = displayDates.filter(d => d.isHoliday || d.isSunday).length
+
+            const handleWhatsApp = () => {
+              const today = dayjs().format('DD/MM/YYYY')
+              const reportPeriod = isAllMonths ? 'All Months Record' : dayjs(historyMonthFilter + '-01').format('MMMM YYYY')
+              const msg = `*Dear Parent,*\n\n*Student Attendance Report (${reportPeriod})*\n👤 *Student:* ${searchedStudent.name}\n📚 *Class:* ${searchedStudent.class}\n\n✅ *Present:* ${presentCount} days\n❌ *Absent:* ${absentCount} days\n🎉 *Holidays & Sundays:* ${holidaysAndSundaysCount} days\n🗓️ *Total Days:* ${totalMonthDays} days\n📅 *Total Working Days:* ${totalWorkingDays} days\n\n📆 *Report Date:* ${today}\n\n*Thank you,*\n*School Administration*`
+              window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+            }
+
+            return (
+              <div className="space-y-4">
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                      {searchedStudent.name}
+                    </h3>
+                    <p className="text-sm text-zinc-500 font-medium">
+                      Class {searchedStudent.class} • {isAllMonths ? 'All Months Record' : dayjs(historyMonthFilter + '-01').format('MMMM YYYY')}
+                    </p>
                   </div>
-                )
-              })()}
-
-              {searching ? (
-                <div className="p-12 flex justify-center border border-zinc-200 dark:border-zinc-800 rounded-2xl">
-                  <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleWhatsApp}
+                      className="text-sm bg-[#25D366] hover:bg-[#20bd5a] text-white px-3.5 py-2 rounded-xl flex items-center gap-2 transition shadow-sm font-semibold active:scale-95 cursor-pointer"
+                    >
+                      <svg className="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      </svg>
+                      <span>WhatsApp Report</span>
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <Card>
-                  <CardHeader className="pb-3 border-b border-zinc-100 dark:border-zinc-800/50">
-                    <CardTitle className="text-sm font-medium">Attendance History</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="max-h-[400px] overflow-y-auto">
-                      <table className="w-full text-sm">
-                        <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0 z-10 shadow-sm">
-                          <tr>
-                            <th className="text-left font-medium p-3 text-zinc-500">Date</th>
-                            <th className="text-left font-medium p-3 text-zinc-500">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(() => {
-                            const filtered = historyMonthFilter === 'all'
-                              ? studentHistory
-                              : studentHistory.filter(r => dayjs(r.date).format('YYYY-MM') === historyMonthFilter)
-                            return filtered.length === 0 ? (
-                              <tr>
-                                <td colSpan={2} className="p-6 text-center text-zinc-500">No attendance records found.</td>
-                              </tr>
-                            ) : (
-                              filtered.map((record, i) => (
-                                <tr key={i} className="border-t border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                                  <td className="p-3 text-zinc-900 dark:text-zinc-100">{dayjs(record.date).format('DD MMM YYYY, dddd')}</td>
+
+                {/* Month Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Select Month:</span>
+                  <div className="w-56">
+                    <CustomDropdown
+                      value={historyMonthFilter}
+                      onChange={(val) => setHistoryMonthFilter(val)}
+                      placeholder="Select Month"
+                      options={monthOptions}
+                    />
+                  </div>
+                </div>
+
+                {/* Attendance Summary Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {/* 1. Present */}
+                  <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-4 flex flex-col items-center justify-center gap-1 shadow-sm">
+                    <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{presentCount}</span>
+                    <span className="text-xs font-semibold text-emerald-600/80 dark:text-emerald-400/80 uppercase tracking-wide text-center">Present ({totalWorkingDays} Working)</span>
+                  </div>
+
+                  {/* 2. Absent */}
+                  <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 rounded-xl p-4 flex flex-col items-center justify-center gap-1 shadow-sm">
+                    <span className="text-2xl font-bold text-rose-600 dark:text-rose-400">{absentCount}</span>
+                    <span className="text-xs font-semibold text-rose-600/80 dark:text-rose-400/80 uppercase tracking-wide text-center">Absent</span>
+                  </div>
+
+                  {/* 3. Holidays & Sundays */}
+                  <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/50 rounded-xl p-4 flex flex-col items-center justify-center gap-1 shadow-sm">
+                    <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{holidaysAndSundaysCount}</span>
+                    <span className="text-xs font-semibold text-purple-600/80 dark:text-purple-400/80 uppercase tracking-wide text-center">Holidays & Sundays</span>
+                  </div>
+
+                  {/* 4. Total Days */}
+                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 flex flex-col items-center justify-center gap-1 shadow-sm">
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalMonthDays}</span>
+                    <span className="text-xs font-semibold text-blue-600/80 dark:text-blue-400/80 uppercase tracking-wide text-center">Total {isAllMonths ? 'Days' : 'Month Days'}</span>
+                  </div>
+                </div>
+
+                {searching ? (
+                  <div className="p-12 flex justify-center border border-zinc-200 dark:border-zinc-800 rounded-2xl">
+                    <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                  </div>
+                ) : (
+                  <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden">
+                    <CardHeader className="pb-3 border-b border-zinc-100 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-950/50">
+                      <CardTitle className="text-sm font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                        <Calendar size={16} className="text-violet-600" />
+                        Daily Attendance & Holidays Record ({isAllMonths ? 'All Months' : dayjs(historyMonthFilter + '-01').format('MMMM YYYY')})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="max-h-[420px] overflow-y-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0 z-10 shadow-xs">
+                            <tr>
+                              <th className="text-left font-bold p-3 text-zinc-400 text-xs uppercase tracking-wider">Date & Day</th>
+                              <th className="text-left font-bold p-3 text-zinc-400 text-xs uppercase tracking-wider">Status / Holiday</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                            {displayDates.map(d => {
+                              const rec = studentHistory.find(r => r.date === d.date)
+                              const isFuture = dayjs(d.date).isAfter(dayjs(), 'day')
+                              const isToday = d.date === dayjs().format('YYYY-MM-DD')
+
+                              let label = ''
+                              let badgeEl = null
+
+                              if (rec) {
+                                if (rec.status === 'present') {
+                                  badgeEl = <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 font-bold">Present</Badge>
+                                } else {
+                                  badgeEl = <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-0 font-bold">Absent</Badge>
+                                }
+                              } else {
+                                if (d.isHoliday) {
+                                  badgeEl = (
+                                    <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 hover:bg-purple-100 border-0 font-bold flex items-center gap-1 w-fit">
+                                      <PartyPopper size={12} /> Holiday: {d.holidayTitle}
+                                    </Badge>
+                                  )
+                                } else if (d.isSunday) {
+                                  badgeEl = <Badge className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-zinc-100 border-0 font-medium">Sunday</Badge>
+                                } else if (isFuture) {
+                                  badgeEl = <span className="text-xs text-zinc-300 dark:text-zinc-600 font-medium">Upcoming</span>
+                                } else if (isToday) {
+                                  badgeEl = <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0 font-medium">Not Marked Yet</Badge>
+                                } else {
+                                  badgeEl = <Badge className="bg-amber-50 text-amber-600 hover:bg-amber-50 border-0 font-medium">Not Recorded</Badge>
+                                }
+                              }
+
+                              return (
+                                <tr 
+                                  key={d.date} 
+                                  className={cn(
+                                    "hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors",
+                                    d.isHoliday ? "bg-purple-50/20" : d.isSunday ? "bg-zinc-50/40 dark:bg-zinc-950/20" : isToday ? "bg-violet-50/30" : ""
+                                  )}
+                                >
+                                  <td className="p-3 font-medium text-zinc-900 dark:text-zinc-100 text-xs">
+                                    {dayjs(d.date).format('DD MMM YYYY, dddd')}
+                                  </td>
                                   <td className="p-3">
-                                    {record.status === 'present' ? (
-                                      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Present</Badge>
-                                    ) : (
-                                      <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-0">Absent</Badge>
-                                    )}
+                                    {badgeEl}
                                   </td>
                                 </tr>
-                              ))
-                            )
-                          })()}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )
+          })()}
         </div>
       )}
 

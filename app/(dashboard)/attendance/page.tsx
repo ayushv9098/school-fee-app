@@ -23,7 +23,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
   // Fetch specific date attendance
   const { data: todayAttendance } = await supabase
     .from('attendance')
-    .select('*, teachers(name, subject)')
+    .select('*')
     .eq('admin_id', user?.id)
     .eq('date', selectedDate)
 
@@ -39,15 +39,24 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
     .lte('date', endOfMonth)
 
   // Fetch leave requests (all statuses)
-  const { data: pendingLeaves, error: leaveError } = await supabase
+  const { data: rawLeaves } = await supabase
     .from('leaves')
-    .select('*, teachers(name, subject)')
+    .select('*')
     .eq('admin_id', user?.id)
     .order('created_at', { ascending: false })
 
-  if (leaveError) {
-    console.error('Error fetching leaves:', leaveError)
-  }
+  const teacherMap = new Map((teachers || []).map(t => [t.id, t]))
+  const pendingLeaves = (rawLeaves || []).map(l => ({
+    ...l,
+    teachers: teacherMap.get(l.teacher_id) || { name: 'Staff Member', subject: 'Staff' }
+  }))
+
+  // Fetch holidays for user
+  const { data: holidays } = await supabase
+    .from('holidays')
+    .select('*')
+    .eq('user_id', user?.id)
+    .order('date', { ascending: true })
 
   // Fetch settings for map
   const { data: settings } = await supabase
@@ -65,6 +74,7 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
       todayAttendance={todayAttendance || []}
       monthlyAttendance={monthlyAttendance || []}
       pendingLeaves={pendingLeaves || []}
+      initialHolidays={holidays || []}
       adminEmail={user?.email || ''}
       adminId={user?.id || ''}
       selectedDate={selectedDate}

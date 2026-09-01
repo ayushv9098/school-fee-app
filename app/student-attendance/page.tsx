@@ -4,10 +4,11 @@ import { CustomSelect } from '@/components/ui/custom-select'
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { LogOut, Bus, Users, CheckCircle2, XCircle, Loader2, MapPin, ChevronDown, ChevronLeft, ChevronRight, Info, X, Search, Plus, GraduationCap, Pencil, ClipboardList, FileDown, Clock, CalendarCheck, AlertTriangle } from 'lucide-react'
+import { LogOut, Bus, Users, CheckCircle2, XCircle, Loader2, MapPin, ChevronDown, ChevronLeft, ChevronRight, Info, X, Search, Plus, GraduationCap, Pencil, ClipboardList, FileDown, Clock, CalendarCheck, AlertTriangle, PartyPopper } from 'lucide-react'
 import { CLASSES } from '@/lib/constants'
 import dayjs from 'dayjs'
 import { pdf, Document, Page as PdfPage, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { getDayType, getHolidayForDate, getMonthWorkingDays, HolidayItem, isSunday } from '@/lib/holidays'
 
 interface Vehicle {
   id: string
@@ -212,6 +213,7 @@ export default function StudentAttendanceDashboard() {
   const [studentDayRecords, setStudentDayRecords] = useState<any[]>([])
   const [schoolName, setSchoolName] = useState('School Attendance Report')
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [holidays, setHolidays] = useState<HolidayItem[]>([])
 
   const handleLogout = async () => {
     const confirmLogout = window.confirm("Are you sure you want to logout?")
@@ -224,7 +226,7 @@ export default function StudentAttendanceDashboard() {
     return academicYear
   }
 
-  // Init: fetch user, classes, vehicles
+  // Init: fetch user, classes, vehicles, holidays
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -270,11 +272,16 @@ export default function StudentAttendanceDashboard() {
       }
       setAcademicYear(sessionYear)
 
-      const [studentsRes, vehiclesRes, todayAttendanceRes] = await Promise.all([
+      const [studentsRes, vehiclesRes, todayAttendanceRes, holidaysRes] = await Promise.all([
         supabase.from('students').select('*').eq('user_id', ownerIdVal).eq('status', 'active').eq('academic_year', sessionYear).order('name'),
         supabase.from('vehicles').select('id, name, type').eq('user_id', ownerIdVal).order('name'),
-        supabase.from('student_attendance').select('*').eq('date', todayDate)
+        supabase.from('student_attendance').select('*').eq('date', todayDate),
+        supabase.from('holidays').select('*').order('date', { ascending: true })
       ])
+
+      if (holidaysRes.data) {
+        setHolidays(holidaysRes.data as HolidayItem[])
+      }
 
       console.log("init studentsRes:", studentsRes)
       console.log("init vehiclesRes:", vehiclesRes)
@@ -466,16 +473,11 @@ export default function StudentAttendanceDashboard() {
       return
     }
 
-    // Calculate total working days in the month (excluding Sundays)
-    const startOfMonth = dayjs(recordMonth).startOf('month')
-    const daysInMonth = startOfMonth.daysInMonth()
-    let totalMonthWorkingDays = 0
-    for (let i = 1; i <= daysInMonth; i++) {
-      const d = startOfMonth.date(i)
-      if (d.day() !== 0) { // 0 is Sunday
-        totalMonthWorkingDays++
-      }
-    }
+    // Calculate total working days in the month (excluding Sundays and Holidays)
+    const [yearStr, monthStr] = recordMonth.split('-')
+    const yearNum = parseInt(yearStr) || dayjs().year()
+    const monthNum = parseInt(monthStr) || dayjs().month() + 1
+    const totalMonthWorkingDays = getMonthWorkingDays(yearNum, monthNum, holidays)
 
     const monthStart = dayjs(recordMonth).startOf('month').format('YYYY-MM-DD')
     const monthEnd = dayjs(recordMonth).endOf('month').format('YYYY-MM-DD')
@@ -1749,6 +1751,34 @@ export default function StudentAttendanceDashboard() {
           </button>
         </div>
       </div>
+
+      {/* Holiday / Sunday Banner */}
+      {(() => {
+        const dt = getDayType(todayDate, holidays)
+        if (dt.type === 'holiday') {
+          return (
+            <div className="mx-4 md:mx-8 mt-3 bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-900/50 rounded-2xl p-4 flex items-center gap-3 text-purple-800 dark:text-purple-300 animate-in fade-in">
+              <PartyPopper size={20} className="text-purple-600 shrink-0" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider">🎉 School Holiday: {dt.title}</p>
+                <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">School is closed today for this holiday. Attendance is not marked as absent.</p>
+              </div>
+            </div>
+          )
+        }
+        if (dt.type === 'sunday') {
+          return (
+            <div className="mx-4 md:mx-8 mt-3 bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 rounded-2xl p-4 flex items-center gap-3 text-zinc-700 dark:text-zinc-300 animate-in fade-in">
+              <CalendarCheck size={20} className="text-zinc-500 shrink-0" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider">☀️ Sunday (Weekly Off)</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">Weekly holiday for students and staff.</p>
+              </div>
+            </div>
+          )
+        }
+        return null
+      })()}
 
       {/* Section Toggle */}
       <div className="px-4 md:px-8 py-4">

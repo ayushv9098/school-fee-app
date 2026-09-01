@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { CustomDateInput } from '@/components/ui/custom-date-input'
-import { CheckCircle2, XCircle, Users, Plus, Calendar, Download, Camera, Loader2, X, Pencil, Trash2, Copy, ChevronLeft, ChevronRight, RotateCcw, MapPin, Map, Clock, Home, LogOut } from 'lucide-react'
+import { getDayType, getHolidayForDate, HolidayItem, isSunday, STANDARD_HOLIDAYS } from '@/lib/holidays'
+import { CheckCircle2, XCircle, Users, Plus, Calendar, Download, Camera, Loader2, X, Pencil, Trash2, Copy, ChevronLeft, ChevronRight, RotateCcw, MapPin, Map, Clock, Home, LogOut, AlertTriangle, Sparkles, PartyPopper } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import dayjs from 'dayjs'
 import jsPDF from 'jspdf'
@@ -55,6 +56,7 @@ interface Props {
   todayAttendance: AttendanceRecord[]
   monthlyAttendance: AttendanceRecord[]
   pendingLeaves: any[]
+  initialHolidays?: HolidayItem[]
   adminEmail: string
   adminId: string
   selectedDate: string
@@ -68,6 +70,7 @@ export default function AttendanceClient({
   todayAttendance, 
   monthlyAttendance, 
   pendingLeaves: initialPendingLeaves,
+  initialHolidays = [],
   adminEmail, 
   adminId,
   selectedDate,
@@ -77,9 +80,13 @@ export default function AttendanceClient({
 }: Props) {
   const router = useRouter()
   const supabase = createClient()
-  const [activeTab, setActiveTab] = useState<'attendance' | 'leaves'>('attendance')
+  const [activeTab, setActiveTab] = useState<'attendance' | 'leaves' | 'holidays'>('attendance')
   const [loading, setLoading] = useState(false)
   const [pendingLeaves, setPendingLeaves] = useState(initialPendingLeaves)
+  const [holidays, setHolidays] = useState<HolidayItem[]>(initialHolidays)
+  const [showHolidayModal, setShowHolidayModal] = useState(false)
+  const [newHoliday, setNewHoliday] = useState({ date: dayjs().format('YYYY-MM-DD'), title: '', description: '' })
+  const [savingHoliday, setSavingHoliday] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -102,6 +109,54 @@ export default function AttendanceClient({
   const [showMovementModal, setShowMovementModal] = useState(false)
   const [movementHistory, setMovementHistory] = useState<any[]>([])
   const [trackingTeacher, setTrackingTeacher] = useState<any>(null)
+
+  async function handleAddHoliday(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newHoliday.title || !newHoliday.date) return
+    setSavingHoliday(true)
+    try {
+      const { data, error } = await supabase.from('holidays').insert({
+        user_id: adminId,
+        date: newHoliday.date,
+        title: newHoliday.title.trim(),
+        description: newHoliday.description?.trim() || null
+      }).select().single()
+
+      if (error) throw error
+
+      setHolidays(prev => [...prev.filter(h => h.date !== newHoliday.date), data].sort((a, b) => a.date.localeCompare(b.date)))
+      setShowHolidayModal(false)
+      setNewHoliday({ date: dayjs().format('YYYY-MM-DD'), title: '', description: '' })
+      alert('Holiday added successfully! 🎉')
+      router.refresh()
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setSavingHoliday(false)
+    }
+  }
+
+  async function handleDeleteHoliday(holidayId: string) {
+    if (!confirm('Are you sure you want to remove this holiday?')) return
+    try {
+      const { error } = await supabase.from('holidays').delete().eq('id', holidayId)
+      if (error) throw error
+      setHolidays(prev => prev.filter(h => h.id !== holidayId))
+      router.refresh()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
+
+  const daysInMonth = dayjs().year(selectedYear).month(selectedMonth - 1).daysInMonth()
+  const dates = Array.from({ length: daysInMonth }, (_, i) => dayjs().year(selectedYear).month(selectedMonth - 1).date(i + 1).format('YYYY-MM-DD'))
+
+  const MONTHS = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ]
+  const YEARS = Array.from({ length: 5 }, (_, i) => dayjs().year() - i)
 
   const handleExportPDF = () => {
     const doc = new jsPDF('l', 'mm', 'a4')
@@ -136,12 +191,17 @@ export default function AttendanceClient({
       const lCount = records.filter(a => a.status === 'late').length
       const hCount = records.filter(a => a.status === 'half_day').length
       const lvCount = records.filter(a => a.status === 'on_leave').length
-      const workingDays = dates.filter(d => dayjs(d).day() !== 0).length
+      const workingDays = dates.filter(d => getDayType(d, holidays).type === 'working').length
       const attendPercent = workingDays > 0 ? Math.round(((pCount + lCount + hCount) / workingDays) * 100) : 0
       
       const dayStatuses = dates.map(date => {
         const r = records.find(a => a.date === date)
-        if (!r) return dayjs(date).day() === 0 ? 'S' : '-'
+        const dt = getDayType(date, holidays)
+        if (!r) {
+          if (dt.type === 'sunday') return 'S'
+          if (dt.type === 'holiday') return 'H'
+          return '-'
+        }
         if (r.status === 'present') return 'P'
         if (r.status === 'absent') return 'A'
         if (r.status === 'late') return 'L'
@@ -171,7 +231,7 @@ export default function AttendanceClient({
           if (val === 'P') { data.cell.styles.textColor = [22, 163, 74]; data.cell.styles.fontStyle = 'bold' }
           else if (val === 'A') { data.cell.styles.textColor = [220, 38, 38]; data.cell.styles.fontStyle = 'bold' }
           else if (val === 'L') { data.cell.styles.textColor = [234, 88, 12] }
-          else if (val === 'H') { data.cell.styles.textColor = [202, 138, 4] }
+          else if (val === 'H') { data.cell.styles.textColor = [124, 58, 237]; data.cell.styles.fontStyle = 'bold' }
           else if (val === 'LV') { data.cell.styles.textColor = [37, 99, 235]; data.cell.styles.fontSize = 5 }
           else if (val === 'S') { data.cell.styles.textColor = [161, 161, 170]; data.cell.styles.fillColor = [250, 250, 250] }
         }
@@ -183,7 +243,7 @@ export default function AttendanceClient({
     const finalY = (doc as any).lastAutoTable.finalY + 6
     doc.setFontSize(7)
     doc.setTextColor(100, 100, 100)
-    doc.text('P = Present  |  A = Absent  |  L = Late  |  H = Half Day  |  LV = On Leave  |  S = Sunday  |  % = Attendance Percentage', 14, finalY)
+    doc.text('P = Present  |  A = Absent  |  L = Late  |  H = Half Day / Holiday  |  LV = On Leave  |  S = Sunday  |  % = Attendance Percentage', 14, finalY)
     doc.text(`${schoolName}  •  Confidential Document`, 14, finalY + 5)
 
     doc.save(`Attendance_${monthName}_${selectedYear}.pdf`)
@@ -229,8 +289,8 @@ export default function AttendanceClient({
     const lCount = records.filter(a => a.status === 'late').length
     const hCount = records.filter(a => a.status === 'half_day').length
     const lvCount = records.filter(a => a.status === 'on_leave').length
-    const workingDays = dates.filter(d => dayjs(d).day() !== 0).length
-    const aCount = workingDays - (pCount + lCount + hCount + lvCount)
+    const workingDays = dates.filter(d => getDayType(d, holidays).type === 'working').length
+    const aCount = Math.max(0, workingDays - (pCount + lCount + hCount + lvCount))
     const attendPercent = workingDays > 0 ? Math.round(((pCount + lCount + hCount) / workingDays) * 100) : 0
 
     const statsY = 70
@@ -262,10 +322,11 @@ export default function AttendanceClient({
     const tableData = dates.map(date => {
       const r = records.find(a => a.date === date)
       const dayName = dayjs(date).format('ddd')
-      const isSunday = dayjs(date).day() === 0
+      const dt = getDayType(date, holidays)
       let status = '-'
       if (r) status = r.status.replace('_', ' ').toUpperCase()
-      else if (isSunday) status = 'SUNDAY'
+      else if (dt.type === 'holiday') status = `HOLIDAY (${dt.title?.toUpperCase()})`
+      else if (dt.type === 'sunday') status = 'SUNDAY'
       else status = 'ABSENT'
       
       return [
@@ -297,6 +358,7 @@ export default function AttendanceClient({
           else if (val === 'LATE') { data.cell.styles.textColor = [234, 88, 12] }
           else if (val === 'HALF DAY') { data.cell.styles.textColor = [202, 138, 4] }
           else if (val === 'ON LEAVE') { data.cell.styles.textColor = [37, 99, 235] }
+          else if (val.startsWith('HOLIDAY')) { data.cell.styles.textColor = [124, 58, 237]; data.cell.styles.fillColor = [245, 243, 255] }
           else if (val === 'SUNDAY') { data.cell.styles.textColor = [161, 161, 170]; data.cell.styles.fillColor = [250, 250, 250] }
         }
       },
@@ -312,6 +374,7 @@ export default function AttendanceClient({
     doc.save(`${teacher.name}_Attendance_${monthName}.pdf`)
   }
 
+
   async function fetchMovementHistory(attendanceId: string, teacher: any) {
     setLoading(true)
     setTrackingTeacher({ ...teacher, attendanceId })
@@ -325,9 +388,6 @@ export default function AttendanceClient({
     setShowMovementModal(true)
     setLoading(false)
   }
-
-  const presentCount = todayAttendance.filter(a => ['present', 'late', 'half_day'].includes(a.status)).length
-  const absentCount = initialTeachers.length - presentCount
 
   const handleDateChange = (date: string) => {
     const params = new URLSearchParams(window.location.search)
@@ -560,14 +620,38 @@ export default function AttendanceClient({
     }
   }
 
-  const daysInMonth = dayjs().year(selectedYear).month(selectedMonth - 1).daysInMonth()
-  const dates = Array.from({ length: daysInMonth }, (_, i) => dayjs().year(selectedYear).month(selectedMonth - 1).date(i + 1).format('YYYY-MM-DD'))
+  const isSelectedToday = selectedDate === dayjs().format('YYYY-MM-DD')
+  const isPastDate = dayjs(selectedDate).isBefore(dayjs(), 'day')
+  const isFutureDate = dayjs(selectedDate).isAfter(dayjs(), 'day')
+  const currentHour = dayjs().hour()
+  const isPast3PM = currentHour >= 15
+  const selectedDayType = getDayType(selectedDate, holidays)
+  const todayDayType = getDayType(dayjs().format('YYYY-MM-DD'), holidays)
 
-  const MONTHS = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ]
-  const YEARS = Array.from({ length: 5 }, (_, i) => dayjs().year() - i)
+  // Unmarked staff for today
+  const unmarkedStaffToday = initialTeachers.filter(t => !todayAttendance.some(a => a.teacher_id === t.id))
+  const show3PMStaffAlert = isPast3PM && todayDayType.type === 'working' && unmarkedStaffToday.length > 0
+
+  const presentCount = todayAttendance.filter(a => ['present', 'late', 'half_day'].includes(a.status)).length
+  const absentCount = selectedDayType.type === 'working' 
+    ? (isSelectedToday ? (isPast3PM ? initialTeachers.length - presentCount : 0) : initialTeachers.length - presentCount)
+    : 0
+  const pendingCount = (isSelectedToday && !isPast3PM && selectedDayType.type === 'working') 
+    ? initialTeachers.length - presentCount 
+    : 0
+
+  // Combine standard and custom holidays for display in Holidays tab
+  const allDisplayHolidays: (HolidayItem & { isCustom: boolean })[] = [
+    ...holidays.map(h => ({ ...h, isCustom: true })),
+    ...Object.entries(STANDARD_HOLIDAYS)
+      .filter(([date]) => !holidays.some(h => h.date === date))
+      .map(([date, title]) => ({ date, title, description: null, isCustom: false }))
+  ].sort((a, b) => a.date.localeCompare(b.date))
+
+  const monthHolidays = allDisplayHolidays.filter(h => {
+    const d = dayjs(h.date)
+    return d.year() === selectedYear && d.month() + 1 === selectedMonth
+  })
 
   return (
     <div className="p-4 md:p-6 space-y-6 pb-20 font-sans max-w-7xl mx-auto">
@@ -601,6 +685,20 @@ export default function AttendanceClient({
                    </span>
                 )}
              </button>
+             <button 
+                onClick={() => setActiveTab('holidays')}
+                className={cn(
+                   "px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2",
+                   activeTab === 'holidays' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300"
+                )}
+             >
+                Holidays
+                {monthHolidays.length > 0 && (
+                   <span className="w-5 h-5 bg-purple-600 text-white text-[10px] rounded-full flex items-center justify-center">
+                      {monthHolidays.length}
+                   </span>
+                )}
+             </button>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
@@ -612,18 +710,39 @@ export default function AttendanceClient({
         </div>
       </div>
 
+      {/* 3:00 PM Staff Attendance Alert Banner */}
+      {show3PMStaffAlert && activeTab === 'attendance' && (
+        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 p-4 rounded-2xl flex items-start sm:items-center justify-between gap-3 animate-in fade-in duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <AlertTriangle size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                ⚠️ 3:00 PM Staff Attendance Cutoff Alert
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-200 font-medium mt-0.5">
+                {unmarkedStaffToday.length} staff member{unmarkedStaffToday.length > 1 ? 's' : ''} ({unmarkedStaffToday.map(t => t.name).join(', ')}) have not marked attendance today by 3:00 PM.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'attendance' ? (
          <>
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                {[
                { label: 'Present Today', value: presentCount, icon: CheckCircle2, color: 'green', span: 'col-span-1' },
+               ...(pendingCount > 0 ? [{ label: 'Pending / Not Marked', value: pendingCount, icon: Clock, color: 'amber', span: 'col-span-1' }] : []),
                { label: 'Absent Today', value: absentCount, icon: XCircle, color: 'red', span: 'col-span-1' },
                { label: 'Total Staff', value: initialTeachers.length, icon: Users, color: 'violet', span: 'col-span-2 md:col-span-1' }
                ].map(stat => (
                <Card key={stat.label} className={cn(
                   stat.span,
                   stat.color === 'green' ? "border-green-100 bg-green-50/50" :
+                  stat.color === 'amber' ? "border-amber-100 bg-amber-50/50" :
                   stat.color === 'red' ? "border-red-100 bg-red-50/50" :
                   "border-violet-100 bg-violet-50/50",
                   "hover:shadow-md transition"
@@ -632,12 +751,14 @@ export default function AttendanceClient({
                      <div className="flex items-center justify-between mb-2 md:mb-3">
                      <span className={cn(
                         stat.color === 'green' ? "text-green-700/60" :
+                        stat.color === 'amber' ? "text-amber-700/60" :
                         stat.color === 'red' ? "text-red-700/60" :
                         "text-violet-700/60",
                         "text-xs md:text-sm font-bold uppercase tracking-wider"
                      )}>{stat.label}</span>
                      <div className={cn(
                         stat.color === 'green' ? "bg-green-100 text-green-600 border-green-200/50" :
+                        stat.color === 'amber' ? "bg-amber-100 text-amber-600 border-amber-200/50" :
                         stat.color === 'red' ? "bg-red-100 text-red-600 border-red-200/50" :
                         "bg-violet-100 text-violet-600 border-violet-200/50",
                         "w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center shadow-sm border"
@@ -647,6 +768,7 @@ export default function AttendanceClient({
                      </div>
                      <p className={cn(
                         stat.color === 'green' ? "text-green-600" :
+                        stat.color === 'amber' ? "text-amber-600" :
                         stat.color === 'red' ? "text-red-600" :
                         "text-violet-600",
                         "text-2xl font-semibold tracking-tight"
@@ -671,8 +793,23 @@ export default function AttendanceClient({
                   />
                </div>
                </CardHeader>
+
+               {/* Banner for Holiday or Sunday */}
+               {selectedDayType.type === 'holiday' && (
+                 <div className="bg-purple-50 dark:bg-purple-950/50 border-b border-purple-100 dark:border-purple-900/50 px-4 py-3 flex items-center gap-2.5 text-purple-800 dark:text-purple-300 text-xs font-bold animate-in fade-in">
+                   <PartyPopper size={16} className="text-purple-600 shrink-0" />
+                   <span>🎉 School Holiday: {selectedDayType.title} (No regular classes / attendance)</span>
+                 </div>
+               )}
+               {selectedDayType.type === 'sunday' && (
+                 <div className="bg-zinc-100 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-700/60 px-4 py-3 flex items-center gap-2.5 text-zinc-700 dark:text-zinc-300 text-xs font-bold animate-in fade-in">
+                   <Calendar size={16} className="text-zinc-500 shrink-0" />
+                   <span>☀️ Sunday (Weekly Off)</span>
+                 </div>
+               )}
+
                <CardContent className="p-0 overflow-hidden font-sans">
-                  <div className="divide-y divide-zinc-100">
+                  <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                      {initialTeachers.map(teacher => {
                         const record = todayAttendance.find(a => a.teacher_id === teacher.id)
                         const statusColors = {
@@ -682,6 +819,72 @@ export default function AttendanceClient({
                            on_leave: 'bg-blue-50 text-blue-700 ring-blue-100',
                            absent: 'bg-red-50 text-red-700 ring-red-100'
                         }
+
+                        // Determine status display for teacher
+                        let statusBadge = null
+                        let dotColor = "bg-red-500"
+
+                        if (record) {
+                          dotColor = record.status === 'present' ? "bg-emerald-500" :
+                                     record.status === 'late' ? "bg-amber-500" :
+                                     record.status === 'half_day' ? "bg-violet-500" :
+                                     record.status === 'on_leave' ? "bg-blue-500" : "bg-red-500"
+                          statusBadge = (
+                            <span className={cn(
+                              "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ring-1 ring-inset",
+                              statusColors[record.status as keyof typeof statusColors] || statusColors.absent
+                            )}>
+                              {record.status.replace('_', ' ')}
+                            </span>
+                          )
+                        } else {
+                          if (selectedDayType.type === 'holiday') {
+                            dotColor = "bg-purple-500"
+                            statusBadge = (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 ring-1 ring-purple-200">
+                                🎉 Holiday ({selectedDayType.title})
+                              </span>
+                            )
+                          } else if (selectedDayType.type === 'sunday') {
+                            dotColor = "bg-zinc-400"
+                            statusBadge = (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200">
+                                Sunday
+                              </span>
+                            )
+                          } else if (isSelectedToday) {
+                            if (isPast3PM) {
+                              dotColor = "bg-rose-500"
+                              statusBadge = (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 ring-1 ring-rose-300 font-bold animate-pulse">
+                                  Unmarked (Past 3 PM)
+                                </span>
+                              )
+                            } else {
+                              dotColor = "bg-amber-400"
+                              statusBadge = (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                                  Pending / Not Marked
+                                </span>
+                              )
+                            }
+                          } else if (isPastDate) {
+                            dotColor = "bg-rose-500"
+                            statusBadge = (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 ring-1 ring-rose-200">
+                                Unmarked / Absent
+                              </span>
+                            )
+                          } else {
+                            dotColor = "bg-zinc-300"
+                            statusBadge = (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-zinc-50 text-zinc-500 ring-1 ring-zinc-200">
+                                Upcoming
+                              </span>
+                            )
+                          }
+                        }
+
                         return (
                            <div 
                               key={teacher.id}
@@ -713,10 +916,7 @@ export default function AttendanceClient({
                                  {/* Status Indicator Dot */}
                                  <div className={cn(
                                     "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-sm",
-                                    record?.status === 'present' ? "bg-emerald-500" :
-                                    record?.status === 'late' ? "bg-amber-500" :
-                                    record?.status === 'half_day' ? "bg-violet-500" :
-                                    "bg-red-500"
+                                    dotColor
                                  )} />
                               </div>
 
@@ -729,14 +929,7 @@ export default function AttendanceClient({
                                     <span className="text-[10px] md:text-xs text-zinc-500 dark:text-zinc-400 font-medium tracking-tight">
                                        {teacher.subject}
                                     </span>
-                                    {record && (
-                                       <span className={cn(
-                                          "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ring-1 ring-inset",
-                                          statusColors[record.status as keyof typeof statusColors] || statusColors.absent
-                                       )}>
-                                          {record.status}
-                                       </span>
-                                    )}
+                                    {statusBadge}
                                  </div>
                               </div>
 
@@ -848,14 +1041,16 @@ export default function AttendanceClient({
                            Teacher
                         </th>
                         {dates.map(date => {
-                           const isSunday = dayjs(date).day() === 0
-                           const isToday = date === dayjs().format('YYYY-MM-DD')
+                           const isSun = dayjs(date).day() === 0
+                           const dt = getDayType(date, holidays)
+                           const isTod = date === dayjs().format('YYYY-MM-DD')
                            return (
                            <th 
                               key={date} 
+                              title={dt.title || undefined}
                               className={`p-1.5 border-r border-zinc-100 dark:border-zinc-800/50 text-center font-bold min-w-[36px] w-[36px] transition-colors
-                                 ${isSunday ? 'bg-red-50/50 text-red-400' : 'text-zinc-400'}
-                                 ${isToday ? 'bg-violet-50 text-violet-600 ring-inset ring-1 ring-violet-100' : ''}
+                                 ${isSun ? 'bg-red-50/50 text-red-400' : dt.type === 'holiday' ? 'bg-purple-50/80 text-purple-600 font-black' : 'text-zinc-400'}
+                                 ${isTod ? 'bg-violet-50 text-violet-600 ring-inset ring-1 ring-violet-100' : ''}
                               `}
                            >
                               <span className="block text-[8px] uppercase tracking-tighter leading-none mb-1 opacity-70">
@@ -885,15 +1080,17 @@ export default function AttendanceClient({
                            </td>
                            {dates.map(date => {
                            const record = monthlyAttendance.find(a => a.teacher_id === teacher.id && a.date === date)
-                           const isToday = date === dayjs().format('YYYY-MM-DD')
-                           const isSunday = dayjs(date).day() === 0
+                           const isTod = date === dayjs().format('YYYY-MM-DD')
+                           const isSun = dayjs(date).day() === 0
+                           const dt = getDayType(date, holidays)
                            const isFuture = dayjs(date).isAfter(dayjs(), 'day')
                            return (
                               <td 
                                  key={date} 
                                  className={`p-2 border-r border-zinc-100 dark:border-zinc-800/50 text-center transition-colors
-                                 ${isToday ? 'bg-violet-50/30' : ''} 
-                                 ${isSunday ? 'bg-red-50/20' : ''}
+                                 ${isTod ? 'bg-violet-50/30' : ''} 
+                                 ${isSun ? 'bg-red-50/20' : ''}
+                                 ${dt.type === 'holiday' ? 'bg-purple-50/30' : ''}
                                  `}
                               >
                                  {record ? (
@@ -911,8 +1108,12 @@ export default function AttendanceClient({
                                  ) : (
                                  isFuture ? (
                                     <span className="text-zinc-200">·</span>
-                                 ) : isSunday ? (
+                                 ) : dt.type === 'holiday' ? (
+                                    <span className="w-5 h-5 flex items-center justify-center mx-auto bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 rounded-md font-bold text-[8px] shadow-xs" title={`Holiday: ${dt.title}`}>H</span>
+                                 ) : isSun ? (
                                     <span className="text-red-200 font-bold">SUN</span>
+                                 ) : isTod && !isPast3PM ? (
+                                    <span className="w-5 h-5 flex items-center justify-center mx-auto bg-amber-100 text-amber-700 rounded-md font-bold text-[8px]" title="Pending">PND</span>
                                  ) : (
                                     <span className="text-red-400 font-bold opacity-60">A</span>
                                  )
@@ -928,7 +1129,7 @@ export default function AttendanceClient({
                </CardContent>
             </Card>
          </>
-      ) : (
+      ) : activeTab === 'leaves' ? (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {pendingLeaves.length === 0 ? (
                <div className="col-span-full py-20 text-center bg-white dark:bg-zinc-900 rounded-[32px] border border-dashed border-zinc-200 dark:border-zinc-800">
@@ -992,18 +1193,111 @@ export default function AttendanceClient({
                            </div>
                         ) : (
                            <div className={cn(
-                              "w-full py-3 rounded-xl text-center text-[10px] font-black uppercase tracking-[0.2em]",
-                              leave.status === 'approved' ? "bg-green-50 text-green-600 border border-green-100" : "bg-red-50 text-red-600 border border-red-100"
-                           )}>
-                              Action Taken: {leave.status}
+                                 "w-full py-3 rounded-xl text-center text-[10px] font-black uppercase tracking-[0.2em]",
+                               leave.status === 'approved' ? "bg-green-50 text-green-600 border border-green-100" : "bg-red-50 text-red-600 border border-red-100"
+                            )}>
+                               Action Taken: {leave.status}
+                            </div>
+                         )}
+                      </CardContent>
+                   </Card>
+                ))
+             )}
+          </div>
+      ) : activeTab === 'holidays' ? (
+         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+               <div>
+                  <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                     <PartyPopper size={18} className="text-purple-600" />
+                     School Holidays & Calendar
+                  </h2>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                     Manage school holidays, vacations & festivals (e.g. Eid, Diwali, Rain holidays). Holidays are highlighted across student and staff records.
+                  </p>
+               </div>
+               <button 
+                  onClick={() => setShowHolidayModal(true)}
+                  className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-sm shrink-0"
+               >
+                  <Plus size={16} />
+                  Add Holiday
+               </button>
+            </div>
+
+            {/* Holidays List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+               {allDisplayHolidays.map((holiday, idx) => {
+                  const hDate = dayjs(holiday.date)
+                  const isCurrentMonth = hDate.year() === selectedYear && hDate.month() + 1 === selectedMonth
+                  const isTod = holiday.date === dayjs().format('YYYY-MM-DD')
+
+                  return (
+                     <Card key={`${holiday.date}-${idx}`} className={cn(
+                        "border shadow-sm rounded-2xl transition-all",
+                        isTod ? "border-purple-300 ring-2 ring-purple-500/20 bg-purple-50/40 dark:bg-purple-950/20" :
+                        isCurrentMonth ? "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900" :
+                        "border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-950/30 opacity-80"
+                     )}>
+                        <CardContent className="p-4 flex items-start justify-between gap-3">
+                           <div className="flex items-start gap-3">
+                              <div className={cn(
+                                 "w-11 h-11 rounded-xl flex flex-col items-center justify-center font-bold shrink-0 border",
+                                 holiday.isCustom 
+                                    ? "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:border-purple-800 dark:text-purple-300"
+                                    : "bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300"
+                              )}>
+                                 <span className="text-[9px] uppercase leading-none">{hDate.format('MMM')}</span>
+                                 <span className="text-sm font-black leading-tight mt-0.5">{hDate.format('DD')}</span>
+                              </div>
+                              <div>
+                                 <div className="flex items-center gap-2">
+                                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+                                       {holiday.title}
+                                    </h3>
+                                    {isTod && (
+                                       <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-purple-600 text-white">
+                                          Today
+                                       </span>
+                                    )}
+                                 </div>
+                                 <p className="text-[10px] text-zinc-400 mt-1 font-medium">
+                                    {hDate.format('dddd, DD MMMM YYYY')}
+                                 </p>
+                                 <div className="flex items-center gap-2 mt-2">
+                                    {holiday.isCustom ? (
+                                       <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-950 dark:text-purple-300">
+                                          School Declared
+                                       </span>
+                                    ) : (
+                                       <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                                          Gazetted Festival
+                                       </span>
+                                    )}
+                                    {holiday.description && (
+                                       <span className="text-[10px] text-zinc-500 italic truncate max-w-[150px]">
+                                          "{holiday.description}"
+                                       </span>
+                                    )}
+                                 </div>
+                              </div>
                            </div>
-                        )}
-                     </CardContent>
-                  </Card>
-               ))
-            )}
+                           {holiday.isCustom && holiday.id && (
+                              <button 
+                                 onClick={() => handleDeleteHoliday(holiday.id!)}
+                                 className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
+                                 title="Delete custom holiday"
+                              >
+                                 <Trash2 size={14} />
+                              </button>
+                           )}
+                        </CardContent>
+                     </Card>
+                  )
+               })}
+            </div>
          </div>
-      )}
+      ) : null}
 
       {/* Add Teacher Modal */}
       {showAddModal && mounted && createPortal(
@@ -1358,6 +1652,74 @@ export default function AttendanceClient({
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Add Holiday Modal */}
+      {showHolidayModal && mounted && createPortal(
+         <div className="fixed inset-0 z-[100] font-sans">
+           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowHolidayModal(false)} />
+           <div className="absolute inset-0 p-4" style={{ overflowY: 'scroll' }}>
+             <div className="flex min-h-full items-center justify-center">
+               <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 font-sans relative z-10">
+                 <div className="p-5 border-b border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950/50 rounded-t-2xl">
+                   <div className="flex items-center gap-2">
+                     <PartyPopper size={18} className="text-purple-600" />
+                     <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Add School Holiday</h2>
+                   </div>
+                   <button onClick={() => setShowHolidayModal(false)} className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-400 transition">
+                     <X size={20} />
+                   </button>
+                 </div>
+                 <form onSubmit={handleAddHoliday} className="p-6 space-y-4">
+                   <div className="space-y-1.5">
+                     <Label className="text-xs font-bold uppercase tracking-wider text-zinc-500">Holiday Date</Label>
+                     <CustomDateInput 
+                       value={newHoliday.date} 
+                       onChange={e => setNewHoliday({ ...newHoliday, date: e.target.value })}
+                       className="h-11 w-full rounded-xl font-bold border border-zinc-200 dark:border-zinc-800 px-3 bg-zinc-50 dark:bg-zinc-950 text-sm"
+                     />
+                   </div>
+                   <div className="space-y-1.5">
+                     <Label className="text-xs font-bold uppercase tracking-wider text-zinc-500">Holiday Name / Title</Label>
+                     <Input 
+                       required 
+                       placeholder="e.g. Eid-ul-Fitr, Diwali Vacation, Rain Holiday"
+                       value={newHoliday.title} 
+                       onChange={e => setNewHoliday({ ...newHoliday, title: e.target.value })}
+                       className="h-11 rounded-xl font-bold text-sm"
+                     />
+                   </div>
+                   <div className="space-y-1.5">
+                     <Label className="text-xs font-bold uppercase tracking-wider text-zinc-500">Description / Note (Optional)</Label>
+                     <Input 
+                       placeholder="e.g. School will remain closed for students and staff"
+                       value={newHoliday.description} 
+                       onChange={e => setNewHoliday({ ...newHoliday, description: e.target.value })}
+                       className="h-11 rounded-xl text-sm"
+                     />
+                   </div>
+                   <div className="flex gap-3 pt-4">
+                     <button 
+                       type="button" 
+                       onClick={() => setShowHolidayModal(false)}
+                       className="flex-1 h-11 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 transition"
+                     >
+                       Cancel
+                     </button>
+                     <button 
+                       type="submit" 
+                       disabled={savingHoliday}
+                       className="flex-1 h-11 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-wider transition disabled:opacity-50 shadow-md"
+                     >
+                       {savingHoliday ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Save Holiday'}
+                     </button>
+                   </div>
+                 </form>
+               </div>
+             </div>
+           </div>
+         </div>,
+         document.body
       )}
 
       {/* Image Preview Modal */}
