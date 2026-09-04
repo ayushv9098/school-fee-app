@@ -12,6 +12,52 @@ import CollapsibleSection from '@/components/ui/collapsible-section'
 
 import { useSession } from '@/lib/session-context'
 
+const playLuxurySound = (isTurningOn: boolean) => {
+  if (typeof window === 'undefined') return
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioContext) return
+    const ctx = new AudioContext()
+
+    // Pitch variation: higher when turning on (showing), lower when turning off (hiding)
+    const pitchMultiplier = isTurningOn ? 1.2 : 0.8
+
+    // 1. High frequency click (the crisp "snap")
+    const osc1 = ctx.createOscillator()
+    const gain1 = ctx.createGain()
+    osc1.type = 'sine'
+    osc1.frequency.setValueAtTime(1000 * pitchMultiplier, ctx.currentTime)
+    osc1.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.04)
+    
+    gain1.gain.setValueAtTime(0.25, ctx.currentTime)
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04)
+
+    osc1.connect(gain1)
+    gain1.connect(ctx.destination)
+
+    // 2. Low frequency body (the tactile "thump")
+    const osc2 = ctx.createOscillator()
+    const gain2 = ctx.createGain()
+    osc2.type = 'triangle'
+    osc2.frequency.setValueAtTime(300 * pitchMultiplier, ctx.currentTime)
+    osc2.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.08)
+
+    gain2.gain.setValueAtTime(0.15, ctx.currentTime)
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
+
+    osc2.connect(gain2)
+    gain2.connect(ctx.destination)
+
+    osc1.start()
+    osc1.stop(ctx.currentTime + 0.04)
+    
+    osc2.start()
+    osc2.stop(ctx.currentTime + 0.08)
+  } catch (e) {
+    // ignore
+  }
+}
+
 export default function DashboardPage() {
   const { academicYear } = useSession()
   const [students, setStudents] = useState<any[]>([])
@@ -103,7 +149,11 @@ export default function DashboardPage() {
           <p className="text-sm text-zinc-500 dark:text-zinc-400">{schoolName}</p>
         </div>
         <button
-          onClick={() => setHidden(!hidden)}
+          onClick={() => {
+            const willBeHidden = !hidden
+            playLuxurySound(!willBeHidden)
+            setHidden(willBeHidden)
+          }}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition border ${
             hidden
               ? 'bg-zinc-900 text-white border-zinc-900'

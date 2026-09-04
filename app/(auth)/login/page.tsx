@@ -24,72 +24,100 @@ export default function LoginPage() {
 
     const supabase = createClient()
 
-    if (isLogin) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError('Invalid email or password')
-        setLoading(false)
-        return
-      }
-      
-      // Check role from teachers table
-      const { data: teacher } = await supabase
-        .from('teachers')
-        .select('role')
-        .eq('auth_user_id', data.user?.id)
-        .maybeSingle()
-
-      if (teacher?.role === 'teacher') {
-        router.push('/teacher/attendance')
-      } else {
-        router.push('/dashboard')
-      }
-      router.refresh()
-    } else {
-      if (password.length < 6) {
-        setError('Password must be at least 6 characters')
-        setLoading(false)
-        return
-      }
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: name }
+    try {
+      if (isLogin) {
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+        if (signInError) {
+          setError(signInError.message === 'Invalid login credentials' ? 'Invalid email or password' : signInError.message)
+          setLoading(false)
+          return
         }
-      })
-      if (error) {
-        setError(error.message)
-        setLoading(false)
-        return
-      }
-      if (data.user) {
-        // Check if this email was invited as a teacher
-        const { data: invitedTeacher } = await supabase
-          .from('teachers')
-          .select('id')
-          .eq('email', email)
-          .maybeSingle()
+        
+        // Check role from teachers table
+        try {
+          const { data: teacher } = await supabase
+            .from('teachers')
+            .select('role')
+            .eq('auth_user_id', data.user?.id)
+            .maybeSingle()
 
-        if (invitedTeacher) {
-          // Use the server API to link (Service Role)
-          await fetch('/api/complete-teacher-signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: data.user.id,
-              teacherId: invitedTeacher.id,
-              role: 'teacher'
-            })
-          })
-          
-          alert('Teacher account linked! Redirecting to attendance... ✅')
-          router.push('/teacher/attendance')
-        } else {
+          if (teacher?.role === 'teacher') {
+            router.push('/teacher/attendance')
+          } else {
+            router.push('/dashboard')
+          }
+        } catch {
           router.push('/dashboard')
         }
         router.refresh()
+      } else {
+        if (!name.trim()) {
+          setError('Full name is required')
+          setLoading(false)
+          return
+        }
+        if (password.length < 6) {
+          setError('Password must be at least 6 characters')
+          setLoading(false)
+          return
+        }
+
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: { full_name: name.trim() }
+          }
+        })
+
+        if (signUpError) {
+          setError(signUpError.message)
+          setLoading(false)
+          return
+        }
+
+        if (data?.user) {
+          // If user exists already (Supabase returns empty identities)
+          if (data.user.identities && data.user.identities.length === 0) {
+            setError('An account with this email already exists. Please log in.')
+            setLoading(false)
+            return
+          }
+
+          // Check if this email was invited as a teacher (via server API)
+          try {
+            const res = await fetch('/api/complete-teacher-signup', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: data.user.id,
+                email: email.trim(),
+                role: 'teacher'
+              })
+            })
+            const resData = await res.json()
+            if (resData?.linked) {
+              alert('Teacher account linked! Redirecting to attendance... ✅')
+              router.push('/teacher/attendance')
+              router.refresh()
+              setLoading(false)
+              return
+            }
+          } catch (linkErr) {
+            console.error('Teacher link error:', linkErr)
+          }
+
+          router.push('/dashboard')
+          router.refresh()
+        } else {
+          router.push('/dashboard')
+          router.refresh()
+        }
       }
+    } catch (err: any) {
+      console.error('Auth submit error:', err)
+      setError(err?.message || 'Failed to connect. Please check your internet connection.')
+    } finally {
       setLoading(false)
     }
   }

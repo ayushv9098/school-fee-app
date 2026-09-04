@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   try {
-    const { userId, teacherId, role } = await req.json()
+    const { userId, teacherId, email, role } = await req.json()
 
-    if (!userId || !teacherId) {
-      return NextResponse.json({ error: 'Missing userId or teacherId' }, { status: 400 })
+    if (!userId || (!teacherId && !email)) {
+      return NextResponse.json({ error: 'Missing userId or teacherId/email' }, { status: 400 })
     }
 
     // Use Service Role Key to bypass RLS
@@ -15,22 +15,31 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const { error } = await supabase
+    let query = supabase
       .from('teachers')
       .update({ 
         auth_user_id: userId,
         role: role || 'teacher' 
       })
-      .eq('id', teacherId)
+
+    if (teacherId) {
+      query = query.eq('id', teacherId)
+    } else if (email) {
+      query = query.eq('email', email)
+    }
+
+    const { data, error } = await query.select('id, name, role')
 
     if (error) {
       console.error('Database Update Error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: error.message, linked: false }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true })
+    const linked = Array.isArray(data) && data.length > 0
+
+    return NextResponse.json({ success: true, linked })
   } catch (error: any) {
     console.error('API Server Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error?.message || 'Server error', linked: false }, { status: 500 })
   }
 }
