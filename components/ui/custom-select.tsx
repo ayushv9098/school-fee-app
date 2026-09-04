@@ -7,10 +7,13 @@ interface CustomSelectProps {
   children?: ReactNode
   className?: string
   style?: React.CSSProperties
+  name?: string
+  id?: string
+  disabled?: boolean
   [key: string]: unknown
 }
 
-export function CustomSelect({ value, onChange, children, className, ...props }: CustomSelectProps) {
+export function CustomSelect({ value, onChange, children, className, name, id, disabled, style, ...props }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -54,17 +57,22 @@ export function CustomSelect({ value, onChange, children, className, ...props }:
     <div className={cn("relative", wrapperClass)} ref={containerRef}>
       <button
         type="button"
+        id={id}
+        name={name}
+        disabled={disabled}
         onClick={(e) => {
           e.preventDefault()
+          if (disabled) return
           setIsOpen(!isOpen)
         }}
         className={cn(
           "flex items-center justify-between cursor-pointer outline-none transition-colors",
           className,
           // Ensure these are enforced for the custom dropdown layout
-          "w-full text-left appearance-none"
+          "w-full text-left appearance-none",
+          disabled && "opacity-50 cursor-not-allowed"
         )}
-        style={{ ...props.style }}
+        style={{ ...style }}
       >
         <span className="truncate mr-2 block flex-1">{selectedOpt ? selectedOpt.label : (value || 'Select...')}</span>
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 shrink-0"><path d="m6 9 6 6 6-6"/></svg>
@@ -79,8 +87,16 @@ export function CustomSelect({ value, onChange, children, className, ...props }:
               onClick={(e) => {
                 e.preventDefault()
                 if (onChange) {
-                  // Simulate event for drop-in replacement
-                  onChange({ target: { value: opt.value } })
+                  // Simulate event for drop-in replacement with name and id
+                  const targetObj = {
+                    name: name || id || (props as any).name || '',
+                    id: id || '',
+                    value: opt.value,
+                  }
+                  onChange({
+                    target: targetObj,
+                    currentTarget: targetObj,
+                  })
                 }
                 setIsOpen(false)
               }}
