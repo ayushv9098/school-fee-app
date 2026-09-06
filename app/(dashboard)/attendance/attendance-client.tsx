@@ -632,11 +632,12 @@ export default function AttendanceClient({
   const unmarkedStaffToday = initialTeachers.filter(t => !todayAttendance.some(a => a.teacher_id === t.id))
   const show3PMStaffAlert = isPast3PM && todayDayType.type === 'working' && unmarkedStaffToday.length > 0
 
+  const isObservance = !!selectedDayType.isObservance
   const presentCount = todayAttendance.filter(a => ['present', 'late', 'half_day'].includes(a.status)).length
-  const absentCount = selectedDayType.type === 'working' 
+  const absentCount = (selectedDayType.type === 'working' && !isObservance) 
     ? (isSelectedToday ? (isPast3PM ? initialTeachers.length - presentCount : 0) : initialTeachers.length - presentCount)
     : 0
-  const pendingCount = (isSelectedToday && !isPast3PM && selectedDayType.type === 'working') 
+  const pendingCount = (isSelectedToday && !isPast3PM && selectedDayType.type === 'working' && !isObservance) 
     ? initialTeachers.length - presentCount 
     : 0
 
@@ -794,58 +795,77 @@ export default function AttendanceClient({
                </div>
                </CardHeader>
 
-               {/* Banner for Holiday or Sunday */}
-               {selectedDayType.type === 'holiday' && (
-                 <div className="bg-purple-50 dark:bg-purple-950/50 border-b border-purple-100 dark:border-purple-900/50 px-4 py-3 flex items-center gap-2.5 text-purple-800 dark:text-purple-300 text-xs font-bold animate-in fade-in">
-                   <PartyPopper size={16} className="text-purple-600 shrink-0" />
-                   <span>🎉 School Holiday: {selectedDayType.title} (No regular classes / attendance)</span>
-                 </div>
-               )}
-               {selectedDayType.type === 'sunday' && (
-                 <div className="bg-zinc-100 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-700/60 px-4 py-3 flex items-center gap-2.5 text-zinc-700 dark:text-zinc-300 text-xs font-bold animate-in fade-in">
-                   <Calendar size={16} className="text-zinc-500 shrink-0" />
-                   <span>☀️ Sunday (Weekly Off)</span>
-                 </div>
-               )}
+                {/* Banner for Holiday or Sunday or Observance */}
+                {selectedDayType.type === 'holiday' && (
+                  <div className="bg-purple-50 dark:bg-purple-950/50 border-b border-purple-100 dark:border-purple-900/50 px-4 py-3 flex items-center gap-2.5 text-purple-800 dark:text-purple-300 text-xs font-bold animate-in fade-in">
+                    <PartyPopper size={16} className="text-purple-600 shrink-0" />
+                    <span>🎉 School Holiday: {selectedDayType.title} (No regular classes / attendance)</span>
+                  </div>
+                )}
+                {selectedDayType.type === 'sunday' && (
+                  <div className="bg-zinc-100 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-700/60 px-4 py-3 flex items-center gap-2.5 text-zinc-700 dark:text-zinc-300 text-xs font-bold animate-in fade-in">
+                    <Calendar size={16} className="text-zinc-500 shrink-0" />
+                    <span>☀️ Sunday (Weekly Off)</span>
+                  </div>
+                )}
+                {selectedDayType.isObservance && (
+                  <div className="bg-violet-50 dark:bg-violet-950/50 border-b border-violet-100 dark:border-violet-900/50 px-4 py-3 flex items-center gap-2.5 text-violet-800 dark:text-violet-300 text-xs font-bold animate-in fade-in">
+                    <span>Special Celebration: {selectedDayType.observanceTitle} (School was open for celebration — unmarked staff not penalized)</span>
+                  </div>
+                )}
 
-               <CardContent className="p-0 overflow-hidden font-sans">
-                  <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                     {initialTeachers.map(teacher => {
-                        const record = todayAttendance.find(a => a.teacher_id === teacher.id)
-                        const statusColors = {
-                           present: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-                           late: 'bg-amber-50 text-amber-700 ring-amber-100',
-                           half_day: 'bg-violet-50 text-violet-700 ring-violet-100',
-                           on_leave: 'bg-blue-50 text-blue-700 ring-blue-100',
-                           absent: 'bg-red-50 text-red-700 ring-red-100'
-                        }
+                <CardContent className="p-0 overflow-hidden font-sans">
+                   <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {initialTeachers.map(teacher => {
+                         const record = todayAttendance.find(a => a.teacher_id === teacher.id)
+                         const statusColors = {
+                            present: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+                            late: 'bg-amber-50 text-amber-700 ring-amber-100',
+                            half_day: 'bg-violet-50 text-violet-700 ring-violet-100',
+                            on_leave: 'bg-blue-50 text-blue-700 ring-blue-100',
+                            absent: 'bg-red-50 text-red-700 ring-red-100'
+                         }
 
-                        // Determine status display for teacher
-                        let statusBadge = null
-                        let dotColor = "bg-red-500"
+                         // Determine status display for teacher
+                         let statusBadge = null
+                         let dotColor = "bg-red-500"
 
-                        if (record) {
-                          dotColor = record.status === 'present' ? "bg-emerald-500" :
-                                     record.status === 'late' ? "bg-amber-500" :
-                                     record.status === 'half_day' ? "bg-violet-500" :
-                                     record.status === 'on_leave' ? "bg-blue-500" : "bg-red-500"
-                          statusBadge = (
-                            <span className={cn(
-                              "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ring-1 ring-inset",
-                              statusColors[record.status as keyof typeof statusColors] || statusColors.absent
-                            )}>
-                              {record.status.replace('_', ' ')}
-                            </span>
-                          )
-                        } else {
-                          if (selectedDayType.type === 'holiday') {
-                            dotColor = "bg-purple-500"
-                            statusBadge = (
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 ring-1 ring-purple-200">
-                                🎉 Holiday ({selectedDayType.title})
-                              </span>
-                            )
-                          } else if (selectedDayType.type === 'sunday') {
+                         if (record) {
+                           dotColor = record.status === 'present' ? "bg-emerald-500" :
+                                      record.status === 'late' ? "bg-amber-500" :
+                                      record.status === 'half_day' ? "bg-violet-500" :
+                                      record.status === 'on_leave' ? "bg-blue-500" : "bg-red-500"
+                           statusBadge = (
+                             <span className={cn(
+                               "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ring-1 ring-inset",
+                               statusColors[record.status as keyof typeof statusColors] || statusColors.absent
+                             )}>
+                               {record.status.replace('_', ' ')}
+                             </span>
+                           )
+                         } else {
+                           if (selectedDayType.type === 'holiday') {
+                             dotColor = "bg-purple-500"
+                             statusBadge = (
+                               <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 ring-1 ring-purple-200">
+                                 🎉 Holiday ({selectedDayType.title})
+                               </span>
+                             )
+                           } else if (selectedDayType.type === 'sunday') {
+                             dotColor = "bg-zinc-400"
+                             statusBadge = (
+                               <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200">
+                                 Sunday
+                               </span>
+                             )
+                           } else if (selectedDayType.isObservance) {
+                             dotColor = "bg-violet-500"
+                             statusBadge = (
+                               <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-violet-50 text-violet-700 ring-1 ring-violet-200 font-semibold">
+                                 {selectedDayType.observanceTitle}
+                               </span>
+                             )
+                           } else if (isSelectedToday) {
                             dotColor = "bg-zinc-400"
                             statusBadge = (
                               <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200">

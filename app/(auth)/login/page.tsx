@@ -136,7 +136,7 @@ export default function LoginPage() {
             <GraduationCap className="text-white w-7 h-7" />
           </div>
           <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Ayushman Educational Academy</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Fee Management System</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">School Management System</p>
         </div>
 
         {/* Card */}

@@ -36,7 +36,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">Ayushman</p>
-            <p className="text-xs text-zinc-400">Fee Manager</p>
+            <p className="text-xs text-zinc-400">School Manager</p>
           </div>
         </div>
         {onClose && (

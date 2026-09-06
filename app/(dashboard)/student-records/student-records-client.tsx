@@ -1181,7 +1181,13 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                                 if (d.isHoliday) {
                                   badgeEl = (
                                     <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 hover:bg-purple-100 border-0 font-bold flex items-center gap-1 w-fit">
-                                      <PartyPopper size={12} /> Holiday: {d.holidayTitle}
+                                      <PartyPopper size={12} /> {d.holidayTitle === "Teachers' Day" ? "👨‍🏫 Teachers' Day" : `Holiday: ${d.holidayTitle}`}
+                                    </Badge>
+                                  )
+                                } else if (d.isObservance) {
+                                  badgeEl = (
+                                    <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300 hover:bg-violet-100 border-0 font-bold w-fit">
+                                      {d.observanceTitle}
                                     </Badge>
                                   )
                                 } else if (d.isSunday) {

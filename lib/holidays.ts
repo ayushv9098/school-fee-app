@@ -111,6 +111,17 @@ export const FIXED_ANNUAL_HOLIDAYS: Record<string, string> = {
   '12-25': 'Christmas',
 }
 
+// Special School Observance Days (School is OPEN, working day, but special function / celebration)
+export const SCHOOL_OBSERVANCE_DAYS: Record<string, string> = {
+  '09-05': "Teachers' Day",
+  '11-14': "Children's Day",
+}
+
+export function getObservanceDay(dateStr: string): string | null {
+  const mmdd = dayjs(dateStr).format('MM-DD')
+  return SCHOOL_OBSERVANCE_DAYS[mmdd] || null
+}
+
 /**
  * Checks if a given date is Sunday
  */
@@ -141,11 +152,13 @@ export function getHolidayForDate(dateStr: string, customHolidays: HolidayItem[]
 }
 
 /**
- * Returns day status: 'holiday' | 'sunday' | 'working'
+ * Returns day status: 'holiday' | 'sunday' | 'working' with observance info
  */
 export function getDayType(dateStr: string, customHolidays: HolidayItem[] = []): {
   type: 'holiday' | 'sunday' | 'working'
   title?: string
+  isObservance?: boolean
+  observanceTitle?: string
 } {
   const holiday = getHolidayForDate(dateStr, customHolidays)
   if (holiday) {
@@ -153,6 +166,10 @@ export function getDayType(dateStr: string, customHolidays: HolidayItem[] = []):
   }
   if (isSunday(dateStr)) {
     return { type: 'sunday', title: 'Sunday' }
+  }
+  const observance = getObservanceDay(dateStr)
+  if (observance) {
+    return { type: 'working', title: observance, isObservance: true, observanceTitle: observance }
   }
   return { type: 'working' }
 }
@@ -177,9 +194,19 @@ export function getMonthWorkingDays(year: number, month: number, customHolidays:
 }
 
 /**
- * Generates an array of all dates in a month with their metadata (isSunday, isHoliday, holidayTitle)
+ * Generates an array of all dates in a month with their metadata (isSunday, isHoliday, holidayTitle, isObservance)
  */
-export function getMonthDatesMeta(year: number, month: number, customHolidays: HolidayItem[] = []) {
+export function getMonthDatesMeta(year: number, month: number, customHolidays: HolidayItem[] = []): {
+  date: string
+  day: number
+  dayName: string
+  isSunday: boolean
+  isHoliday: boolean
+  holidayTitle?: string
+  isWorkingDay: boolean
+  isObservance?: boolean
+  observanceTitle?: string
+}[] {
   const start = dayjs().year(year).month(month - 1).startOf('month')
   const daysInMonth = start.daysInMonth()
   const dates = []
@@ -197,6 +224,8 @@ export function getMonthDatesMeta(year: number, month: number, customHolidays: H
       isHoliday: dayType.type === 'holiday',
       holidayTitle: dayType.title,
       isWorkingDay: dayType.type === 'working',
+      isObservance: dayType.isObservance,
+      observanceTitle: dayType.observanceTitle,
     })
   }
 

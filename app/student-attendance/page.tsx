@@ -1755,6 +1755,16 @@ export default function StudentAttendanceDashboard() {
       {/* Holiday / Sunday Banner */}
       {(() => {
         const dt = getDayType(todayDate, holidays)
+        if (dt.isObservance) {
+          return (
+            <div className="mx-4 md:mx-8 mt-3 bg-violet-50 dark:bg-violet-950/50 border border-violet-200 dark:border-violet-900/50 rounded-2xl p-4 flex items-center gap-3 text-violet-800 dark:text-violet-300 animate-in fade-in">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider">Special Day: {dt.observanceTitle}</p>
+                <p className="text-xs text-violet-600 dark:text-violet-400 font-medium">Celebration day — school open for celebrations. Unmarked students are not penalized as absent.</p>
+              </div>
+            </div>
+          )
+        }
         if (dt.type === 'holiday') {
           return (
             <div className="mx-4 md:mx-8 mt-3 bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-900/50 rounded-2xl p-4 flex items-center gap-3 text-purple-800 dark:text-purple-300 animate-in fade-in">

@@ -35,7 +35,9 @@ const FIXED_EVENTS: Record<string, string> = {
   '01-01': 'New Year',
   '01-26': 'Republic Day',
   '08-15': 'Independence Day',
+  '09-05': "Teachers' Day",
   '10-02': 'Gandhi Jayanti',
+  '11-14': "Children's Day",
   '12-25': 'Christmas',
 }
 
