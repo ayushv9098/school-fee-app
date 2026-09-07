@@ -19,43 +19,65 @@ const playLuxurySound = (isTurningOn: boolean) => {
     if (!AudioContext) return
     const ctx = new AudioContext()
 
-    // Pitch variation: higher when turning on (showing), lower when turning off (hiding)
-    const pitchMultiplier = isTurningOn ? 1.2 : 0.8
+    if (ctx.state === 'suspended') {
+      ctx.resume()
+    }
 
-    // 1. High frequency click (the crisp "snap")
+    // Pitch variation: higher when turning on (showing), lower when turning off (hiding)
+    const pitchMultiplier = isTurningOn ? 1.25 : 0.85
+
+    // 1. High frequency click (the crisp mechanical snap)
     const osc1 = ctx.createOscillator()
     const gain1 = ctx.createGain()
     osc1.type = 'sine'
-    osc1.frequency.setValueAtTime(1000 * pitchMultiplier, ctx.currentTime)
-    osc1.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.04)
+    osc1.frequency.setValueAtTime(1200 * pitchMultiplier, ctx.currentTime)
+    osc1.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.035)
     
-    gain1.gain.setValueAtTime(0.25, ctx.currentTime)
-    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04)
+    gain1.gain.setValueAtTime(0.3, ctx.currentTime)
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.035)
 
     osc1.connect(gain1)
     gain1.connect(ctx.destination)
 
-    // 2. Low frequency body (the tactile "thump")
+    // 2. Low frequency body (the tactile speaker thump / acoustic haptic)
     const osc2 = ctx.createOscillator()
     const gain2 = ctx.createGain()
     osc2.type = 'triangle'
-    osc2.frequency.setValueAtTime(300 * pitchMultiplier, ctx.currentTime)
-    osc2.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.08)
+    osc2.frequency.setValueAtTime(180 * pitchMultiplier, ctx.currentTime)
+    osc2.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.07)
 
-    gain2.gain.setValueAtTime(0.15, ctx.currentTime)
-    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08)
+    gain2.gain.setValueAtTime(0.35, ctx.currentTime)
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07)
 
     osc2.connect(gain2)
     gain2.connect(ctx.destination)
 
     osc1.start()
-    osc1.stop(ctx.currentTime + 0.04)
+    osc1.stop(ctx.currentTime + 0.035)
     
     osc2.start()
-    osc2.stop(ctx.currentTime + 0.08)
+    osc2.stop(ctx.currentTime + 0.07)
   } catch (e) {
     // ignore
   }
+}
+
+const triggerHaptics = (isTurningOn: boolean) => {
+  // 1. Physical Device Vibration Haptics (Android Chrome, Firefox Mobile, etc.)
+  if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      if (isTurningOn) {
+        navigator.vibrate([18, 30, 22]) // Double-click pulse when revealing
+      } else {
+        navigator.vibrate(28) // Single solid tactile click when hiding
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. Acoustic Haptics (Tactile speaker thump for physical feedback across all devices)
+  playLuxurySound(isTurningOn)
 }
 
 export default function DashboardPage() {
@@ -149,19 +171,20 @@ export default function DashboardPage() {
           <p className="text-sm text-zinc-500 dark:text-zinc-400">{schoolName}</p>
         </div>
         <button
+          type="button"
           onClick={() => {
             const willBeHidden = !hidden
-            playLuxurySound(!willBeHidden)
+            triggerHaptics(!willBeHidden)
             setHidden(willBeHidden)
           }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition border ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95 cursor-pointer select-none border shadow-sm active:shadow-none ${
             hidden
-              ? 'bg-zinc-900 text-white border-zinc-900'
-              : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:bg-zinc-950'
+              ? 'bg-zinc-900 text-white border-zinc-900 active:bg-zinc-800'
+              : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:bg-zinc-950 active:bg-zinc-100 dark:active:bg-zinc-800'
           }`}
         >
-          {hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          {hidden ? 'Hidden' : 'Hide '}
+          {hidden ? <EyeOff className="w-4 h-4 transition-transform active:scale-90" /> : <Eye className="w-4 h-4 transition-transform active:scale-90" />}
+          <span>{hidden ? 'Hidden' : 'Hide'}</span>
         </button>
       </div>
 
