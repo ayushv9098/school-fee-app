@@ -214,10 +214,14 @@ export default function StudentAttendanceDashboard() {
   const [schoolName, setSchoolName] = useState('School Attendance Report')
   const [pdfLoading, setPdfLoading] = useState(false)
   const [holidays, setHolidays] = useState<HolidayItem[]>([])
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
-  const handleLogout = async () => {
-    const confirmLogout = window.confirm("Are you sure you want to logout?")
-    if (!confirmLogout) return
+  const handleLogout = () => {
+    setShowLogoutConfirm(true)
+  }
+
+  const confirmSignOut = async () => {
+    setShowLogoutConfirm(false)
     await supabase.auth.signOut()
     router.push('/login')
   }
@@ -2709,6 +2713,43 @@ export default function StudentAttendanceDashboard() {
             >
               Got it
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-sm p-6 shadow-2xl border border-zinc-100 dark:border-zinc-800 text-center animate-in zoom-in-95 duration-200 space-y-4">
+            <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto">
+              <LogOut size={22} />
+            </div>
+            
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                Confirm Logout
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Are you sure you want to logout from your account?
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 h-10 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmSignOut}
+                className="flex-1 h-10 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition shadow-sm"
+              >
+                Yes, Logout
+              </button>
+            </div>
           </div>
         </div>
       )}

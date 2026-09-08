@@ -77,22 +77,6 @@ export default function DeleteStudentButton({ studentId, studentName }: Props) {
                 Are you sure you want to delete <b className="text-zinc-900 dark:text-zinc-100">{studentName}</b>? All their payments and records will be permanently deleted. This action cannot be undone.
               </p>
 
-              <div className="space-y-2 pt-2">
-                <label className="text-xs uppercase font-bold text-red-600/80 dark:text-red-400/80 block">
-                  Type DELETE to confirm
-                </label>
-                <input 
-                  type="text"
-                  placeholder="DELETE"
-                  onChange={(e) => {
-                    const btn = document.getElementById('confirm-student-delete-btn') as HTMLButtonElement
-                    if (btn) btn.disabled = e.target.value !== 'DELETE'
-                  }}
-                  className="w-full h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 font-semibold tracking-widest uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                  autoFocus
-                />
-              </div>
-
               <div className="pt-2 flex gap-3">
                 <button
                   onClick={() => setOpen(false)}
@@ -102,9 +86,8 @@ export default function DeleteStudentButton({ studentId, studentName }: Props) {
                   Cancel
                 </button>
                 <button
-                  id="confirm-student-delete-btn"
                   onClick={handleDelete}
-                  disabled
+                  disabled={loading}
                   className="flex-1 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? (
