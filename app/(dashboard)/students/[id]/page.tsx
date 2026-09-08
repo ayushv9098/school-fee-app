@@ -72,6 +72,7 @@ export default async function StudentDetailPage({
               studentId={student.id}
               remainingFee={student.remaining_fee}
               isPaid={student.remaining_fee <= 0}
+              studentAcademicYear={student.academic_year}
             />
           </div>
           <EditStudentButton student={student} />

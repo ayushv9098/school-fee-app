@@ -16,12 +16,14 @@ interface Props {
   studentId: string
   remainingFee: number
   isPaid: boolean
+  studentAcademicYear?: string
 }
 
 export default function AddPaymentButton({
   studentId,
   remainingFee,
   isPaid,
+  studentAcademicYear,
 }: Props) {
   const router = useRouter()
   const { academicYear } = useSession()
@@ -77,7 +79,7 @@ export default function AddPaymentButton({
       fee_for: feeFor,
       receipt_number: receiptNumber.trim() || null,
       payment_date: paymentDate,
-      academic_year: academicYear, 
+      academic_year: studentAcademicYear || academicYear || '2025-26', 
     })
 
     if (insertError) {
