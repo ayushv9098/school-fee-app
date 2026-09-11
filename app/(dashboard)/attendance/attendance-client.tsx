@@ -1395,14 +1395,14 @@ export default function AttendanceClient({
                   </div>
                </div>
 
-               <div className="space-y-2">
+                <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Onboarding Invite Link</Label>
                   <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-xl border border-amber-100 ring-1 ring-amber-200/20">
                     <p className="text-[10px] md:text-xs font-mono text-amber-700 flex-1 break-all line-clamp-1 opacity-80">
-                      {typeof window !== 'undefined' ? `${window.location.origin}/teacher-signup?email=${encodeURIComponent(editingTeacher.email)}&teacher_id=${editingTeacher.id}` : '...'}
+                      {typeof window !== 'undefined' ? `${window.location.origin}/teacher-signup?email=${encodeURIComponent(editingTeacher.email || '')}&teacher_id=${editingTeacher.id}` : '...'}
                     </p>
                     <button 
-                      onClick={(e) => { e.stopPropagation(); handleCopyInvite(editingTeacher.id, editingTeacher.email); }}
+                      onClick={(e) => { e.stopPropagation(); handleCopyInvite(editingTeacher.id, editingTeacher.email || ''); }}
                       className="p-1.5 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors shadow-sm"
                     >
                       <Copy size={14} />
@@ -1411,11 +1411,11 @@ export default function AttendanceClient({
                   {copiedId === editingTeacher.id && (
                     <p className="text-[10px] text-green-600 font-bold animate-in fade-in slide-in-from-top-1">Link copied to clipboard! 📋</p>
                   )}
-               </div>
+                </div>
 
-               <div className="h-px bg-zinc-100 dark:bg-zinc-800" />
+                <div className="h-px bg-zinc-100 dark:bg-zinc-800" />
 
-               <div className="space-y-3">
+                <div className="space-y-3">
                   <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Manual Attendance Override ({dayjs(selectedDate).format('DD MMM')})</Label>
                   <div className="grid grid-cols-2 gap-2">
                      <button 
@@ -1454,20 +1454,20 @@ export default function AttendanceClient({
                <form onSubmit={handleEditTeacher} className="space-y-4 font-sans">
                 <div className="space-y-1.5 font-sans">
                   <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Full Name</Label>
-                  <Input required value={editingTeacher.name} onChange={e => setEditingTeacher({ ...editingTeacher, name: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
+                  <Input required value={editingTeacher.name || ''} onChange={e => setEditingTeacher({ ...editingTeacher, name: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
                 </div>
                 <div className="space-y-1.5 font-sans">
                   <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Subject / Role</Label>
-                  <Input required value={editingTeacher.subject} onChange={e => setEditingTeacher({ ...editingTeacher, subject: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
+                  <Input required value={editingTeacher.subject || ''} onChange={e => setEditingTeacher({ ...editingTeacher, subject: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
                 </div>
                 <div className="grid grid-cols-2 gap-4 font-sans">
                   <div className="space-y-1.5 font-sans">
                     <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Salary (₹)</Label>
-                    <Input required type="number" value={editingTeacher.monthly_salary} onChange={e => setEditingTeacher({ ...editingTeacher, monthly_salary: Number(e.target.value) })} className="h-11 rounded-xl font-bold font-sans" />
+                    <Input required type="number" value={editingTeacher.monthly_salary ?? ''} onChange={e => setEditingTeacher({ ...editingTeacher, monthly_salary: Number(e.target.value) })} className="h-11 rounded-xl font-bold font-sans" />
                   </div>
                   <div className="space-y-1.5 font-sans">
                     <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Email</Label>
-                    <Input required type="email" value={editingTeacher.email} onChange={e => setEditingTeacher({ ...editingTeacher, email: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
+                    <Input required type="email" value={editingTeacher.email || ''} onChange={e => setEditingTeacher({ ...editingTeacher, email: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
                   </div>
                 </div>
 

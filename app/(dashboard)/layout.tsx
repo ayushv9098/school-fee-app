@@ -2,11 +2,9 @@
 
 import { DesktopSidebar, MobileSidebar } from '@/components/layout/sidebar'
 import Link from 'next/link'
-import { User, ArrowLeft, Bell } from 'lucide-react'
+import { User, ArrowLeft } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import NotificationsDropdown from '@/components/layout/notifications'
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 export default function DashboardLayout({
   children,
@@ -31,44 +29,24 @@ function Header() {
   const isDashboard = pathname === '/dashboard'
 
   return (
-    <>
-      {/* Mobile Header */}
-      <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800/50 sticky top-0 z-30">
-        <div className="flex items-center gap-3">
+    <header className="flex items-center justify-between px-4 lg:px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800/50 sticky top-0 z-30">
+      <div className="flex items-center gap-3">
+        <div className="lg:hidden">
           <MobileSidebar />
-          {!isDashboard && (
-            <Link href="/dashboard" className="p-1.5 rounded-lg hover:bg-zinc-100 dark:bg-zinc-800 transition">
-              <ArrowLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-            </Link>
-          )}
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Ayushman Academy</p>
         </div>
-        <div className="flex items-center gap-2">
-          <NotificationsDropdown />
-          <Link href="/profile" className="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center">
-            <User className="w-4 h-4 text-violet-600" />
+        {!isDashboard && (
+          <Link href="/dashboard" className="p-1.5 rounded-lg hover:bg-zinc-100 dark:bg-zinc-800 transition">
+            <ArrowLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
           </Link>
-        </div>
-      </header>
-
-      {/* Desktop Header */}
-      <header className="hidden lg:flex items-center justify-between px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800/50 sticky top-0 z-30">
-        <div className="flex items-center gap-3">
-          {!isDashboard && (
-            <Link href="/dashboard" className="p-1.5 rounded-lg hover:bg-zinc-100 dark:bg-zinc-800 transition">
-              <ArrowLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-            </Link>
-          )}
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Ayushman Academy</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <NotificationsDropdown />
-          
-          <Link href="/profile" className="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center">
-            <User className="w-4 h-4 text-violet-600" />
-          </Link>
-        </div>
-      </header>
-    </>
+        )}
+        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Ayushman Academy</p>
+      </div>
+      <div className="flex items-center gap-2 lg:gap-4">
+        <NotificationsDropdown />
+        <Link href="/profile" className="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center">
+          <User className="w-4 h-4 text-violet-600" />
+        </Link>
+      </div>
+    </header>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Bell, X, CheckCircle2, AlertTriangle, Info, Gift, Users, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import dayjs from 'dayjs'
@@ -9,6 +9,41 @@ import { cn } from '@/lib/utils'
 import { getDayType, HolidayItem } from '@/lib/holidays'
 
 dayjs.extend(relativeTime)
+
+function deduplicateNotifications(list: any[]): { unique: any[], duplicateIdsToDelete: string[] } {
+  const seenIds = new Set<string>()
+  const seenContentKeys = new Set<string>()
+  const unique: any[] = []
+  const duplicateIdsToDelete: string[] = []
+
+  for (const item of list) {
+    if (!item) continue
+    
+    // Deduplicate by database ID
+    if (item.id && seenIds.has(item.id)) {
+      continue
+    }
+
+    // Deduplicate by content signature: type + title + message + date (YYYY-MM-DD)
+    const dateStr = item.created_at ? dayjs(item.created_at).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
+    const titleClean = (item.title || '').trim().toLowerCase()
+    const msgClean = (item.message || '').trim().toLowerCase()
+    const contentKey = `${item.type || ''}__${titleClean}__${msgClean}__${dateStr}`
+
+    if (seenContentKeys.has(contentKey)) {
+      if (item.id) {
+        duplicateIdsToDelete.push(item.id)
+      }
+      continue
+    }
+
+    if (item.id) seenIds.add(item.id)
+    seenContentKeys.add(contentKey)
+    unique.push(item)
+  }
+
+  return { unique, duplicateIdsToDelete }
+}
 
 const EVENT_DATES: Record<string, string> = {
   // 2024
@@ -46,6 +81,7 @@ export default function NotificationsDropdown() {
   const [notifications, setNotifications] = useState<any[]>([])
   const [attendanceSummary, setAttendanceSummary] = useState<{ present: number, absent: number } | null>(null)
   const [birthdays, setBirthdays] = useState<any[]>([])
+  const activeChecks = useRef<Set<string>>(new Set())
   const supabase = createClient()
 
   async function checkAndInsertEventNotification(userId: string) {
@@ -55,6 +91,10 @@ export default function NotificationsDropdown() {
     const eventName = EVENT_DATES[today] || FIXED_EVENTS[todayMMDD]
 
     if (eventName) {
+      const checkKey = `event_${userId}_${today}`
+      if (activeChecks.current.has(checkKey)) return false
+      activeChecks.current.add(checkKey)
+
       const { data } = await supabase.from('notifications')
         .select('id')
         .eq('user_id', userId)
@@ -81,6 +121,10 @@ export default function NotificationsDropdown() {
 
     const today = dayjs().format('YYYY-MM-DD')
     if (dayjs().day() === 0) return false // Exclude Sunday
+
+    const checkKey = `staff_unmarked_${userId}_${today}`
+    if (activeChecks.current.has(checkKey)) return false
+    activeChecks.current.add(checkKey)
 
     const { data: hData } = await supabase.from('holidays').select('*').eq('date', today)
     const dt = getDayType(today, hData || [])
@@ -130,7 +174,12 @@ export default function NotificationsDropdown() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications' },
         (payload) => {
-          setNotifications((prev) => [payload.new, ...prev])
+          const newItem = payload.new
+          if (!newItem) return
+          setNotifications((prev) => {
+            const { unique } = deduplicateNotifications([newItem, ...prev])
+            return unique
+          })
         }
       )
       .on(
@@ -179,7 +228,7 @@ export default function NotificationsDropdown() {
         .select('*')
         .gte('created_at', dayjs().subtract(24, 'hour').toISOString())
         .order('created_at', { ascending: false })
-        .limit(10),
+        .limit(20),
       supabase.from('student_attendance')
         .select('status, type')
         .eq('date', dayjs().format('YYYY-MM-DD'))
@@ -190,7 +239,15 @@ export default function NotificationsDropdown() {
         .eq('status', 'Active')
     ])
     
-    if (notifRes.data) setNotifications(notifRes.data)
+    if (notifRes.data) {
+      const { unique, duplicateIdsToDelete } = deduplicateNotifications(notifRes.data)
+      setNotifications(unique.slice(0, 10))
+
+      // Clean up duplicate records from DB
+      if (duplicateIdsToDelete.length > 0) {
+        supabase.from('notifications').delete().in('id', duplicateIdsToDelete).then(() => {})
+      }
+    }
     
     if (attRes.data) {
       const present = attRes.data.filter(a => a.status === 'present').length
@@ -204,6 +261,7 @@ export default function NotificationsDropdown() {
   }
 
   async function markAsRead(id: string) {
+    if (!id) return
     await supabase
       .from('notifications')
       .update({ is_read: true })
@@ -212,7 +270,8 @@ export default function NotificationsDropdown() {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
   }
 
-  const unreadCount = notifications.filter(n => !n.is_read).length
+  const { unique: displayNotifications } = deduplicateNotifications(notifications)
+  const unreadCount = displayNotifications.filter(n => !n.is_read).length
 
   return (
     <div className="relative">
@@ -286,14 +345,14 @@ export default function NotificationsDropdown() {
                 </div>
               </div>
 
-              {notifications.length === 0 ? (
+              {displayNotifications.length === 0 ? (
                 <div className="p-8 text-center">
                   <p className="text-xs text-zinc-400 font-medium">No recent notifications</p>
                 </div>
               ) : (
-                notifications.map(n => (
+                displayNotifications.map(n => (
                   <div 
-                    key={n.id} 
+                    key={n.id || `${n.type}-${n.title}-${n.created_at}`} 
                     onClick={() => markAsRead(n.id)}
                     className={cn(
                       "p-4 border-b border-zinc-50 last:border-0 cursor-pointer hover:bg-zinc-50 dark:bg-zinc-950 transition-colors flex gap-3",

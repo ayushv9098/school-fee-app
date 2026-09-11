@@ -215,7 +215,7 @@ export default function StaffClient({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
         {filteredTeachers.map(teacher => {
           const totalPaid = initialTeacherPayments
             .filter(p => p.teacher_id === teacher.id)
@@ -248,68 +248,71 @@ export default function StaffClient({
 
           const attRecord = todayAttendance.find(a => a.teacher_id === teacher.id)
           const attendanceStatus = attRecord ? attRecord.status : 'not_marked'
+          const teacherName = teacher.name?.trim() || 'Teacher'
+          const teacherSubject = teacher.subject?.trim() || 'Staff'
+          const initials = teacherName.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase()
 
           return (
-            <Link key={teacher.id} href={`/staff/${teacher.id}`}>
-              <Card className="group relative overflow-hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-violet-500 dark:hover:border-violet-600 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 rounded-2xl shadow-sm">
-                <CardContent className="p-5 flex flex-col justify-between h-full">
+            <Link key={teacher.id} href={`/staff/${teacher.id}`} className="flex flex-col h-full">
+              <Card className="group relative flex flex-col justify-between h-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-violet-500 dark:hover:border-violet-600 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 rounded-2xl shadow-sm overflow-hidden">
+                <CardContent className="p-5 flex flex-col justify-between flex-1 h-full">
                   <div className="space-y-4">
                     {/* Top Row: Avatar & Status */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getGradientByName(teacher.name)} flex items-center justify-center text-white shadow-sm`}>
-                          <User size={18} className="text-white" />
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getGradientByName(teacherName)} flex items-center justify-center text-white font-bold text-xs tracking-wider shadow-sm shrink-0`}>
+                          {initials || <User size={18} className="text-white" />}
                         </div>
-                        <div>
-                          <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 group-hover:text-violet-600 transition-colors">
-                            {teacher.name}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 group-hover:text-violet-600 transition-colors truncate" title={teacherName}>
+                            {teacherName}
                           </h3>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1 font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                            {teacher.subject}
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 font-medium truncate mt-0.5" title={teacherSubject}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700 shrink-0" />
+                            <span className="truncate">{teacherSubject}</span>
                           </p>
                         </div>
                       </div>
                       
-                      <div className="flex flex-col items-end gap-1.5">
-                        <Badge variant={statusVariant}>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <Badge variant={statusVariant} className="text-[10px] font-bold px-2 py-0.5">
                           {statusText}
                         </Badge>
                         {(() => {
                           switch (attendanceStatus) {
                             case 'present':
                               return (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30 uppercase tracking-wide">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30 uppercase tracking-wide whitespace-nowrap">
                                   Present
                                 </span>
                               )
                             case 'absent':
                               return (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30 uppercase tracking-wide">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30 uppercase tracking-wide whitespace-nowrap">
                                   Absent
                                 </span>
                               )
                             case 'late':
                               return (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30 uppercase tracking-wide">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30 uppercase tracking-wide whitespace-nowrap">
                                   Late
                                 </span>
                               )
                             case 'half_day':
                               return (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/30 uppercase tracking-wide">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/30 uppercase tracking-wide whitespace-nowrap">
                                   Half Day
                                 </span>
                               )
                             case 'on_leave':
                               return (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/30 uppercase tracking-wide">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-900/30 uppercase tracking-wide whitespace-nowrap">
                                   On Leave
                                 </span>
                               )
                             default:
                               return (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 uppercase tracking-wide">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 uppercase tracking-wide whitespace-nowrap">
                                   Not Marked
                                 </span>
                               )
@@ -319,27 +322,27 @@ export default function StaffClient({
                     </div>
 
                     {/* Progress indicator */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 pt-1">
                       <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
                         <span>Payment Status</span>
-                        <span>{progress}% Paid</span>
+                        <span className="font-semibold">{progress}% Paid</span>
                       </div>
-                      <Progress value={progress} indicatorClassName={getProgressColor(progress)} />
+                      <Progress value={progress} indicatorClassName={getProgressColor(progress)} className="h-1.5" />
                     </div>
 
                     {/* Salary stats */}
-                    <div className="grid grid-cols-3 gap-2 py-3 px-3 bg-zinc-50 dark:bg-zinc-950/40 rounded-xl border border-zinc-100/50 dark:border-zinc-800/20 text-center">
-                      <div>
+                    <div className="grid grid-cols-3 gap-2 py-2.5 px-3 bg-zinc-50 dark:bg-zinc-950/40 rounded-xl border border-zinc-100/60 dark:border-zinc-800/30 text-center">
+                      <div className="flex flex-col justify-center">
                         <p className="text-[9px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500">Expected</p>
-                        <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mt-0.5">{formatCurrency(expectedTotal)}</p>
+                        <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-0.5 truncate">{formatCurrency(expectedTotal)}</p>
                       </div>
-                      <div>
+                      <div className="flex flex-col justify-center border-x border-zinc-100 dark:border-zinc-800/40">
                         <p className="text-[9px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500">Paid</p>
-                        <p className="text-xs font-semibold text-green-600 dark:text-green-400 mt-0.5">{formatCurrency(totalPaid)}</p>
+                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 truncate">{formatCurrency(totalPaid)}</p>
                       </div>
-                      <div>
+                      <div className="flex flex-col justify-center">
                         <p className="text-[9px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500">Remaining</p>
-                        <p className={`text-xs font-bold mt-0.5 ${remainingDue > 0 ? 'text-red-500 dark:text-red-400' : 'text-zinc-400'}`}>
+                        <p className={`text-xs font-bold mt-0.5 truncate ${remainingDue > 0 ? 'text-rose-500 dark:text-rose-400' : 'text-zinc-400'}`}>
                           {formatCurrency(remainingDue)}
                         </p>
                       </div>
@@ -347,14 +350,18 @@ export default function StaffClient({
                   </div>
 
                   {/* Card Actions */}
-                  <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between text-xs">
+                  <div className="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800/50 flex items-center justify-between text-xs h-9">
                     <span className="font-bold text-violet-600 dark:text-violet-400 flex items-center gap-1.5 group-hover:gap-2.5 transition-all">
                       Manage Details & Payments
                       <ChevronRight size={14} className="transition-transform group-hover:translate-x-0.5" />
                     </span>
-                    {teacher.mobile && (
+                    {teacher.mobile ? (
                       <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500">
                         📞 {teacher.mobile}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
+                        View Profile
                       </span>
                     )}
                   </div>
@@ -364,6 +371,18 @@ export default function StaffClient({
           )
         })}
       </div>
+
+      {filteredTeachers.length === 0 && (
+        <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6">
+          <div className="w-12 h-12 rounded-full bg-violet-50 dark:bg-violet-950/40 text-violet-600 flex items-center justify-center mx-auto mb-3">
+            <User size={24} />
+          </div>
+          <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-200">No staff members found</h3>
+          <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto">
+            {search ? `No staff matching "${search}". Try searching another name.` : 'No staff members added yet.'}
+          </p>
+        </div>
+      )}
 
       {/* Modals */}
       {activeModal && mounted && createPortal(

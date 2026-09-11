@@ -44,3 +44,10 @@ next-env.d.ts
 playwright-report/
 test-results/
 playwright/.auth/
+
+# scratch & temporary video/audio generation
+scratch/
+scripts/
+*.wav
+*.mp4
+voices.json

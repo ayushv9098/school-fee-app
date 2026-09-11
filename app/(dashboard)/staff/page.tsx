@@ -20,11 +20,35 @@ export default function StaffPage() {
       }
       const supabase = createClient()
       const today = dayjs().format('YYYY-MM-DD')
+      const { data: { user } } = await supabase.auth.getUser()
+
+      let teachersQuery = supabase
+        .from('teachers')
+        .select('*')
+        .or('role.neq.attendance_staff,role.is.null')
+        .order('name')
+
+      if (user?.id) {
+        teachersQuery = teachersQuery.eq('user_id', user.id)
+      }
+
+      let attendanceQuery = supabase
+        .from('attendance')
+        .select('*')
+        .eq('date', today)
+
+      if (user?.id) {
+        attendanceQuery = attendanceQuery.eq('admin_id', user.id)
+      }
 
       const [teachers, teacherPayments, todayAttendance] = await Promise.all([
-        supabase.from('teachers').select('*').neq('role', 'attendance_staff').eq('academic_year', academicYear).order('name'),
-        supabase.from('teacher_payments').select('*').or(`academic_year.eq.${academicYear},academic_year.is.null`).order('paid_at', { ascending: false }),
-        supabase.from('attendance').select('*').eq('date', today)
+        teachersQuery,
+        supabase
+          .from('teacher_payments')
+          .select('*')
+          .or(`academic_year.eq.${academicYear},academic_year.is.null`)
+          .order('paid_at', { ascending: false }),
+        attendanceQuery
       ])
 
       setData({
