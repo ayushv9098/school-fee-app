@@ -38,45 +38,25 @@ export default function PaymentsClient({
   allPayments: Payment[]
   students: Student[]
 }) {
-  const [filter, setFilter] = useState<'month' | 'week' | 'year'>('month')
+  const [filterMonth, setFilterMonth] = useState('all')
   const [search, setSearch] = useState('')
-  const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth() + 1).padStart(2, '0'))
-  const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()))
-  const [selectedWeek, setSelectedWeek] = useState(String(dayjs().isoWeek()))
 
-  const months = [
-    { value: '01', label: 'January' },
-    { value: '02', label: 'February' },
-    { value: '03', label: 'March' },
-    { value: '04', label: 'April' },
-    { value: '05', label: 'May' },
-    { value: '06', label: 'June' },
-    { value: '07', label: 'July' },
-    { value: '08', label: 'August' },
-    { value: '09', label: 'September' },
-    { value: '10', label: 'October' },
-    { value: '11', label: 'November' },
-    { value: '12', label: 'December' },
-  ]
-
-  const years = ['2024', '2025', '2026', '2027']
-  const weeks = Array.from({ length: 52 }, (_, i) => String(i + 1).padStart(2, '0'))
+  const availableMonths = useMemo(() => {
+    const monthsSet = new Set<string>()
+    allPayments.forEach(p => {
+      monthsSet.add(dayjs(p.paid_at).format('YYYY-MM'))
+    })
+    return Array.from(monthsSet).sort((a, b) => b.localeCompare(a)).map(m => ({
+      value: m,
+      label: dayjs(m + '-01').format('MMMM YYYY')
+    }))
+  }, [allPayments])
 
   const filteredPayments = useMemo(() => {
     let result = allPayments
 
-    if (filter === 'month') {
-      result = result.filter(p => {
-        const d = dayjs(p.paid_at)
-        return d.format('MM') === selectedMonth && d.format('YYYY') === selectedYear
-      })
-    } else if (filter === 'year') {
-      result = result.filter(p => dayjs(p.paid_at).format('YYYY') === selectedYear)
-    } else if (filter === 'week') {
-      result = result.filter(p => {
-        const d = dayjs(p.paid_at)
-        return String(d.isoWeek()).padStart(2, '0') === selectedWeek && d.format('YYYY') === selectedYear
-      })
+    if (filterMonth !== 'all') {
+      result = result.filter(p => dayjs(p.paid_at).format('YYYY-MM') === filterMonth)
     }
 
     if (search) {
@@ -86,76 +66,36 @@ export default function PaymentsClient({
     }
 
     return result
-  }, [allPayments, filter, selectedMonth, selectedYear, selectedWeek, search])
+  }, [allPayments, filterMonth, search])
 
   const totalCollected = filteredPayments.reduce((a, p) => a + p.amount, 0)
   const totalPending = students.reduce((a, s) => a + s.remaining_fee, 0)
   const totalFees = students.reduce((a, s) => a + s.total_fee, 0)
   const uniqueStudents = new Set(filteredPayments.map(p => p.students?.name)).size
 
-  const filterLabel = () => {
-    if (filter === 'month') return `${months.find(m => m.value === selectedMonth)?.label} ${selectedYear}`
-    if (filter === 'year') return `Year ${selectedYear}`
-    return `Week ${selectedWeek}, ${selectedYear}`
-  }
-
   return (
     <div className="p-4 md:p-6 space-y-5">
 
-      {/* Header */}
-      <div>
-        <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Payments</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{filterLabel()}</p>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl w-fit">
-        {(['month', 'week', 'year'] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition capitalize ${
-              filter === f
-                ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm'
-                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300'
-            }`}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-
-      {/* Date Selectors */}
-      <div className="flex gap-3 flex-wrap">
-        {filter !== 'year' && filter !== 'week' && (
-          <CustomSelect
-            value={selectedMonth}
-            onChange={e => setSelectedMonth(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-          >
-            {months.map(m => (
-              <option key={m.value} value={m.value}>{m.label}</option>
-            ))}
-          </CustomSelect>
-        )}
-        {filter === 'week' && (
-          <CustomSelect
-            value={selectedWeek}
-            onChange={e => setSelectedWeek(e.target.value)}
-            className="h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-          >
-            {weeks.map(w => (
-              <option key={w} value={w}>Week {w}</option>
-            ))}
-          </CustomSelect>
-        )}
+      {/* Filter Bar */}
+      <div className="flex gap-3 items-center w-full">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <input
+            placeholder="Search by student name..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full h-11 pl-9 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          />
+        </div>
+        
         <CustomSelect
-          value={selectedYear}
-          onChange={e => setSelectedYear(e.target.value)}
-          className="h-10 px-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+          value={filterMonth}
+          onChange={e => setFilterMonth(e.target.value)}
+          className="h-11 px-3 w-[160px] rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 font-medium"
         >
-          {years.map(y => (
-            <option key={y} value={y}>{y}</option>
+          <option value="all">Entire Session</option>
+          {availableMonths.map(m => (
+            <option key={m.value} value={m.value}>{m.label}</option>
           ))}
         </CustomSelect>
       </div>
@@ -207,17 +147,6 @@ export default function PaymentsClient({
             <p className="text-xs text-zinc-400 mt-1">Of total fees</p>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-        <input
-          placeholder="Search by student name..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full h-11 pl-9 pr-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-        />
       </div>
 
       {/* Payments List */}

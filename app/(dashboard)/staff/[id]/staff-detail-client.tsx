@@ -18,7 +18,7 @@ import { Progress } from '@/components/ui/progress'
 
 
 
-export default function StaffDetailClient({ teacher, schoolName, initialPayments, onRefresh }: { teacher: any, schoolName: string, initialPayments: any[], onRefresh?: () => void }) {
+export default function StaffDetailClient({ teacher, schoolName, schoolAddress, schoolMobile, initialPayments, onRefresh }: { teacher: any, schoolName: string, schoolAddress?: string, schoolMobile?: string, initialPayments: any[], onRefresh?: () => void }) {
   const router = useRouter()
   const { academicYear } = useSession()
   const now = new Date()
@@ -609,6 +609,8 @@ export default function StaffDetailClient({ teacher, schoolName, initialPayments
           balance={selectedMonthView.balance}
           note="Monthly Salary Payment"
           schoolName={schoolName}
+          schoolAddress={schoolAddress}
+          schoolMobile={schoolMobile}
           teacherMobile={teacher.email}
           payments={selectedMonthView.payments}
         />

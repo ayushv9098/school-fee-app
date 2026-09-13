@@ -24,13 +24,15 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
 
       const [teacherRes, settingsRes, paymentsRes] = await Promise.all([
         supabase.from('teachers').select('*').eq('id', id).single(),
-        supabase.from('school_settings').select('school_name').eq('user_id', user?.id).maybeSingle(),
+        supabase.from('school_settings').select('school_name, address, mobile').eq('user_id', user?.id).maybeSingle(),
         supabase.from('teacher_payments').select('*').eq('teacher_id', id).or(`academic_year.eq.${academicYear},academic_year.is.null`).order('month', { ascending: true })
       ])
 
       setData({
         teacher: teacherRes.data,
         schoolName: settingsRes.data?.school_name || 'School Name',
+        schoolAddress: settingsRes.data?.address || '',
+        schoolMobile: settingsRes.data?.mobile || '',
         payments: paymentsRes.data || []
       })
       setLoading(false)
@@ -51,6 +53,8 @@ export default function StaffDetailPage({ params }: { params: Promise<{ id: stri
     <StaffDetailClient
       teacher={data.teacher}
       schoolName={data.schoolName}
+      schoolAddress={data.schoolAddress}
+      schoolMobile={data.schoolMobile}
       initialPayments={data.payments}
       onRefresh={() => setRefreshKey(prev => prev + 1)}
     />

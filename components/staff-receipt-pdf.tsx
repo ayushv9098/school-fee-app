@@ -148,13 +148,18 @@ function ReceiptDocument({ teacherName, subject, monthName, year, amountPaidNow,
             <Text style={styles.receiptId}>{t.receiptId}</Text>
             <Text style={styles.receiptIdValue}>{receiptId}</Text>
           </View>
-          <Text style={styles.badge}>✓ {t.paid.toUpperCase()}</Text>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={styles.badge}>✓ {t.paid.toUpperCase()}</Text>
+            {schoolMobile ? (
+              <Text style={{ fontSize: 9, color: '#71717A', fontWeight: 'bold', marginTop: 4 }}>
+                📞 {schoolMobile}
+              </Text>
+            ) : null}
+          </View>
         </View>
 
         <View style={styles.header}>
           <Text style={styles.schoolName}>{schoolName}</Text>
-          {schoolAddress ? <Text style={styles.subtitle}>{schoolAddress}</Text> : null}
-          {schoolMobile ? <Text style={styles.subtitle}>📞 {schoolMobile}</Text> : null}
           <Text style={[styles.subtitle, { marginTop: 8, fontWeight: 'bold' }]}>
             {t.feeReceipt.toUpperCase()}
           </Text>
@@ -255,17 +260,41 @@ function StaffReceiptHTML({ teacherName, subject, monthName, year, amountPaidNow
           <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#71717a', margin: '0 0 4px' }}>{t.receiptId}</p>
           <p style={{ fontSize: '12px', fontWeight: '700', margin: 0 }}>{receiptId}</p>
         </div>
-        <div style={{ backgroundColor: '#dcfce7', color: '#16a34a', fontSize: '10px', fontWeight: '800', padding: '4px 12px', borderRadius: '12px', textTransform: 'uppercase' }}>
-          ✓ {t.paid}
+        <div style={{ textAlignment: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' } as any}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            backgroundColor: '#dcfce7',
+            border: '1px solid #bbf7d0',
+            color: '#15803d',
+            fontSize: '11px',
+            fontWeight: '700',
+            padding: '4px 10px',
+            borderRadius: '9999px',
+          }}>
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#15803d"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ display: 'block', position: 'relative', top: lang === 'hi' ? '1.5px' : '1px', marginRight: '5px' }}
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span style={{ display: 'block', position: 'relative', top: lang === 'hi' ? '-0.5px' : '0px' }}>{t.paid}</span>
+          </div>
+
         </div>
       </div>
 
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#7c3aed', margin: '0 0 8px', letterSpacing: '-0.02em' }}>{schoolName}</h1>
-        {schoolAddress && <p style={{ fontSize: '12px', color: '#71717a', margin: '0 0 4px' }}>{schoolAddress}</p>}
-        {schoolMobile && <p style={{ fontSize: '12px', color: '#71717a', margin: 0 }}>📞 {schoolMobile}</p>}
-        <div style={{ margin: '20px auto 0', height: '2px', width: '40px', backgroundColor: '#7c3aed', borderRadius: '2px' }}></div>
-        <p style={{ fontSize: '13px', fontWeight: '700', color: '#71717a', marginTop: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div style={{ margin: '14px auto 0', height: '2px', width: '40px', backgroundColor: '#7c3aed', borderRadius: '2px' }}></div>
+        <p style={{ fontSize: '13px', fontWeight: '700', color: '#71717a', marginTop: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           {t.feeReceipt}
         </p>
       </div>
@@ -384,6 +413,7 @@ export default function StaffReceiptPDF(props: Props) {
       if (!el) return
 
       el.style.display = 'block'
+      await new Promise(r => setTimeout(r, 50))
       const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff', logging: false, useCORS: true })
       el.style.display = 'none'
 

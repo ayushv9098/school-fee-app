@@ -96,7 +96,7 @@ const AttendanceReportPDF = ({ recordData, recordType, recordSelection, recordMo
         </View>
 
         <View style={pdfStyles.footer}>
-          <Text>Ayushman Educational Academy Attendance System</Text>
+          <Text>{schoolName ? `${schoolName} Attendance System` : 'School Attendance System'}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} fixed />
         </View>
       </PdfPage>

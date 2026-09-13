@@ -82,6 +82,8 @@ export default function NotificationsDropdown() {
   const [attendanceSummary, setAttendanceSummary] = useState<{ present: number, absent: number } | null>(null)
   const [birthdays, setBirthdays] = useState<any[]>([])
   const activeChecks = useRef<Set<string>>(new Set())
+  const currentUserIdRef = useRef<string | null>(null)
+  const schoolAdminIdRef = useRef<string | null>(null)
   const supabase = createClient()
 
   async function checkAndInsertEventNotification(userId: string) {
@@ -103,13 +105,13 @@ export default function NotificationsDropdown() {
         .limit(1)
         
       if (!data || data.length === 0) {
-         await supabase.from('notifications').insert({
-           user_id: userId,
-           type: 'event_notification',
-           title: `Happy ${eventName}!`,
-           message: `Wishing you a very Happy ${eventName}. Warm greetings from AV Infra.`
-         })
-         return true
+        await supabase.from('notifications').insert({
+          user_id: userId,
+          type: 'event_notification',
+          title: `Happy ${eventName}!`,
+          message: `Wishing you a very Happy ${eventName}. Warm greetings from AV Infra.`
+        })
+        return true
       }
     }
     return false
@@ -142,7 +144,7 @@ export default function NotificationsDropdown() {
 
     const [teachersRes, attRes] = await Promise.all([
       supabase.from('teachers').select('id, name').eq('user_id', userId),
-      supabase.from('attendance').select('teacher_id').eq('date', today)
+      supabase.from('attendance').select('teacher_id').eq('date', today).or(`admin_id.eq.${userId},admin_user_id.eq.${userId}`)
     ])
 
     const teachers = teachersRes.data || []
@@ -176,6 +178,8 @@ export default function NotificationsDropdown() {
         (payload) => {
           const newItem = payload.new
           if (!newItem) return
+          // Filter out notifications that don't belong to the current logged in user
+          if (newItem.user_id && currentUserIdRef.current && newItem.user_id !== currentUserIdRef.current) return
           setNotifications((prev) => {
             const { unique } = deduplicateNotifications([newItem, ...prev])
             return unique
@@ -186,8 +190,10 @@ export default function NotificationsDropdown() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'student_attendance' },
         () => {
-          // Re-fetch attendance summary when anyone marks attendance
-          fetchAttendanceSummary()
+          // Re-fetch attendance summary scoped to this school's admin
+          if (schoolAdminIdRef.current) {
+            fetchAttendanceSummary(schoolAdminIdRef.current)
+          }
         }
       )
       .subscribe()
@@ -197,16 +203,53 @@ export default function NotificationsDropdown() {
     }
   }, [])
 
-  async function fetchAttendanceSummary() {
-    const { data } = await supabase.from('student_attendance')
-      .select('status')
-      .eq('date', dayjs().format('YYYY-MM-DD'))
-      .eq('type', 'class')
-    
-    if (data) {
-      const present = data.filter(a => a.status === 'present').length
-      const absent = data.filter(a => a.status === 'absent').length
-      setAttendanceSummary({ present, absent })
+  async function fetchAttendanceSummary(adminId?: string) {
+    const targetAdminId = adminId || schoolAdminIdRef.current
+    if (!targetAdminId) return
+
+    const today = dayjs().format('YYYY-MM-DD')
+
+    try {
+      // First attempt: inner join with students table so attendance is scoped to this school
+      const { data, error } = await supabase
+        .from('student_attendance')
+        .select('status, students!inner(user_id)')
+        .eq('date', today)
+        .eq('type', 'class')
+        .eq('students.user_id', targetAdminId)
+      
+      if (!error && data) {
+        const present = data.filter(a => a.status === 'present').length
+        const absent = data.filter(a => a.status === 'absent').length
+        setAttendanceSummary({ present, absent })
+        return
+      }
+
+      // Resilient fallback: Query student IDs for target school admin, then filter attendance
+      const { data: userStudents } = await supabase
+        .from('students')
+        .select('id')
+        .eq('user_id', targetAdminId)
+
+      if (userStudents && userStudents.length > 0) {
+        const studentIds = userStudents.map(s => s.id)
+        const { data: attData } = await supabase
+          .from('student_attendance')
+          .select('status')
+          .eq('date', today)
+          .eq('type', 'class')
+          .in('student_id', studentIds)
+
+        if (attData) {
+          const present = attData.filter(a => a.status === 'present').length
+          const absent = attData.filter(a => a.status === 'absent').length
+          setAttendanceSummary({ present, absent })
+        }
+      } else {
+        setAttendanceSummary({ present: 0, absent: 0 })
+      }
+    } catch (e) {
+      console.error('Error fetching scoped attendance summary:', e)
     }
   }
 
@@ -214,29 +257,46 @@ export default function NotificationsDropdown() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    currentUserIdRef.current = user.id
+
+    // Check if user is staff/teacher to resolve school admin ID
+    let schoolAdminId = user.id
+    const { data: teacherProfile } = await supabase
+      .from('teachers')
+      .select('user_id')
+      .eq('auth_user_id', user.id)
+      .maybeSingle()
+
+    if (teacherProfile?.user_id) {
+      schoolAdminId = teacherProfile.user_id
+    }
+    schoolAdminIdRef.current = schoolAdminId
+
+    // Clean up old notifications for this user only
     await supabase.from('notifications')
       .delete()
+      .eq('user_id', user.id)
       .lt('created_at', dayjs().subtract(24, 'hour').toISOString())
 
     await Promise.all([
       checkAndInsertEventNotification(user.id),
-      checkAndInsertStaffUnmarkedAlert(user.id)
+      checkAndInsertStaffUnmarkedAlert(schoolAdminId)
     ])
 
-    const [notifRes, attRes, bdayRes] = await Promise.all([
+    const todayMMDD = dayjs().format('MM-DD')
+
+    const [notifRes, bdayRes] = await Promise.all([
       supabase.from('notifications')
         .select('*')
+        .eq('user_id', user.id)
         .gte('created_at', dayjs().subtract(24, 'hour').toISOString())
         .order('created_at', { ascending: false })
         .limit(20),
-      supabase.from('student_attendance')
-        .select('status, type')
-        .eq('date', dayjs().format('YYYY-MM-DD'))
-        .eq('type', 'class'),
       supabase.from('students')
         .select('name, class')
-        .like('date_of_birth', `%-${dayjs().format('MM-DD')}`)
-        .eq('status', 'Active')
+        .eq('user_id', schoolAdminId)
+        .like('date_of_birth', `%-${todayMMDD}`)
+        .ilike('status', 'active')
     ])
     
     if (notifRes.data) {
@@ -249,15 +309,12 @@ export default function NotificationsDropdown() {
       }
     }
     
-    if (attRes.data) {
-      const present = attRes.data.filter(a => a.status === 'present').length
-      const absent = attRes.data.filter(a => a.status === 'absent').length
-      setAttendanceSummary({ present, absent })
-    }
-
     if (bdayRes.data) {
       setBirthdays(bdayRes.data)
     }
+
+    // Fetch attendance summary strictly scoped to this school
+    await fetchAttendanceSummary(schoolAdminId)
   }
 
   async function markAsRead(id: string) {

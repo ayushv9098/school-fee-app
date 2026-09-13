@@ -41,6 +41,12 @@ export default async function StudentDetailPage({
     )
   }
 
+  const { data: schoolSettings } = await supabase
+    .from('school_settings')
+    .select('school_name, address, mobile')
+    .eq('user_id', student.user_id)
+    .maybeSingle()
+
   const totalPayable = (student.total_fee || 0) + (student.previous_dues || 0)
   const percent = totalPayable > 0 ? Math.round(((student.total_paid || 0) / totalPayable) * 100) : 0
   const paymentStatus = student.remaining_fee <= 0 ? 'paid' : student.total_paid > 0 ? 'partial' : 'unpaid'
@@ -144,17 +150,19 @@ export default async function StudentDetailPage({
       </Card>
       {/* Receipt PDF */}
       <ReceiptPDF
-      studentName={student.name}
-      fatherName={student.guardian_name}
-      className={student.class}
-      session={student.academic_year}
-      amountPaid={student.total_paid}
-      totalFees={student.total_fee}
-      previousDues={student.previous_dues}
-      remainingFees={student.remaining_fee}
-      parentMobile={student.mobile}
-      payments={payments || []}
-      schoolName="Ayushman Educational Academy"
+        studentName={student.name}
+        fatherName={student.guardian_name}
+        className={student.class}
+        session={student.academic_year}
+        amountPaid={student.total_paid}
+        totalFees={student.total_fee}
+        previousDues={student.previous_dues}
+        remainingFees={student.remaining_fee}
+        parentMobile={student.mobile}
+        payments={payments || []}
+        schoolName={schoolSettings?.school_name || 'School Name'}
+        schoolAddress={schoolSettings?.address || ''}
+        schoolMobile={schoolSettings?.mobile || ''}
       />
       {/* Payment History */}
       <Card>

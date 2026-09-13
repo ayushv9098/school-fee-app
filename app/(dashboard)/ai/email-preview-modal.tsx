@@ -146,7 +146,7 @@ export default function EmailPreviewModal({
             
             {/* Header */}
             <div className="bg-gradient-to-r from-violet-600 to-purple-600 text-white p-6 sm:p-8 text-center">
-              <h1 className="text-xl sm:text-2xl font-bold">📚 {emailData.schoolName || 'Ayushman Educational Academy'}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">📚 {emailData.schoolName || 'School Name'}</h1>
               <p className="mt-1 sm:mt-2 text-white/90 text-sm sm:text-lg">Fee Payment Reminder</p>
             </div>
 
@@ -212,7 +212,7 @@ export default function EmailPreviewModal({
             {/* Footer */}
             <div className="bg-zinc-100 dark:bg-zinc-800 p-4 sm:p-5 text-center border-t border-zinc-200 dark:border-zinc-800">
               <p className="font-bold text-zinc-800 text-sm sm:text-base">
-                {emailData.schoolName || 'Ayushman Educational Academy'}
+                {emailData.schoolName || 'School Name'}
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 sm:mt-2">
                 This is an automated message. Please do not reply.

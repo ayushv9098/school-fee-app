@@ -24,15 +24,18 @@ function WhatsAppIcon({ size = 20, className = '' }: { size?: number; className?
 export default function DefaulterRow({
   student,
   index,
+  schoolName,
 }: {
   student: any
   index: number
+  schoolName?: string
 }) {
   const [copied, setCopied] = useState(false)
   const [sending, setSending] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
 
-  const message = `Dear Parent of ${student.name} (${student.class}), your fee payment of ${formatCurrency(student.remaining_fee)} is pending. Please pay at the earliest. — Ayushman Educational Academy`
+  const displayName = schoolName || 'School'
+  const message = `Dear Parent of ${student.name} (${student.class}), your fee payment of ${formatCurrency(student.remaining_fee)} is pending. Please pay at the earliest. — ${displayName}`
 
   // ✅ Get email (hidden)
   const parentEmail = student.email || null
@@ -47,7 +50,7 @@ export default function DefaulterRow({
     className: student.class,
     remainingFee: student.remaining_fee,
     totalFee: student.total_fee,
-    schoolName: 'Ayushman Educational Academy',
+    schoolName: displayName,
     hasEmail: !!parentEmail
   }
 
