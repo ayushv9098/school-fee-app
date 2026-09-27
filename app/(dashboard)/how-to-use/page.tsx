@@ -331,7 +331,7 @@ export default function HowToUsePage() {
       {/* ==================== FOOTER ==================== */}
       <div className="text-center pt-4 border-t border-zinc-200 dark:border-zinc-800">
         <p className="text-xs text-zinc-400 mt-2">
-          &copy; {new Date().getFullYear()} Designed & Developed by AV Infra
+          &copy; 2026 built by AV Infratech
         </p>
       </div>
 

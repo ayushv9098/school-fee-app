@@ -236,7 +236,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="text-center text-xs text-zinc-400 mt-6">
-        © 2026 Designed & Developed by AV Infra
+        © 2026 built by AV Infratech
         </p>
       </div>
     </div>

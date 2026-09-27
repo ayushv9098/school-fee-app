@@ -178,7 +178,7 @@ export default function TeacherLoginPage() {
         </Card>
 
         <p className="text-center text-[10px] text-zinc-400 mt-8 font-medium uppercase tracking-widest">
-          © {new Date().getFullYear()} Designed & Developed by AV Infra
+          © 2026 built by AV Infratech
         </p>
       </div>
     </div>

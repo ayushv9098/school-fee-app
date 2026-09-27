@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     'school administration software',
   ],
   authors: [{ name: 'Ayushman Educational Academy' }],
-  creator: 'AV Infra',
+  creator: 'AV Infratech',
   publisher: 'Ayushman Educational Academy',
   manifest: '/manifest.json',
   alternates: {

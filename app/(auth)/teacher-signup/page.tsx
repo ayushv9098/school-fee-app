@@ -115,7 +115,7 @@ export default function TeacherSignupPage() {
         </Suspense>
 
         <p className="text-center text-[10px] text-zinc-400 mt-12 font-bold uppercase tracking-widest opacity-60">
-          © {new Date().getFullYear()} AV Infra Systems
+          © 2026 built by AV Infratech
         </p>
       </div>
     </div>

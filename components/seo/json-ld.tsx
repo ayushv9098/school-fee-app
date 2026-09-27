@@ -30,7 +30,7 @@ export default function JsonLd() {
     },
     creator: {
       '@type': 'Organization',
-      name: 'AV Infra',
+      name: 'AV Infratech',
     },
   }
 

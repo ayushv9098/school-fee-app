@@ -109,7 +109,7 @@ export default function NotificationsDropdown() {
           user_id: userId,
           type: 'event_notification',
           title: `Happy ${eventName}!`,
-          message: `Wishing you a very Happy ${eventName}. Warm greetings from AV Infra.`
+          message: `Wishing you a very Happy ${eventName}. Warm greetings from AV Infratech.`
         })
         return true
       }
