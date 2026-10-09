@@ -10,7 +10,7 @@ import { CLASSES } from '@/lib/constants'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, Search, X, FileDown } from 'lucide-react'
-import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect, useCallback, useRef, useLayoutEffect, Suspense } from 'react'
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 
 // PDF Styles
@@ -100,7 +100,7 @@ const StudentsReportPDF = ({ students, schoolName, reportTitle, date, count }: a
 
 import { useSession } from '@/lib/session-context'
 
-export default function StudentsPage() {
+function StudentsListContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { academicYear: sessionYear } = useSession()
@@ -553,3 +553,14 @@ export default function StudentsPage() {
   )
 }
 
+export default function StudentsPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-4 md:p-6 text-zinc-500">
+        Loading...
+      </div>
+    }>
+      <StudentsListContent />
+    </Suspense>
+  )
+}
