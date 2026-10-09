@@ -8,9 +8,9 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { CLASSES } from '@/lib/constants'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, Search, X, FileDown } from 'lucide-react'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 
 // PDF Styles
@@ -102,15 +102,31 @@ import { useSession } from '@/lib/session-context'
 
 export default function StudentsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { academicYear: sessionYear } = useSession()
   const [mounted, setMounted] = useState(false)
+  
   const [students, setStudents] = useState<any[]>([])
-  const [search, setSearch] = useState('')
-  const [selectedClass, setSelectedClass] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState('')
-  const [selectedStudentStatus, setSelectedStudentStatus] = useState('active')
-  const [selectedYear, setSelectedYear] = useState('')
   const [loading, setLoading] = useState(true)
+
+  useLayoutEffect(() => {
+    try {
+      const cached = sessionStorage.getItem('students-cache')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (parsed.length > 0) {
+          setStudents(parsed)
+          setLoading(false)
+        }
+      }
+    } catch (e) {}
+  }, [])
+
+  const [search, setSearch] = useState(searchParams.get('search') || '')
+  const [selectedClass, setSelectedClass] = useState(searchParams.get('class') || '')
+  const [selectedStatus, setSelectedStatus] = useState(searchParams.get('payment') || '')
+  const [selectedStudentStatus, setSelectedStudentStatus] = useState(searchParams.get('status') || 'active')
+  const [selectedYear, setSelectedYear] = useState(searchParams.get('year') || '')
   const [pdfLoading, setPdfLoading] = useState(false)
   const [schoolName, setSchoolName] = useState('School Fee Report')
 
@@ -133,7 +149,9 @@ export default function StudentsPage() {
   }, [])
 
   const fetchStudents = useCallback(async () => {
-    setLoading(true)
+    if (students.length === 0) {
+      setLoading(true)
+    }
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     let query = supabase.from('student_fee_summary').select('*')
@@ -175,12 +193,72 @@ export default function StudentsPage() {
     });
 
     setStudents(sortedData)
+    try {
+      sessionStorage.setItem('students-cache', JSON.stringify(sortedData))
+    } catch (e) {}
     setLoading(false)
-  }, [search, selectedClass, selectedStatus, selectedStudentStatus, currentYearFilter])
+  }, [search, selectedClass, selectedStatus, selectedStudentStatus, currentYearFilter, students.length])
 
   useEffect(() => {
     fetchStudents()
   }, [fetchStudents])
+
+  // Sync filters to URL searchParams (without adding history entries)
+  useEffect(() => {
+    if (!mounted) return
+    const params = new URLSearchParams()
+    if (search) params.set('search', search)
+    if (selectedClass) params.set('class', selectedClass)
+    if (selectedStatus) params.set('payment', selectedStatus)
+    if (selectedStudentStatus && selectedStudentStatus !== 'active') params.set('status', selectedStudentStatus)
+    if (selectedYear) params.set('year', selectedYear)
+    const qs = params.toString()
+    router.replace(qs ? `/students?${qs}` : '/students', { scroll: false })
+  }, [search, selectedClass, selectedStatus, selectedStudentStatus, selectedYear, mounted, router])
+
+  useLayoutEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual'
+      }
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    if (students.length > 0) {
+      try {
+        const scroll = sessionStorage.getItem('students-scroll')
+        if (scroll) {
+          const savedY = parseInt(scroll, 10)
+          
+          const restore = () => {
+            const main = document.querySelector('main')
+            if (main) main.scrollTop = savedY
+          }
+          
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              restore()
+              sessionStorage.removeItem('students-scroll')
+            })
+          })
+          
+          // Fallback
+          setTimeout(restore, 0)
+        }
+      } catch (e) {}
+    }
+  }, [students.length])
+
+  const saveScrollAndNavigate = (id: string) => {
+    try {
+      const main = document.querySelector('main')
+      if (main) {
+        sessionStorage.setItem('students-scroll', String(main.scrollTop))
+      }
+    } catch (e) {}
+    router.push(`/students/${id}`)
+  }
 
   const downloadPDF = async () => {
     if (students.length === 0) return
@@ -335,7 +413,7 @@ export default function StudentsPage() {
       </div>
 
       {/* Desktop Table */}
-      {!loading && (
+      {(students.length > 0 || !loading) && (
         <div className="hidden md:block">
           <Card>
             <div className="overflow-x-auto">
@@ -374,7 +452,7 @@ export default function StudentsPage() {
                     return (
                       <tr 
                         key={s.id} 
-                        onClick={() => router.push(`/students/${s.id}`)}
+                        onClick={() => saveScrollAndNavigate(s.id)}
                         className="border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition cursor-pointer"
                       >
                         <td className="p-4">
@@ -415,7 +493,7 @@ export default function StudentsPage() {
       )}
 
       {/* Mobile Cards */}
-      {!loading && (
+      {(students.length > 0 || !loading) && (
         <div className="md:hidden space-y-3">
           {students.length === 0 && (
             <Card>
@@ -437,7 +515,7 @@ export default function StudentsPage() {
             }
 
             return (
-              <Link key={s.id} href={`/students/${s.id}`}>
+              <div key={s.id} onClick={() => saveScrollAndNavigate(s.id)} className="cursor-pointer">
                 <Card className="hover:shadow-md transition">
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
@@ -465,7 +543,7 @@ export default function StudentsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </Link>
+              </div>
             );
           })}
         </div>

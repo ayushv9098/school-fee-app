@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { BackButton } from '@/components/ui/back-button'
 import AddPaymentButton from '../[id]/add-payment-button'
 import dayjs from 'dayjs'
 import ReceiptPDF from '@/components/receipt-pdf'
@@ -57,9 +58,7 @@ export default async function StudentDetailPage({
       {/* Header & Main Actions */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/students" className="p-2 rounded-xl hover:bg-zinc-100 dark:bg-zinc-800 transition">
-            <ArrowLeft className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
-          </Link>
+          <BackButton />
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">{student.name}</h1>
