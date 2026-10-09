@@ -109,7 +109,7 @@ function StudentsListContent() {
   
   const [students, setStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [clickedId, setClickedId] = useState<string | null>(null)
+  
 
   useLayoutEffect(() => {
     try {
@@ -252,16 +252,30 @@ function StudentsListContent() {
     }
   }, [students.length])
 
-  const saveScrollAndNavigate = (id: string) => {
-    setClickedId(id);
+  const saveScrollAndNavigate = (id: string, e: React.MouseEvent) => {
     NProgress.start();
-    try {
-      const main = document.querySelector('main')
-      if (main) {
-        sessionStorage.setItem('students-scroll', String(main.scrollTop))
-      }
-    } catch (e) {}
-    router.push(`/students/${id}`)
+    const target = e.currentTarget as HTMLElement;
+    if (target.tagName.toLowerCase() === "tr") {
+       target.classList.add("bg-violet-50", "dark:bg-violet-900/10");
+       target.classList.remove("hover:bg-zinc-50", "dark:hover:bg-zinc-800/50");
+    } else {
+       target.classList.add("scale-[0.98]");
+       const card = target.querySelector(".transition-all");
+       if (card) {
+         card.classList.add("border-violet-500", "shadow-md", "shadow-violet-500/10");
+         card.classList.remove("hover:shadow-md");
+       }
+    }
+    const spinner = target.querySelector(".card-spinner");
+    if (spinner) spinner.classList.remove("hidden");
+
+    setTimeout(() => {
+      try {
+        const main = document.querySelector("main");
+        if (main) sessionStorage.setItem("students-scroll", String(main.scrollTop));
+      } catch (err) {}
+      router.push(`/students/${id}`);
+    }, 10);
   }
 
   const downloadPDF = async () => {
@@ -456,16 +470,16 @@ function StudentsListContent() {
                     return (
                       <tr 
                         key={s.id} 
-                        onClick={() => saveScrollAndNavigate(s.id)}
+                        onClick={(e) => saveScrollAndNavigate(s.id, e)}
                         onMouseEnter={() => router.prefetch(`/students/${s.id}`)}
-                        className={`border-b border-zinc-50 dark:border-zinc-800/50 transition-colors cursor-pointer ${clickedId === s.id ? 'bg-violet-50 dark:bg-violet-900/10' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
+                        className="border-b border-zinc-50 dark:border-zinc-800/50 transition-colors cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                       >
                         <td className="p-4">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-zinc-900 dark:text-zinc-100 hover:text-violet-600">
                             {s.name}
                           </span>
-                            {clickedId === s.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-600" />}
+                            <Loader2 className="card-spinner hidden w-3.5 h-3.5 animate-spin text-violet-600" />
                           </div>
                         </td>
                         <td className="p-4 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">{s.class}</td>
@@ -525,16 +539,16 @@ function StudentsListContent() {
             return (
               <div 
                 key={s.id} 
-                onClick={() => saveScrollAndNavigate(s.id)} 
+                onClick={(e) => saveScrollAndNavigate(s.id, e)} 
                 onTouchStart={() => router.prefetch(`/students/${s.id}`)}
-                className={`cursor-pointer transition-all duration-200 ${clickedId === s.id ? 'scale-[0.98]' : ''}`}
+                className="cursor-pointer transition-all duration-200"
               >
-                <Card className={`transition-all duration-200 ${clickedId === s.id ? 'border-violet-500 shadow-md shadow-violet-500/10' : 'hover:shadow-md'}`}>
+                <Card className="transition-all duration-200 hover:shadow-md">
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-zinc-900 dark:text-zinc-100">{s.name}</p>
-                        {clickedId === s.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-600" />}
+                        <Loader2 className="card-spinner hidden w-3.5 h-3.5 animate-spin text-violet-600" />
                       </div>
                       <Badge variant={paymentStatus}>{paymentStatus}</Badge>
                     </div>

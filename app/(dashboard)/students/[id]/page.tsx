@@ -1,9 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, getProgressPercent } from '@/lib/calculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { BackButton } from '@/components/ui/back-button'
 import AddPaymentButton from '../[id]/add-payment-button'
@@ -12,41 +14,80 @@ import ReceiptPDF from '@/components/receipt-pdf'
 import EditStudentButton from './edit-student-button'
 import DeleteStudentButton from './delete-student-button'
 import PaidCard from './paid-card'
+import { useEffect, useState, use } from 'react'
 
-export default async function StudentDetailPage({
+export default function StudentDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
-  const supabase = await createClient()
+  const { id } = use(params)
+  
+  const [student, setStudent] = useState<any>(null)
+  const [payments, setPayments] = useState<any[] | null>(null)
+  const [schoolSettings, setSchoolSettings] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  const { data: { user } } = await supabase.auth.getUser()
+  useEffect(() => {
+    let mounted = true
+    try {
+      const cached = sessionStorage.getItem('students-cache')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        const found = parsed.find((s: any) => s.id === id)
+        if (found) {
+          setStudent(found)
+          setLoading(false)
+        }
+      }
+    } catch (e) {}
 
-  const { data: student } = await supabase
-    .from('student_fee_summary')
-    .select('*')
-    .eq('id', id)
-    .eq('user_id', user?.id)
-    .single()
+    const fetchFresh = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      const [
+        { data: freshStudent },
+        { data: freshPayments },
+        { data: freshSettings }
+      ] = await Promise.all([
+        supabase
+          .from('student_fee_summary')
+          .select('*')
+          .eq('id', id)
+          .eq('user_id', user?.id)
+          .single(),
+        supabase
+          .from('payments')
+          .select('id, amount, paid_at, mode, note')
+          .eq('student_id', id)
+          .order('paid_at', { ascending: false }),
+        user?.id ? supabase
+          .from('school_settings')
+          .select('school_name, address, mobile')
+          .eq('user_id', user.id)
+          .maybeSingle() : Promise.resolve({ data: null })
+      ])
 
-  const { data: payments } = await supabase
-    .from('payments')
-    .select('*')
-    .eq('student_id', id)
-    .order('paid_at', { ascending: false })
+      if (!mounted) return
+      if (freshStudent) setStudent(freshStudent)
+      if (freshPayments) setPayments(freshPayments)
+      if (freshSettings) setSchoolSettings(freshSettings)
+      setLoading(false)
+    }
+    fetchFresh()
+    return () => { mounted = false }
+  }, [id])
 
-  if (!student) {
+  if (loading && !student) {
+    return <div className="p-10 flex justify-center"></div>
+  }
+
+  if (!student && !loading) {
     return (
       <div className="p-6 text-center text-zinc-400">Student not found</div>
     )
   }
-
-  const { data: schoolSettings } = await supabase
-    .from('school_settings')
-    .select('school_name, address, mobile')
-    .eq('user_id', student.user_id)
-    .maybeSingle()
 
   const totalPayable = (student.total_fee || 0) + (student.previous_dues || 0)
   const percent = totalPayable > 0 ? Math.round(((student.total_paid || 0) / totalPayable) * 100) : 0
@@ -169,7 +210,9 @@ export default async function StudentDetailPage({
           <CardTitle className="text-base">Payment History</CardTitle>
         </CardHeader>
         <CardContent className="p-5 pt-0">
-          {payments?.length === 0 ? (
+          {payments === null ? (
+            <div className="flex justify-center p-4"><Loader2 className="w-5 h-5 animate-spin text-zinc-400" /></div>
+          ) : payments.length === 0 ? (
             <p className="text-sm text-zinc-400 text-center py-4">No payments yet</p>
           ) : (
             <div className="overflow-x-auto">
