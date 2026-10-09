@@ -9,9 +9,10 @@ import { Progress } from '@/components/ui/progress'
 import { CLASSES } from '@/lib/constants'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Search, X, FileDown } from 'lucide-react'
+import { Plus, Search, X, FileDown, Loader2 } from 'lucide-react'
 import { useState, useEffect, useCallback, useRef, useLayoutEffect, Suspense } from 'react'
 import { pdf, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import NProgress from 'nprogress'
 
 // PDF Styles
 const pdfStyles = StyleSheet.create({
@@ -108,6 +109,7 @@ function StudentsListContent() {
   
   const [students, setStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [clickedId, setClickedId] = useState<string | null>(null)
 
   useLayoutEffect(() => {
     try {
@@ -251,6 +253,8 @@ function StudentsListContent() {
   }, [students.length])
 
   const saveScrollAndNavigate = (id: string) => {
+    setClickedId(id);
+    NProgress.start();
     try {
       const main = document.querySelector('main')
       if (main) {
@@ -453,12 +457,16 @@ function StudentsListContent() {
                       <tr 
                         key={s.id} 
                         onClick={() => saveScrollAndNavigate(s.id)}
-                        className="border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition cursor-pointer"
+                        onMouseEnter={() => router.prefetch(`/students/${s.id}`)}
+                        className={`border-b border-zinc-50 dark:border-zinc-800/50 transition-colors cursor-pointer ${clickedId === s.id ? 'bg-violet-50 dark:bg-violet-900/10' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
                       >
                         <td className="p-4">
-                          <span className="font-medium text-zinc-900 dark:text-zinc-100 hover:text-violet-600">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-zinc-900 dark:text-zinc-100 hover:text-violet-600">
                             {s.name}
                           </span>
+                            {clickedId === s.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-600" />}
+                          </div>
                         </td>
                         <td className="p-4 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">{s.class}</td>
                         <td className="p-4 text-zinc-600 dark:text-zinc-400 whitespace-nowrap text-right">{formatCurrency(s.total_fee)}</td>
@@ -515,11 +523,19 @@ function StudentsListContent() {
             }
 
             return (
-              <div key={s.id} onClick={() => saveScrollAndNavigate(s.id)} className="cursor-pointer">
-                <Card className="hover:shadow-md transition">
+              <div 
+                key={s.id} 
+                onClick={() => saveScrollAndNavigate(s.id)} 
+                onTouchStart={() => router.prefetch(`/students/${s.id}`)}
+                className={`cursor-pointer transition-all duration-200 ${clickedId === s.id ? 'scale-[0.98]' : ''}`}
+              >
+                <Card className={`transition-all duration-200 ${clickedId === s.id ? 'border-violet-500 shadow-md shadow-violet-500/10' : 'hover:shadow-md'}`}>
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-zinc-900 dark:text-zinc-100">{s.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-zinc-900 dark:text-zinc-100">{s.name}</p>
+                        {clickedId === s.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-600" />}
+                      </div>
                       <Badge variant={paymentStatus}>{paymentStatus}</Badge>
                     </div>
                     <div className="flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-400">
