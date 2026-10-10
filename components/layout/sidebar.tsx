@@ -138,7 +138,8 @@ function SessionDropdown({ academicYear, availableYears, onYearChange }: { acade
           {availableYears.map(year => (
             <button
               key={year}
-              onClick={() => {
+              onMouseDown={(e) => {
+                e.preventDefault()
                 onYearChange(year)
                 setIsOpen(false)
               }}

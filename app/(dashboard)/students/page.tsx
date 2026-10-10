@@ -104,13 +104,25 @@ import { useSession } from '@/lib/session-context'
 function StudentsListContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { academicYear: sessionYear } = useSession()
+  const { academicYear: sessionYear, isInitialized } = useSession()
   const [mounted, setMounted] = useState(false)
   
+  const selectedYearInit = searchParams.get('year') || ''
+  const currentYearFilter = selectedYearInit === 'all' ? null : (selectedYearInit || sessionYear)
+  
+  const searchInit = searchParams.get('search') || ''
+  const classInit = searchParams.get('class') || ''
+  const paymentInit = searchParams.get('payment') || ''
+  const statusInit = searchParams.get('status') || 'active'
+  
+  const getCacheKey = (y: string | null, s: string, c: string, p: string, st: string) => `students-cache-${y || 'all'}-s:${s}-c:${c}-p:${p}-st:${st}`
+  
+  const cacheKey = getCacheKey(currentYearFilter, searchInit, classInit, paymentInit, statusInit)
+
   const [students, setStudents] = useState<any[]>(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && isInitialized) {
       try {
-        const cached = sessionStorage.getItem('students-cache')
+        const cached = sessionStorage.getItem(cacheKey)
         if (cached) {
           const parsed = JSON.parse(cached)
           if (parsed && parsed.length > 0) return parsed
@@ -121,28 +133,38 @@ function StudentsListContent() {
   })
   
   const [loading, setLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && isInitialized) {
       try {
-        const cached = sessionStorage.getItem('students-cache')
+        const cached = sessionStorage.getItem(cacheKey)
         if (cached && JSON.parse(cached).length > 0) return false
       } catch (e) {}
     }
     return true
   })
   
-
-  useLayoutEffect(() => {
-    try {
-      const cached = sessionStorage.getItem('students-cache')
-      if (cached) {
-        const parsed = JSON.parse(cached)
-        if (parsed.length > 0) {
-          setStudents(parsed)
-          setLoading(false)
+  const [prevCacheKey, setPrevCacheKey] = useState(cacheKey)
+  const [wasInitialized, setWasInitialized] = useState(isInitialized)
+  if ((prevCacheKey !== cacheKey || (!wasInitialized && isInitialized)) && isInitialized) {
+    setPrevCacheKey(cacheKey)
+    setWasInitialized(isInitialized)
+    let newStudents = []
+    let newLoading = true
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem(cacheKey)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            newStudents = parsed
+            newLoading = false
+          }
         }
-      }
-    } catch (e) {}
-  }, [])
+      } catch (e) {}
+    }
+    setStudents(newStudents)
+    setLoading(newLoading)
+  }
+  
 
   const [search, setSearch] = useState(searchParams.get('search') || '')
   const [selectedClass, setSelectedClass] = useState(searchParams.get('class') || '')
@@ -152,8 +174,7 @@ function StudentsListContent() {
   const [pdfLoading, setPdfLoading] = useState(false)
   const [schoolName, setSchoolName] = useState('School Fee Report')
 
-  // Use session year as default if selectedYear is not manually set, but allow 'all' to show all years
-  const currentYearFilter = selectedYear === 'all' ? null : (selectedYear || sessionYear)
+  // currentYearFilter is now defined at the top
 
   // Available academic years (we could fetch this dynamically, but for now let's list common ones)
   const ACADEMIC_YEARS = ['2024-25', '2025-26', '2026-27']
@@ -171,6 +192,7 @@ function StudentsListContent() {
   }, [])
 
   const fetchStudents = useCallback(async () => {
+    if (!isInitialized) return
     if (students.length === 0) {
       setLoading(true)
     }
@@ -216,10 +238,10 @@ function StudentsListContent() {
 
     setStudents(sortedData)
     try {
-      sessionStorage.setItem('students-cache', JSON.stringify(sortedData))
+      sessionStorage.setItem(getCacheKey(currentYearFilter, search, selectedClass, selectedStatus, selectedStudentStatus), JSON.stringify(sortedData))
     } catch (e) {}
     setLoading(false)
-  }, [search, selectedClass, selectedStatus, selectedStudentStatus, currentYearFilter, students.length])
+  }, [search, selectedClass, selectedStatus, selectedStudentStatus, currentYearFilter, students.length, isInitialized])
 
   useEffect(() => {
     fetchStudents()
@@ -270,7 +292,7 @@ function StudentsListContent() {
         }
       } catch (e) {}
     }
-  }, [students.length])
+  }, [students.length, isInitialized])
 
   const saveScrollAndNavigate = (id: string, e: React.MouseEvent) => {
     NProgress.start();
@@ -612,3 +634,6 @@ export default function StudentsPage() {
     </Suspense>
   )
 }
+
+
+

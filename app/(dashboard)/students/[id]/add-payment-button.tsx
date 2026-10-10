@@ -91,24 +91,33 @@ export default function AddPaymentButton({
       return
     }
     try {
-      const cached = sessionStorage.getItem('students-cache')
-      if (cached) {
-        const parsed = JSON.parse(cached)
-        const updated = parsed.map((s: any) => {
-          if (s.id === studentId) {
-            const newPaid = (s.total_paid || 0) + amt;
-            const newRemaining = (s.total_fee + (s.previous_dues || 0)) - newPaid;
-            const newStatus = newRemaining <= 0 ? 'paid' : newPaid > 0 ? 'partial' : 'unpaid';
-            return {
-              ...s,
-              total_paid: newPaid,
-              remaining_fee: newRemaining,
-              payment_status: newStatus
+      // We iterate over ALL keys in sessionStorage that start with 'students-cache-'
+      // This ensures the student is updated across all cached filter combinations.
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith('students-cache-')) {
+          const cached = sessionStorage.getItem(key);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed)) {
+              const updated = parsed.map((s: any) => {
+                if (s.id === studentId) {
+                  const newPaid = (s.total_paid || 0) + amt;
+                  const newRemaining = (s.total_fee + (s.previous_dues || 0)) - newPaid;
+                  const newStatus = newRemaining <= 0 ? 'paid' : newPaid > 0 ? 'partial' : 'unpaid';
+                  return {
+                    ...s,
+                    total_paid: newPaid,
+                    remaining_fee: newRemaining,
+                    payment_status: newStatus
+                  };
+                }
+                return s;
+              });
+              sessionStorage.setItem(key, JSON.stringify(updated));
             }
           }
-          return s;
-        })
-        sessionStorage.setItem('students-cache', JSON.stringify(updated))
+        }
       }
     } catch (e) {}
 
