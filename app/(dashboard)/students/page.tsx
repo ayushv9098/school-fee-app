@@ -107,8 +107,28 @@ function StudentsListContent() {
   const { academicYear: sessionYear } = useSession()
   const [mounted, setMounted] = useState(false)
   
-  const [students, setStudents] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [students, setStudents] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem('students-cache')
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (parsed && parsed.length > 0) return parsed
+        }
+      } catch (e) {}
+    }
+    return []
+  })
+  
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = sessionStorage.getItem('students-cache')
+        if (cached && JSON.parse(cached).length > 0) return false
+      } catch (e) {}
+    }
+    return true
+  })
   
 
   useLayoutEffect(() => {
@@ -586,9 +606,7 @@ function StudentsListContent() {
 export default function StudentsPage() {
   return (
     <Suspense fallback={
-      <div className="p-4 md:p-6 text-zinc-500">
-        Loading...
-      </div>
+      <div className="min-h-screen"></div>
     }>
       <StudentsListContent />
     </Suspense>
