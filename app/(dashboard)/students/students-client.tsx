@@ -281,15 +281,7 @@ function StudentsListContent() {
             if (main) main.scrollTop = savedY
           }
           
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              restore()
-              sessionStorage.removeItem('students-scroll')
-            })
-          })
-          
-          // Fallback
-          setTimeout(restore, 0)
+          restore(); sessionStorage.removeItem('students-scroll');
         }
       } catch (e) {}
     }
@@ -627,3 +619,4 @@ function StudentsListContent() {
 }
 
 export default function StudentsClient() { return <StudentsListContent /> }
+
