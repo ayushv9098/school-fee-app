@@ -17,6 +17,7 @@ interface Props {
   remainingFee: number
   isPaid: boolean
   studentAcademicYear?: string
+  onSuccess?: () => void
 }
 
 export default function AddPaymentButton({
@@ -24,6 +25,7 @@ export default function AddPaymentButton({
   remainingFee,
   isPaid,
   studentAcademicYear,
+  onSuccess,
 }: Props) {
   const router = useRouter()
   const { academicYear } = useSession()
@@ -89,6 +91,10 @@ export default function AddPaymentButton({
       return
     }
 
+    try {
+      sessionStorage.removeItem('students-cache')
+    } catch (e) {}
+
     // Reset fields
     setOpen(false)
     setAmount('')
@@ -100,7 +106,11 @@ export default function AddPaymentButton({
     setError('')
     setLoading(false)
 
-    router.refresh()
+    if (onSuccess) {
+      onSuccess()
+    } else {
+      router.refresh()
+    }
   }
 
   if (isPaid) {

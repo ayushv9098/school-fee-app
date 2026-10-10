@@ -27,6 +27,7 @@ export default function StudentDetailPage({
   const [payments, setPayments] = useState<any[] | null>(null)
   const [schoolSettings, setSchoolSettings] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     let mounted = true
@@ -77,7 +78,7 @@ export default function StudentDetailPage({
     }
     fetchFresh()
     return () => { mounted = false }
-  }, [id])
+  }, [id, refreshKey])
 
   if (loading && !student) {
     return <div className="p-10 flex justify-center"></div>
@@ -119,6 +120,7 @@ export default function StudentDetailPage({
               remainingFee={student.remaining_fee}
               isPaid={student.remaining_fee <= 0}
               studentAcademicYear={student.academic_year}
+              onSuccess={() => setRefreshKey(prev => prev + 1)}
             />
           </div>
           <EditStudentButton student={student} />
