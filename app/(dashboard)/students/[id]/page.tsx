@@ -23,25 +23,55 @@ export default function StudentDetailPage({
 }) {
   const { id } = use(params)
   
-  const [student, setStudent] = useState<any>(null)
+  const [student, setStudent] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i)
+          if (key && (key === 'students-cache' || key.startsWith('students-cache-'))) {
+            const raw = sessionStorage.getItem(key)
+            if (raw) {
+              const list = JSON.parse(raw)
+              if (Array.isArray(list)) {
+                const found = list.find((s: any) => s.id === id)
+                if (found) return found
+              }
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    return null
+  })
   const [payments, setPayments] = useState<any[] | null>(null)
   const [schoolSettings, setSchoolSettings] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i)
+          if (key && (key === 'students-cache' || key.startsWith('students-cache-'))) {
+            const raw = sessionStorage.getItem(key)
+            if (raw) {
+              const list = JSON.parse(raw)
+              if (Array.isArray(list)) {
+                const found = list.find((s: any) => s.id === id)
+                if (found) return false
+              }
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    return true
+  })
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     let mounted = true
-    try {
-      const cached = sessionStorage.getItem('students-cache')
-      if (cached) {
-        const parsed = JSON.parse(cached)
-        const found = parsed.find((s: any) => s.id === id)
-        if (found) {
-          setStudent(found)
-          setLoading(false)
-        }
-      }
-    } catch (e) {}
+    if (typeof window !== 'undefined') {
+      import('nprogress').then(np => np.default.done()).catch(() => {})
+    }
 
     const fetchFresh = async () => {
       const supabase = createClient()
@@ -81,7 +111,12 @@ export default function StudentDetailPage({
   }, [id, refreshKey])
 
   if (loading && !student) {
-    return <div className="p-10 flex justify-center"></div>
+    return (
+      <div className="p-10 flex flex-col items-center justify-center min-h-[50vh] gap-3 text-zinc-400">
+        <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+        <p className="text-sm">Loading student details...</p>
+      </div>
+    )
   }
 
   if (!student && !loading) {

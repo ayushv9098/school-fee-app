@@ -31,13 +31,12 @@ body {
 }
 
 .fade-in-page {
-  opacity: 0;
-  animation: fadeInPage 260ms ease-out forwards;
+  opacity: 1;
 }
 
 @keyframes fadeInPage {
   from {
-    opacity: 0;
+    opacity: 1;
   }
   to {
     opacity: 1;
