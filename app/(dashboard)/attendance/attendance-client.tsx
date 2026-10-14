@@ -655,19 +655,19 @@ export default function AttendanceClient({
   })
 
   return (
-    <div className="p-4 md:p-6 space-y-6 pb-20 font-sans max-w-7xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto p-4 md:p-6 space-y-5 sm:space-y-6 pb-20 font-sans min-w-0 overflow-x-clip">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">Teacher Attendance</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">Control and track staff records</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl w-full sm:w-auto overflow-x-auto scrollbar-hide justify-between sm:justify-start">
              <button 
                 onClick={() => setActiveTab('attendance')}
                 className={cn(
-                   "px-4 py-2 text-sm font-medium rounded-lg transition-all",
-                   activeTab === 'attendance' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300"
+                   "px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all flex-1 sm:flex-none justify-center flex items-center",
+                   activeTab === 'attendance' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 )}
              >
                 Records
@@ -675,13 +675,13 @@ export default function AttendanceClient({
              <button 
                 onClick={() => setActiveTab('leaves')}
                 className={cn(
-                   "px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2",
-                   activeTab === 'leaves' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300"
+                   "px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 sm:gap-2 flex-1 sm:flex-none",
+                   activeTab === 'leaves' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 )}
              >
                 Leaves
                 {pendingLeaves.length > 0 && (
-                   <span className="w-5 h-5 bg-violet-600 text-white text-[10px] rounded-full flex items-center justify-center">
+                   <span className="w-4 h-4 sm:w-5 sm:h-5 bg-violet-600 text-white text-[9px] sm:text-[10px] rounded-full flex items-center justify-center shrink-0">
                       {pendingLeaves.length}
                    </span>
                 )}
@@ -689,13 +689,13 @@ export default function AttendanceClient({
              <button 
                 onClick={() => setActiveTab('holidays')}
                 className={cn(
-                   "px-4 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-2",
-                   activeTab === 'holidays' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:text-zinc-300"
+                   "px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 sm:gap-2 flex-1 sm:flex-none",
+                   activeTab === 'holidays' ? "bg-white dark:bg-zinc-900 text-violet-600 shadow-sm" : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 )}
              >
                 Holidays
                 {monthHolidays.length > 0 && (
-                   <span className="w-5 h-5 bg-purple-600 text-white text-[10px] rounded-full flex items-center justify-center">
+                   <span className="w-4 h-4 sm:w-5 sm:h-5 bg-purple-600 text-white text-[9px] sm:text-[10px] rounded-full flex items-center justify-center shrink-0">
                       {monthHolidays.length}
                    </span>
                 )}
@@ -703,7 +703,7 @@ export default function AttendanceClient({
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition shadow-sm"
+            className="flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-xs sm:text-sm font-medium px-4 py-2.5 sm:py-2 rounded-xl transition shadow-sm w-full sm:w-auto shrink-0"
           >
             <Plus className="w-4 h-4 md:w-5 md:h-5" />
             Add Teacher
@@ -733,12 +733,12 @@ export default function AttendanceClient({
       {activeTab === 'attendance' ? (
          <>
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4">
                {[
                { label: 'Present Today', value: presentCount, icon: CheckCircle2, color: 'green', span: 'col-span-1' },
                ...(pendingCount > 0 ? [{ label: 'Pending / Not Marked', value: pendingCount, icon: Clock, color: 'amber', span: 'col-span-1' }] : []),
                { label: 'Absent Today', value: absentCount, icon: XCircle, color: 'red', span: 'col-span-1' },
-               { label: 'Total Staff', value: initialTeachers.length, icon: Users, color: 'violet', span: 'col-span-2 md:col-span-1' }
+               { label: 'Total Staff', value: initialTeachers.length, icon: Users, color: 'violet', span: pendingCount > 0 ? 'col-span-1' : 'col-span-2 md:col-span-1' }
                ].map(stat => (
                <Card key={stat.label} className={cn(
                   stat.span,
@@ -748,23 +748,23 @@ export default function AttendanceClient({
                   "border-violet-100 bg-violet-50/50",
                   "hover:shadow-md transition"
                )}>
-                  <CardContent className="p-4">
-                     <div className="flex items-center justify-between mb-2 md:mb-3">
+                  <CardContent className="p-3 sm:p-4">
+                     <div className="flex items-center justify-between mb-2 md:mb-3 gap-1">
                      <span className={cn(
                         stat.color === 'green' ? "text-green-700/60" :
                         stat.color === 'amber' ? "text-amber-700/60" :
                         stat.color === 'red' ? "text-red-700/60" :
                         "text-violet-700/60",
-                        "text-xs md:text-sm font-bold uppercase tracking-wider"
+                        "text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-wider truncate"
                      )}>{stat.label}</span>
                      <div className={cn(
                         stat.color === 'green' ? "bg-green-100 text-green-600 border-green-200/50" :
                         stat.color === 'amber' ? "bg-amber-100 text-amber-600 border-amber-200/50" :
                         stat.color === 'red' ? "bg-red-100 text-red-600 border-red-200/50" :
                         "bg-violet-100 text-violet-600 border-violet-200/50",
-                        "w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center shadow-sm border"
+                        "w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center shadow-sm border shrink-0"
                      )}>
-                        <stat.icon className="w-4 h-4 md:w-5 md:h-5" />
+                        <stat.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                      </div>
                      </div>
                      <p className={cn(
@@ -772,7 +772,7 @@ export default function AttendanceClient({
                         stat.color === 'amber' ? "text-amber-600" :
                         stat.color === 'red' ? "text-red-600" :
                         "text-violet-600",
-                        "text-2xl font-semibold tracking-tight"
+                        "text-xl sm:text-2xl font-semibold tracking-tight"
                      )}>{stat.value}</p>
                   </CardContent>
                </Card>
@@ -780,18 +780,20 @@ export default function AttendanceClient({
             </div>
 
             {/* Daily Status Card */}
-            <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden font-sans">
-               <CardHeader className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/50 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-               <CardTitle className="text-sm font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-widest flex items-center gap-2 font-sans text-[11px] md:text-sm">
-                  <Calendar size={16} className="text-violet-600 font-sans" /> Status: {dayjs(selectedDate).format('dddd, DD MMM YYYY')}
+            <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden font-sans min-w-0 max-w-full">
+               <CardHeader className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800/50 p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+               <CardTitle className="text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider sm:tracking-widest flex items-center gap-2 font-sans truncate">
+                  <Calendar size={16} className="text-violet-600 shrink-0 font-sans" /> Status: {dayjs(selectedDate).format('dddd, DD MMM YYYY')}
                </CardTitle>
-               <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm self-start md:self-auto">
-                  <Calendar size={14} className="text-zinc-400 ml-2" />
-                  <CustomDateInput 
-                     value={selectedDate}
-                     onChange={(e) => handleDateChange(e.target.value)}
-                     className="text-xs font-bold text-zinc-700 dark:text-zinc-300 focus:outline-none pr-2 bg-transparent h-7 min-w-[130px]"
-                  />
+               <div className="flex items-center justify-between sm:justify-start gap-2 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm w-full sm:w-auto">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1 sm:flex-none">
+                     <Calendar size={14} className="text-zinc-400 ml-1.5 shrink-0" />
+                     <CustomDateInput 
+                        value={selectedDate}
+                        onChange={(e) => handleDateChange(e.target.value)}
+                        className="text-xs font-bold text-zinc-700 dark:text-zinc-300 focus:outline-none pr-2 bg-transparent h-7 w-full sm:w-auto min-w-[120px]"
+                     />
+                  </div>
                </div>
                </CardHeader>
 
@@ -865,13 +867,6 @@ export default function AttendanceClient({
                                  {selectedDayType.observanceTitle}
                                </span>
                              )
-                           } else if (isSelectedToday) {
-                            dotColor = "bg-zinc-400"
-                            statusBadge = (
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200">
-                                Sunday
-                              </span>
-                            )
                           } else if (isSelectedToday) {
                             if (isPast3PM) {
                               dotColor = "bg-rose-500"
@@ -907,63 +902,66 @@ export default function AttendanceClient({
 
                         return (
                            <div 
-                              key={teacher.id}
+                              key={teacher.id} 
                               onClick={() => { setEditingTeacher(teacher); setShowEditModal(true); }}
-                              className="group p-4 hover:bg-zinc-50 dark:bg-zinc-950/80 transition-all cursor-pointer flex items-center gap-4"
+                              className="group p-3 sm:p-4 hover:bg-zinc-50 dark:bg-zinc-950/80 transition-all cursor-pointer flex items-center justify-between gap-3 sm:gap-4 min-w-0"
                            >
-                              {/* Selfie Thumbnail */}
-                              <div className="relative shrink-0">
-                                 {record?.selfie_url ? (
-                                    <div 
-                                       onClick={(e) => {
-                                          e.stopPropagation();
-                                          const url = supabase.storage.from('attendance-selfies').getPublicUrl(record.selfie_url).data.publicUrl;
-                                          setSelectedImage(url);
-                                       }}
-                                       className="w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden ring-2 ring-white shadow-md cursor-zoom-in group-hover:scale-105 transition-transform"
-                                    >
-                                       <img 
-                                          src={supabase.storage.from('attendance-selfies').getPublicUrl(record.selfie_url).data.publicUrl} 
-                                          alt={teacher.name} 
-                                          className="w-full h-full object-cover"
-                                       />
-                                    </div>
-                                 ) : (
-                                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-300 border border-zinc-200 dark:border-zinc-800">
-                                       <Camera size={20} />
-                                    </div>
-                                 )}
-                                 {/* Status Indicator Dot */}
-                                 <div className={cn(
-                                    "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-sm",
-                                    dotColor
-                                 )} />
-                              </div>
+                              {/* Left & Middle: Avatar + Info */}
+                              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                                 {/* Selfie Thumbnail */}
+                                 <div className="relative shrink-0">
+                                    {record?.selfie_url ? (
+                                       <div 
+                                          onClick={(e) => {
+                                             e.stopPropagation();
+                                             const url = supabase.storage.from('attendance-selfies').getPublicUrl(record.selfie_url).data.publicUrl;
+                                             setSelectedImage(url);
+                                          }}
+                                          className="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden ring-2 ring-white shadow-md cursor-zoom-in group-hover:scale-105 transition-transform"
+                                       >
+                                          <img 
+                                             src={supabase.storage.from('attendance-selfies').getPublicUrl(record.selfie_url).data.publicUrl} 
+                                             alt={teacher.name} 
+                                             className="w-full h-full object-cover"
+                                          />
+                                       </div>
+                                    ) : (
+                                       <div className="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-300 border border-zinc-200 dark:border-zinc-800">
+                                          <Camera size={18} className="sm:w-5 sm:h-5" />
+                                       </div>
+                                    )}
+                                    {/* Status Indicator Dot */}
+                                    <div className={cn(
+                                       "absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-white shadow-sm",
+                                       dotColor
+                                    )} />
+                                 </div>
 
-                              {/* Staff Info */}
-                              <div className="flex-1 min-w-0">
-                                 <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm md:text-base truncate group-hover:text-violet-600 transition-colors">
-                                    {teacher.name}
-                                 </h3>
-                                 <div className="flex flex-wrap items-center gap-2 mt-1">
-                                    <span className="text-[10px] md:text-xs text-zinc-500 dark:text-zinc-400 font-medium tracking-tight">
-                                       {teacher.subject}
-                                    </span>
-                                    {statusBadge}
+                                 {/* Staff Info */}
+                                 <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm md:text-base truncate group-hover:text-violet-600 transition-colors">
+                                       {teacher.name}
+                                    </h3>
+                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
+                                       <span className="text-[10px] md:text-xs text-zinc-500 dark:text-zinc-400 font-medium tracking-tight truncate max-w-[130px] sm:max-w-none">
+                                          {teacher.subject}
+                                       </span>
+                                       {statusBadge}
+                                    </div>
                                  </div>
                               </div>
 
                               {/* Time & Tracking */}
-                              <div className="text-right shrink-0 space-y-2">
+                              <div className="text-right shrink-0 space-y-1 sm:space-y-2">
                                  <div className="flex flex-col">
-                                    <div className="flex items-center justify-end gap-1.5 text-zinc-900 dark:text-zinc-100">
-                                       <Clock size={12} className="text-zinc-400" />
-                                       <span className="text-xs md:text-sm font-bold tracking-tight">
+                                    <div className="flex items-center justify-end gap-1 sm:gap-1.5 text-zinc-900 dark:text-zinc-100">
+                                       <Clock size={11} className="text-zinc-400 sm:w-3 sm:h-3" />
+                                       <span className="text-[11px] sm:text-xs md:text-sm font-bold tracking-tight">
                                           {record?.check_in_time ? dayjs(record.check_in_time).format('hh:mm A') : '--:--'}
                                        </span>
                                     </div>
                                     {record?.check_out_time && (
-                                       <span className="text-[10px] text-amber-600 font-bold uppercase tracking-tight mt-0.5">
+                                       <span className="text-[9px] sm:text-[10px] text-amber-600 font-bold uppercase tracking-tight mt-0.5">
                                           Out: {dayjs(record.check_out_time).format('hh:mm A')}
                                        </span>
                                     )}
@@ -972,9 +970,9 @@ export default function AttendanceClient({
                                  {record && (
                                     <button 
                                        onClick={(e) => { e.stopPropagation(); fetchMovementHistory(record.id, teacher); }}
-                                       className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-violet-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-900 transition-all shadow-lg shadow-violet-100 group-hover:shadow-none"
+                                       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-violet-600 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider hover:bg-zinc-900 transition-all shadow-md group-hover:shadow-none shrink-0"
                                     >
-                                       <MapPin size={10} strokeWidth={3} />
+                                       <MapPin size={9} strokeWidth={3} />
                                        Track
                                     </button>
                                  )}
@@ -987,23 +985,23 @@ export default function AttendanceClient({
             </Card>
 
             {/* Monthly Register Card */}
-            <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden mb-10 font-sans">
-               <CardHeader className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b border-zinc-100 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-950/50 gap-4">
-               <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-sm md:text-base font-bold text-zinc-800 tracking-tight whitespace-nowrap">
+            <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm rounded-2xl overflow-hidden mb-10 font-sans min-w-0 max-w-full">
+               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 border-b border-zinc-100 dark:border-zinc-800/50 bg-zinc-50 dark:bg-zinc-950/50 gap-3 sm:gap-4">
+               <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+                  <h2 className="text-xs sm:text-sm md:text-base font-bold text-zinc-800 dark:text-zinc-200 tracking-tight whitespace-nowrap">
                      {dayjs().year(selectedYear).month(selectedMonth - 1).format('MMMM YYYY')} Register
                   </h2>
                   
-                  <div className="flex items-center gap-1.5 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                  <div className="flex items-center justify-between sm:justify-start gap-1 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm w-full sm:w-auto">
                      <button 
                      onClick={handlePrevMonth}
-                     className="p-1.5 hover:bg-zinc-50 dark:bg-zinc-950 rounded-lg text-zinc-500 dark:text-zinc-400 transition-colors"
+                     className="p-1 sm:p-1.5 hover:bg-zinc-50 dark:bg-zinc-950 rounded-lg text-zinc-500 dark:text-zinc-400 transition-colors"
                      title="Previous Month"
                      >
                      <ChevronLeft size={16} />
                      </button>
                      
-                     <div className="h-4 w-px bg-zinc-100 dark:bg-zinc-800 mx-1" />
+                     <div className="h-4 w-px bg-zinc-100 dark:bg-zinc-800 mx-0.5 sm:mx-1" />
                      
                      <CustomSelect 
                      value={selectedMonth}
@@ -1025,11 +1023,11 @@ export default function AttendanceClient({
                      ))}
                      </CustomSelect>
 
-                     <div className="h-4 w-px bg-zinc-100 dark:bg-zinc-800 mx-1" />
+                     <div className="h-4 w-px bg-zinc-100 dark:bg-zinc-800 mx-0.5 sm:mx-1" />
 
                      <button 
                      onClick={handleNextMonth}
-                     className="p-1.5 hover:bg-zinc-50 dark:bg-zinc-950 rounded-lg text-zinc-500 dark:text-zinc-400 transition-colors"
+                     className="p-1 sm:p-1.5 hover:bg-zinc-50 dark:bg-zinc-950 rounded-lg text-zinc-500 dark:text-zinc-400 transition-colors"
                      title="Next Month"
                      >
                      <ChevronRight size={16} />
@@ -1037,22 +1035,22 @@ export default function AttendanceClient({
                   </div>
                </div>
 
-               <div className="flex items-center gap-2">
+               <div className="flex items-center gap-2 w-full sm:w-auto">
                   <button 
                      onClick={handleGoToToday}
-                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:bg-white dark:bg-zinc-900 hover:text-violet-600 border border-transparent hover:border-zinc-200 dark:border-zinc-800 transition-all shadow-none hover:shadow-sm"
+                     className="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:bg-white dark:bg-zinc-900 hover:text-violet-600 border border-transparent hover:border-zinc-200 dark:border-zinc-800 transition-all shadow-none hover:shadow-sm"
                   >
                      <RotateCcw size={14} /> Today
                   </button>
                   <button 
                      onClick={handleExportPDF}
-                     className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-violet-600 hover:bg-violet-50 border border-violet-100 transition-colors"
+                     className="flex-1 sm:flex-none justify-center flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold text-violet-600 hover:bg-violet-50 border border-violet-100 transition-colors"
                   >
                      <Download size={14} /> Export PDF
                   </button>
                </div>
                </CardHeader>
-               <CardContent className="p-0 overflow-x-auto scrollbar-hide font-sans relative">
+               <CardContent className="p-0 max-w-full overflow-x-auto scrollbar-hide font-sans relative">
                <div key={`${selectedMonth}-${selectedYear}`} className="animate-in fade-in slide-in-from-right-1 duration-500">
                   <table className="w-full text-[10px] border-collapse min-w-[800px] table-fixed font-sans">
                      <thead className="bg-zinc-50 dark:bg-zinc-950/30 font-sans sticky top-0 z-20">
@@ -1341,7 +1339,7 @@ export default function AttendanceClient({
                 <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Subject / Role</Label>
                 <Input required placeholder="e.g. Mathematics" value={newTeacher.subject} onChange={e => setNewTeacher({ ...newTeacher, subject: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
               </div>
-              <div className="grid grid-cols-2 gap-4 font-sans">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 font-sans">
                 <div className="space-y-1.5 font-sans">
                   <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Salary (₹)</Label>
                   <Input required type="number" placeholder="20000" value={newTeacher.salary} onChange={e => setNewTeacher({ ...newTeacher, salary: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
@@ -1460,7 +1458,7 @@ export default function AttendanceClient({
                   <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Subject / Role</Label>
                   <Input required value={editingTeacher.subject || ''} onChange={e => setEditingTeacher({ ...editingTeacher, subject: e.target.value })} className="h-11 rounded-xl font-bold font-sans" />
                 </div>
-                <div className="grid grid-cols-2 gap-4 font-sans">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 font-sans">
                   <div className="space-y-1.5 font-sans">
                     <Label className="text-xs font-bold uppercase tracking-wider text-zinc-400 font-sans">Salary (₹)</Label>
                     <Input required type="number" value={editingTeacher.monthly_salary ?? ''} onChange={e => setEditingTeacher({ ...editingTeacher, monthly_salary: Number(e.target.value) })} className="h-11 rounded-xl font-bold font-sans" />
