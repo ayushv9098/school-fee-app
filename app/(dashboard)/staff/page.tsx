@@ -6,18 +6,29 @@ import { useSession } from '@/lib/session-context'
 import StaffClient from './staff-client'
 import { Loader2 } from 'lucide-react'
 import dayjs from 'dayjs'
+import { getSafeInitialCache, setSafeCache, markAppHydrated } from '@/lib/cache-utils'
 
 export default function StaffPage() {
   const { academicYear } = useSession()
-  const [data, setData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<any>(() => getSafeInitialCache(`staff-cache-${academicYear}`))
+  const [loading, setLoading] = useState<boolean>(() => !getSafeInitialCache(`staff-cache-${academicYear}`))
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
+    markAppHydrated()
+
+    if (!data) {
+      try {
+        const cached = sessionStorage.getItem(`staff-cache-${academicYear}`)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          setData(parsed)
+          setLoading(false)
+        }
+      } catch (e) {}
+    }
+
     async function fetchData() {
-      if (!data) {
-        setLoading(true)
-      }
       const supabase = createClient()
       const today = dayjs().format('YYYY-MM-DD')
       const { data: { user } } = await supabase.auth.getUser()
@@ -51,11 +62,14 @@ export default function StaffPage() {
         attendanceQuery
       ])
 
-      setData({
+      const freshData = {
         teachers: teachers.data || [],
         teacherPayments: teacherPayments.data || [],
         todayAttendance: todayAttendance.data || []
-      })
+      }
+
+      setSafeCache(`staff-cache-${academicYear}`, freshData)
+      setData(freshData)
       setLoading(false)
     }
 
@@ -72,9 +86,9 @@ export default function StaffPage() {
 
   return (
     <StaffClient
-      initialTeachers={data.teachers}
-      initialTeacherPayments={data.teacherPayments}
-      todayAttendance={data.todayAttendance || []}
+      initialTeachers={data?.teachers || []}
+      initialTeacherPayments={data?.teacherPayments || []}
+      todayAttendance={data?.todayAttendance || []}
       onRefresh={() => setRefreshKey(prev => prev + 1)}
     />
   )

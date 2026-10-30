@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, getProgressPercent } from '@/lib/calculations'
 import { CLASSES } from '@/lib/constants'
@@ -81,55 +81,152 @@ const triggerHaptics = (isTurningOn: boolean) => {
 }
 
 export default function DashboardPage() {
-  const { academicYear } = useSession()
+  const { academicYear, isInitialized } = useSession()
   const [students, setStudents] = useState<any[]>([])
   const [expenses, setExpenses] = useState<any[]>([])
   const [schoolName, setSchoolName] = useState('Ayushman Educational Academy')
   const [hidden, setHidden] = useState(true)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async (showLoading = true) => {
+    if (!isInitialized) return
+    if (showLoading && students.length === 0) {
       setLoading(true)
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+    }
 
-      // Fetch everything in parallel
+    try {
+      const supabase = createClient()
+      
+      // Fast local session check first (0ms)
+      const { data: { session } } = await supabase.auth.getSession()
+      let user = session?.user || null
+      if (!user) {
+        const userRes = await supabase.auth.getUser()
+        user = userRes.data?.user || null
+      }
+
+      const userFilter = user ? { user_id: user.id } : {}
+
+      // Fetch all dashboard stats in parallel with projected lightweight columns
       const [settingsRes, studentsRes, legacy, teachers, vehicles, building] = await Promise.all([
-        user ? supabase.from('school_settings').select('school_name').eq('user_id', user.id).maybeSingle() : Promise.resolve({ data: null }),
-        user ? supabase.from('student_fee_summary').select('*').eq('academic_year', academicYear).eq('status', 'active').eq('user_id', user.id) : Promise.resolve({ data: [] }),
-        supabase.from('expenses').select('amount'),
-        supabase.from('teacher_payments').select('amount').or(`academic_year.eq.${academicYear},academic_year.is.null`),
-        supabase.from('vehicle_expenses').select('amount').or(`academic_year.eq.${academicYear},academic_year.is.null`),
-        supabase.from('building_expenses').select('amount').or(`academic_year.eq.${academicYear},academic_year.is.null`)
+        user 
+          ? supabase.from('school_settings').select('school_name').eq('user_id', user.id).maybeSingle() 
+          : Promise.resolve({ data: null }),
+        supabase
+          .from('student_fee_summary')
+          .select('class, total_fee, previous_dues, total_paid, remaining_fee')
+          .eq('academic_year', academicYear)
+          .eq('status', 'active')
+          .match(userFilter),
+        supabase.from('expenses').select('amount').match(userFilter),
+        supabase.from('teacher_payments').select('amount').or(`academic_year.eq.${academicYear},academic_year.is.null`).match(userFilter),
+        supabase.from('vehicle_expenses').select('amount').or(`academic_year.eq.${academicYear},academic_year.is.null`).match(userFilter),
+        supabase.from('building_expenses').select('amount').or(`academic_year.eq.${academicYear},academic_year.is.null`).match(userFilter)
       ])
 
       if (settingsRes.data?.school_name) {
         setSchoolName(settingsRes.data.school_name)
       }
-      setStudents(studentsRes.data || [])
 
+      const freshStudents = studentsRes.data || []
       const allExpenses = [
         ...(legacy.data || []),
         ...(teachers.data || []),
         ...(vehicles.data || []),
         ...(building.data || [])
       ]
+
+      setStudents(freshStudents)
       setExpenses(allExpenses)
       setLoading(false)
+
+      // Save to sessionStorage cache for instant 0ms load next time
+      try {
+        sessionStorage.setItem(`dashboard-cache-${academicYear}`, JSON.stringify({
+          students: freshStudents,
+          expenses: allExpenses,
+          schoolName: settingsRes.data?.school_name || schoolName
+        }))
+      } catch (e) {}
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err)
+      setLoading(false)
+    }
+  }, [academicYear, isInitialized, schoolName, students.length])
+
+  // 1. Initial Load & Fast Cache Read
+  useEffect(() => {
+    if (!isInitialized) return
+
+    let hasCached = false
+    try {
+      // Check dashboard cache first
+      const cached = sessionStorage.getItem(`dashboard-cache-${academicYear}`)
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (parsed && Array.isArray(parsed.students)) {
+          setStudents(parsed.students)
+          if (Array.isArray(parsed.expenses)) setExpenses(parsed.expenses)
+          if (parsed.schoolName) setSchoolName(parsed.schoolName)
+          setLoading(false)
+          hasCached = true
+        }
+      }
+
+      // If no dashboard cache, check students list cache for instant figures
+      if (!hasCached) {
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i)
+          if (key && key.startsWith(`students-cache-${academicYear}`)) {
+            const raw = sessionStorage.getItem(key)
+            if (raw) {
+              const list = JSON.parse(raw)
+              if (Array.isArray(list) && list.length > 0) {
+                setStudents(list)
+                setLoading(false)
+                hasCached = true
+                break
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {}
+
+    // Fetch fresh data in background (silent if cached, showing loader only if completely empty)
+    fetchDashboardData(!hasCached)
+  }, [academicYear, isInitialized, fetchDashboardData])
+
+  // 2. Auto-Update when window regains focus or tab becomes active
+  useEffect(() => {
+    if (!isInitialized) return
+
+    const handleFocus = () => {
+      fetchDashboardData(false)
     }
 
-    fetchDashboardData()
-  }, [academicYear])
+    window.addEventListener('focus', handleFocus)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchDashboardData(false)
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [isInitialized, fetchDashboardData])
 
   const totalStudents = students.length
-  const totalFees = students.reduce((a, s) => a + s.total_fee + (s.previous_dues || 0), 0)
-  const totalCollected = students.reduce((a, s) => a + s.total_paid, 0)
-  const totalPending = students.reduce((a, s) => a + s.remaining_fee, 0)
-  const totalExpenses = expenses.reduce((a, e) => a + Number(e.amount), 0)
+  const totalFees = students.reduce((a, s) => a + (s.total_fee || 0) + (s.previous_dues || 0), 0)
+  const totalCollected = students.reduce((a, s) => a + (s.total_paid || 0), 0)
+  const totalPending = students.reduce((a, s) => a + (s.remaining_fee || 0), 0)
+  const totalExpenses = expenses.reduce((a, e) => a + Number(e.amount || 0), 0)
   const netProfit = totalCollected - totalExpenses
 
-  const classes = [...new Set(students.map(s => s.class))].sort((a, b) => {
+  const classes = [...new Set(students.map(s => s.class))].filter(Boolean).sort((a, b) => {
     const indexA = CLASSES.indexOf(a)
     const indexB = CLASSES.indexOf(b)
     if (indexA === -1 && indexB === -1) return a.localeCompare(b)
@@ -139,8 +236,8 @@ export default function DashboardPage() {
   })
   const classStats = classes.map(cls => {
     const cl = students.filter(s => s.class === cls)
-    const fee = cl.reduce((a, s) => a + s.total_fee + (s.previous_dues || 0), 0)
-    const paid = cl.reduce((a, s) => a + s.total_paid, 0)
+    const fee = cl.reduce((a, s) => a + (s.total_fee || 0) + (s.previous_dues || 0), 0)
+    const paid = cl.reduce((a, s) => a + (s.total_paid || 0), 0)
     return {
       name: cls,
       count: cl.length,
@@ -153,7 +250,14 @@ export default function DashboardPage() {
 
   const mask = '₹ ••••••'
 
-
+  if (loading && students.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-zinc-400">
+        <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+        <p className="text-sm">Loading dashboard stats...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-6">

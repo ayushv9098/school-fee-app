@@ -91,6 +91,14 @@ export default function AddPaymentButton({
       return
     }
     try {
+      // Invalidate dashboard cache so dashboard reflects new collection immediately
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith('dashboard-cache-')) {
+          sessionStorage.removeItem(key);
+        }
+      }
+
       // We iterate over ALL keys in sessionStorage that start with 'students-cache-'
       // This ensures the student is updated across all cached filter combinations.
       for (let i = 0; i < sessionStorage.length; i++) {

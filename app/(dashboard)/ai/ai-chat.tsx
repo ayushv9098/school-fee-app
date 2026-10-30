@@ -41,9 +41,8 @@ export default function AIChat(props: Props) {
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const el = document.getElementById('chat-messages')
-    if (el) el.scrollTop = el.scrollHeight
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
 
   const context = `
     School: ${props.schoolName || 'Ayushman Educational Academy'}
@@ -112,10 +111,10 @@ export default function AIChat(props: Props) {
           AI Assistant
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-5 pt-0 space-y-4">
+      <CardContent className="p-3.5 sm:p-5 pt-0 space-y-2.5">
 
         {/* Messages */}
-        <div className="space-y-3 max-h-80 overflow-y-auto" id="chat-messages">
+        <div className="max-h-[200px] sm:max-h-[260px] min-h-[60px] overflow-y-auto space-y-2.5 pr-1 scroll-smooth" id="chat-messages">
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
               <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -159,11 +158,12 @@ export default function AIChat(props: Props) {
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Quick Questions */}
         {showQuickQuestions && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar whitespace-nowrap">
             {[
               'Software ke kya kya features hain?',
               'Add payment kaise karein?',
@@ -177,7 +177,7 @@ export default function AIChat(props: Props) {
                   setInput(q)
                   setShowQuickQuestions(false)
                 }}
-                className="text-xs px-3 py-1.5 rounded-full border border-violet-200 text-violet-600 hover:bg-violet-50 transition"
+                className="text-xs px-3 py-1 rounded-full border border-violet-200 dark:border-violet-900/40 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition shrink-0"
               >
                 {q}
               </button>
@@ -186,21 +186,23 @@ export default function AIChat(props: Props) {
         )}
 
         {/* Input */}
-        <div className="flex gap-2">
-          <Input
-            placeholder="Ask about students, fees or features..."
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
-            className="h-11"
-          />
-          <button
-            onClick={handleSend}
-            disabled={loading || !input.trim()}
-            className="h-11 w-11 flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white transition disabled:opacity-50"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+        <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky bottom-0 z-10">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Ask about students, fees or features..."
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              className="h-10 text-xs sm:text-sm placeholder:text-xs"
+            />
+            <button
+              onClick={handleSend}
+              disabled={loading || !input.trim()}
+              className="h-10 w-10 flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white transition disabled:opacity-50 shrink-0"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </CardContent>
     </Card>

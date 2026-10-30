@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { context, schoolName, schoolAddress, schoolMobile } = body
+    const { context } = body
     
     let messagesArray = body.messages
     if (!messagesArray && body.message) {
@@ -13,11 +13,31 @@ export async function POST(req: NextRequest) {
       messagesArray = []
     }
 
+    if (messagesArray.length === 0) {
+      return NextResponse.json({ reply: 'Kripya apna sawal likhein.' }, { status: 400 })
+    }
+
+    // Inspect user's query to detect if attendance data is needed
+    const lastUserMsg = [...messagesArray].reverse().find((m: any) => m.role === 'user')?.content || ''
+    const currentQuery = (typeof body.message === 'string' && body.message.trim()) ? body.message : lastUserMsg
+    const isAttendanceQuery = /attendance|attend|haziri|hazri|haazri|haaziri|present|absent|aaya|aaye|aayi|chhutti|chutti|bunk|aaj/i.test(currentQuery)
+
+    // Lazy Supabase helper to avoid duplicate client & auth calls
+    let supabaseClient: any = null
+    let authUser: any = null
+    const getSupabaseUser = async () => {
+      if (!supabaseClient) {
+        const { createClient } = require('@/lib/supabase/server')
+        supabaseClient = await createClient()
+        const { data } = await supabaseClient.auth.getUser()
+        authUser = data?.user || null
+      }
+      return { supabase: supabaseClient, user: authUser }
+    }
+
     let finalContext = context
     if (!finalContext) {
-      const { createClient } = require('@/lib/supabase/server')
-      const supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { supabase, user } = await getSupabaseUser()
       if (user) {
         const { data: students } = await supabase.from('student_fee_summary').select('*').eq('user_id', user.id).eq('status', 'active')
         if (students) {
@@ -27,87 +47,88 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Fetch student attendance data for AI context
+    // Fetch student attendance data for AI context ONLY if the query is attendance-related.
+    // For fee, student, or general queries, skipping this saves 1-2+ seconds!
     let attendanceContext = ''
-    try {
-      const { createClient } = require('@/lib/supabase/server')
-      const supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (user) {
-        const oneMonthAgo = new Date()
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
-        const fromDate = oneMonthAgo.toISOString().split('T')[0]
+    if (isAttendanceQuery) {
+      try {
+        const { supabase, user } = await getSupabaseUser()
+        
+        if (user) {
+          const oneMonthAgo = new Date()
+          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
+          const fromDate = oneMonthAgo.toISOString().split('T')[0]
 
-        let allData: any[] = []
-        let from = 0
-        const step = 1000
-        while (true) {
-          const { data: attendance } = await supabase
-            .from('student_attendance')
-            .select('date, status, student:students!inner(name, class, user_id)')
-            .eq('students.user_id', user.id)
-            .gte('date', fromDate)
-            .order('date', { ascending: false })
-            .range(from, from + step - 1)
-          
-          if (!attendance || attendance.length === 0) break
-          allData.push(...attendance)
-          if (attendance.length < step) break
-          from += step
+          let allData: any[] = []
+          let from = 0
+          const step = 1000
+          while (from < 5000) {
+            const { data: attendance } = await supabase
+              .from('student_attendance')
+              .select('date, status, student:students!inner(name, class, user_id)')
+              .eq('students.user_id', user.id)
+              .gte('date', fromDate)
+              .order('date', { ascending: false })
+              .range(from, from + step - 1)
+            
+            if (!attendance || attendance.length === 0) break
+            allData.push(...attendance)
+            if (attendance.length < step) break
+            from += step
+          }
+
+          if (allData.length > 0) {
+            const studentsMap: any = {}
+            for (const row of allData) {
+              const sName = row.student?.name || 'Unknown'
+              const sClass = row.student?.class || 'Unknown'
+              const key = sName + '|' + sClass
+              if (!studentsMap[key]) {
+                studentsMap[key] = { name: sName, class: sClass, presentDates: new Set(), absentDates: new Set() }
+              }
+              const dStr = row.date.substring(5) // MM-DD
+              if (row.status === 'present') studentsMap[key].presentDates.add(dStr)
+              else if (row.status === 'absent') studentsMap[key].absentDates.add(dStr)
+            }
+
+            const classMap: any = {}
+            for (const key in studentsMap) {
+              const s = studentsMap[key]
+              if (!classMap[s.class]) classMap[s.class] = []
+              classMap[s.class].push(s)
+            }
+
+            let summary = ''
+            for (const cls in classMap) {
+              const students = classMap[cls]
+              let maxP = -1, maxA = -1
+              let mostP: string[] = [], mostA: string[] = []
+              
+              for (const s of students) {
+                const pCount = s.presentDates.size
+                const aCount = s.absentDates.size
+                if (pCount > maxP) { maxP = pCount; mostP = [s.name] }
+                else if (pCount === maxP) mostP.push(s.name)
+                if (aCount > maxA) { maxA = aCount; mostA = [s.name] }
+                else if (aCount === maxA) mostA.push(s.name)
+              }
+              
+              summary += '\nClass ' + cls + ':\n'
+              summary += 'Top Present: ' + (mostP.slice(0,3).join(', ')) + ' (' + maxP + ' days)\n'
+              summary += 'Top Absent: ' + (mostA.slice(0,3).join(', ')) + ' (' + maxA + ' days)\n'
+              
+              for (const s of students) {
+                const pArr = Array.from(s.presentDates)
+                const aArr = Array.from(s.absentDates)
+                summary += s.name + ' | P:' + pArr.length + ' (' + pArr.slice(0, 5).join(',') + '...) | A:' + aArr.length + ' (' + aArr.slice(0, 5).join(',') + '...)\n'
+              }
+            }
+            attendanceContext = summary
+          }
         }
-
-        if (allData.length > 0) {
-          const studentsMap: any = {}
-          for (const row of allData) {
-            const sName = row.student?.name || 'Unknown'
-            const sClass = row.student?.class || 'Unknown'
-            const key = sName + '|' + sClass
-            if (!studentsMap[key]) {
-              studentsMap[key] = { name: sName, class: sClass, presentDates: new Set(), absentDates: new Set() }
-            }
-            const dStr = row.date.substring(5) // MM-DD
-            if (row.status === 'present') studentsMap[key].presentDates.add(dStr)
-            else if (row.status === 'absent') studentsMap[key].absentDates.add(dStr)
-          }
-
-          const classMap: any = {}
-          for (const key in studentsMap) {
-            const s = studentsMap[key]
-            if (!classMap[s.class]) classMap[s.class] = []
-            classMap[s.class].push(s)
-          }
-
-          let summary = ''
-          for (const cls in classMap) {
-            const students = classMap[cls]
-            let maxP = -1, maxA = -1
-            let mostP: string[] = [], mostA: string[] = []
-            
-            for (const s of students) {
-              const pCount = s.presentDates.size
-              const aCount = s.absentDates.size
-              if (pCount > maxP) { maxP = pCount; mostP = [s.name] }
-              else if (pCount === maxP) mostP.push(s.name)
-              if (aCount > maxA) { maxA = aCount; mostA = [s.name] }
-              else if (aCount === maxA) mostA.push(s.name)
-            }
-            
-            summary += '\\nClass ' + cls + ':\\n'
-            summary += 'Top Present: ' + (mostP.slice(0,3).join(', ')) + ' (' + maxP + ' days)\\n'
-            summary += 'Top Absent: ' + (mostA.slice(0,3).join(', ')) + ' (' + maxA + ' days)\\n'
-            
-            for (const s of students) {
-              const pArr = Array.from(s.presentDates)
-              const aArr = Array.from(s.absentDates)
-              summary += s.name + ' | P:' + pArr.length + ' (' + pArr.slice(0, 5).join(',') + '...) | A:' + aArr.length + ' (' + aArr.slice(0, 5).join(',') + '...)\\n'
-            }
-          }
-          attendanceContext = summary
-        }
+      } catch (err) {
+        console.warn('[AI Chat] Attendance fetch failed:', err)
       }
-    } catch (err) {
-      console.warn('[AI Chat] Attendance fetch failed:', err)
     }
 
     const systemPrompt = `
@@ -116,13 +137,13 @@ You are the "Ayushman School Expert". Your job is to answer questions about the 
 ====================================
 📊 DATA CONTEXT (Students List)
 ====================================
-${finalContext}
+${finalContext || 'No student data available.'}
 
 ====================================
-📅 ATTENDANCE DATA (Last 3 Months)
+📅 ATTENDANCE DATA (Last 30 Days)
 ====================================
 Today's Date: ${new Date().toISOString().split('T')[0]}
-${attendanceContext || 'No attendance data available.'}
+${attendanceContext || (isAttendanceQuery ? 'No attendance records found for this period.' : 'No attendance data requested.')}
 
 ====================================
 🗣 STRICT RULES FOR ACCURACY
@@ -157,11 +178,16 @@ ${attendanceContext || 'No attendance data available.'}
 
     const geminiMessages = messagesArray.map((msg: any) => ({
       role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }]
+      parts: [{ text: msg.content || '' }]
     }))
 
     const geminiKey = process.env.GEMINI_API_KEY
-    const models = ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-3.5-flash']
+    if (!geminiKey) {
+      console.error('[AI Chat] GEMINI_API_KEY is not configured')
+      return NextResponse.json({ reply: 'AI service configure nahi hai. Kripya system admin se sampark karein.' }, { status: 500 })
+    }
+
+    const models = ['gemini-flash-lite-latest', 'gemini-3.5-flash']
     let response;
     let data;
 
@@ -187,11 +213,11 @@ ${attendanceContext || 'No attendance data available.'}
       console.error('Gemini API Error after retries:', data)
       return NextResponse.json({ reply: `Server abhi bohot busy hai. Kripya 1-2 minute baad koshish karein.` }, { status: response?.status || 500 })
     }
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response'
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Kripya apna sawal dobara poochein.'
     return NextResponse.json({ reply })
 
   } catch (error: any) {
     console.error('AI Chat Route Error:', error)
-    return NextResponse.json({ reply: `Error: ${error.message || 'Unknown error'}` }, { status: 500 })
+    return NextResponse.json({ reply: `Kripya thodi der baad dobara koshish karein. Technical samasya ke karan AI connect nahi ho pa raha hai.` }, { status: 500 })
   }
 }

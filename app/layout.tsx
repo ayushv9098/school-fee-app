@@ -77,7 +77,12 @@ export default function RootLayout({
       </head>
       <body className={geist.className}>
         <SessionProvider>
-          <Toaster position="top-center" expand={false} richColors />
+          <Toaster 
+            position="top-center" 
+            expand={false} 
+            richColors 
+            swipeDirections={['top', 'right', 'left', 'bottom']}
+          />
           <div className="fade-in-page">{children}</div>
         </SessionProvider>
         {process.env.NODE_ENV === 'development' && <Agentation />}

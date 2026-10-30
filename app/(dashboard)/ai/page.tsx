@@ -10,37 +10,71 @@ import AIChat from './ai-chat'
 import DefaulterRow from './defaulter-row'
 import CollapsibleSection from '@/components/ui/collapsible-section'
 import { useSession } from '@/lib/session-context'
+import { getSafeInitialCache, setSafeCache, markAppHydrated } from '@/lib/cache-utils'
 
 export default function AIPage() {
   const { academicYear } = useSession()
-  const [data, setData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<any>(() => getSafeInitialCache(`ai-cache-${academicYear}`))
+  const [loading, setLoading] = useState<boolean>(() => !getSafeInitialCache(`ai-cache-${academicYear}`))
 
   useEffect(() => {
+    let isCurrent = true
+    markAppHydrated()
+
+    const cacheKey = `ai-cache-${academicYear}`
+
+    if (!data) {
+      try {
+        const raw = sessionStorage.getItem(cacheKey)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          setData(parsed)
+          setLoading(false)
+        }
+      } catch {}
+    }
+
     async function fetchData() {
-      setLoading(true)
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        let user = session?.user || null
+        if (!user) {
+          const userRes = await supabase.auth.getUser()
+          user = userRes.data?.user || null
+        }
 
-      const [studentsRes, paymentsRes, subscriptionRes, schoolSettingsRes, studentsWithEmailRes] = await Promise.all([
-        supabase.from('student_fee_summary').select('*').eq('academic_year', academicYear).eq('status', 'active').eq('user_id', user?.id),
-        supabase.from('payments').select('*, student:students!inner(academic_year, user_id)').eq('students.academic_year', academicYear).eq('students.user_id', user?.id).order('paid_at', { ascending: false }),
-        supabase.from('subscriptions').select('*').eq('user_id', user?.id).eq('status', 'active').gte('expires_at', new Date().toISOString()).maybeSingle(),
-        supabase.from('school_settings').select('*').eq('user_id', user?.id).maybeSingle(),
-        supabase.from('students').select('id, name, email').eq('user_id', user?.id).eq('academic_year', academicYear)
-      ])
+        const [studentsRes, paymentsRes, subscriptionRes, schoolSettingsRes, studentsWithEmailRes] = await Promise.all([
+          supabase.from('student_fee_summary').select('*').eq('academic_year', academicYear).eq('status', 'active').eq('user_id', user?.id),
+          supabase.from('payments').select('*, student:students!inner(academic_year, user_id)').eq('students.academic_year', academicYear).eq('students.user_id', user?.id).order('paid_at', { ascending: false }),
+          supabase.from('subscriptions').select('*').eq('user_id', user?.id).eq('status', 'active').gte('expires_at', new Date().toISOString()).maybeSingle(),
+          supabase.from('school_settings').select('*').eq('user_id', user?.id).maybeSingle(),
+          supabase.from('students').select('id, name, email').eq('user_id', user?.id).eq('academic_year', academicYear)
+        ])
 
-      setData({
-        students: studentsRes.data || [],
-        payments: paymentsRes.data || [],
-        isSubscribed: !!subscriptionRes.data,
-        schoolSettings: schoolSettingsRes.data,
-        studentsWithEmail: studentsWithEmailRes.data || []
-      })
-      setLoading(false)
+        if (!isCurrent) return
+
+        const freshData = {
+          students: studentsRes.data || [],
+          payments: paymentsRes.data || [],
+          isSubscribed: !!subscriptionRes.data,
+          schoolSettings: schoolSettingsRes.data,
+          studentsWithEmail: studentsWithEmailRes.data || []
+        }
+
+        setData(freshData)
+        setLoading(false)
+        setSafeCache(cacheKey, freshData)
+      } catch (err) {
+        if (isCurrent) setLoading(false)
+      }
     }
 
     fetchData()
+
+    return () => {
+      isCurrent = false
+    }
   }, [academicYear])
 
   useEffect(() => {
@@ -51,13 +85,15 @@ export default function AIPage() {
     }
   }, [loading])
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
       </div>
     )
   }
+
+  if (!data) return null
 
   const { students, payments, isSubscribed, schoolSettings, studentsWithEmail } = data
 
@@ -101,7 +137,7 @@ export default function AIPage() {
   }).sort((a, b) => b.percent - a.percent)
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-4 md:p-6 pb-10 md:pb-16 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">AI Insights</h1>

@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GraduationCap } from 'lucide-react'
+import { GraduationCap, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,46 +17,87 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Warm up and prefetch target routes in advance for instant navigation
+  useEffect(() => {
+    router.prefetch('/dashboard')
+    router.prefetch('/teacher/attendance')
+  }, [router])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
 
+    // Safety timeout in case navigation or network hangs unexpectedly
+    const safetyTimeout = setTimeout(() => {
+      setLoading(false)
+    }, 15000)
+
     const supabase = createClient()
 
     try {
       if (isLogin) {
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
+
         if (signInError) {
+          clearTimeout(safetyTimeout)
           setError(signInError.message === 'Invalid login credentials' ? 'Invalid email or password' : signInError.message)
           setLoading(false)
           return
         }
-        
-        // Check role from teachers table
-        try {
-          const { data: teacher } = await supabase
-            .from('teachers')
-            .select('role')
-            .eq('auth_user_id', data.user?.id)
-            .maybeSingle()
 
-          if (teacher?.role === 'teacher') {
-            router.push('/teacher/attendance')
-          } else {
-            router.push('/dashboard')
+        // Fast role determination
+        let targetRoute = '/dashboard'
+        const metaRole = data.user?.user_metadata?.role
+
+        let finalRole = 'admin'
+        if (metaRole === 'teacher') {
+          targetRoute = '/teacher/attendance'
+          finalRole = 'teacher'
+        } else {
+          try {
+            const { data: teacher } = await Promise.race([
+              supabase
+                .from('teachers')
+                .select('role')
+                .eq('auth_user_id', data.user?.id)
+                .maybeSingle(),
+              new Promise<{ data: null }>((resolve) => setTimeout(() => resolve({ data: null }), 800))
+            ])
+
+            if (teacher?.role === 'teacher') {
+              targetRoute = '/teacher/attendance'
+              finalRole = 'teacher'
+            } else if (teacher?.role === 'attendance_staff') {
+              targetRoute = '/student-attendance'
+              finalRole = 'attendance_staff'
+            }
+          } catch {
+            targetRoute = '/dashboard'
           }
-        } catch {
-          router.push('/dashboard')
         }
-        router.refresh()
+
+        // Set role cookie for instant 0ms middleware verification
+        if (typeof document !== 'undefined') {
+          document.cookie = `user-role=${finalRole}; path=/; max-age=604800; SameSite=Lax`
+        }
+
+        // Navigate to target route immediately
+        router.push(targetRoute)
+        // Keep loading=true so button stays active with spinner and doesn't re-enable before transition
+        return
       } else {
         if (!name.trim()) {
+          clearTimeout(safetyTimeout)
           setError('Full name is required')
           setLoading(false)
           return
         }
         if (password.length < 6) {
+          clearTimeout(safetyTimeout)
           setError('Password must be at least 6 characters')
           setLoading(false)
           return
@@ -71,6 +112,7 @@ export default function LoginPage() {
         })
 
         if (signUpError) {
+          clearTimeout(safetyTimeout)
           setError(signUpError.message)
           setLoading(false)
           return
@@ -79,6 +121,7 @@ export default function LoginPage() {
         if (data?.user) {
           // If user exists already (Supabase returns empty identities)
           if (data.user.identities && data.user.identities.length === 0) {
+            clearTimeout(safetyTimeout)
             setError('An account with this email already exists. Please log in.')
             setLoading(false)
             return
@@ -99,8 +142,6 @@ export default function LoginPage() {
             if (resData?.linked) {
               alert('Teacher account linked! Redirecting to attendance... ✅')
               router.push('/teacher/attendance')
-              router.refresh()
-              setLoading(false)
               return
             }
           } catch (linkErr) {
@@ -108,16 +149,16 @@ export default function LoginPage() {
           }
 
           router.push('/dashboard')
-          router.refresh()
         } else {
           router.push('/dashboard')
-          router.refresh()
         }
+        // Keep loading=true while redirecting
+        return
       }
     } catch (err: any) {
+      clearTimeout(safetyTimeout)
       console.error('Auth submit error:', err)
       setError(err?.message || 'Failed to connect. Please check your internet connection.')
-    } finally {
       setLoading(false)
     }
   }
@@ -162,6 +203,7 @@ export default function LoginPage() {
                     placeholder="Your full name"
                     value={name}
                     onChange={e => setName(e.target.value)}
+                    disabled={loading}
                     required
                     className="h-11"
                   />
@@ -176,6 +218,7 @@ export default function LoginPage() {
                   placeholder="admin@school.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
+                  disabled={loading}
                   required
                   className="h-11"
                 />
@@ -189,6 +232,7 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
+                  disabled={loading}
                   required
                   className="h-11"
                 />
@@ -204,17 +248,22 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 flex items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-50"
+                className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition disabled:opacity-70 disabled:cursor-not-allowed shadow-sm active:scale-[0.99]"
               >
-                {loading 
-                  ? (isLogin ? 'Logging in...' : 'Creating Account...') 
-                  : (isLogin ? 'Log In' : 'Create Account')
-                }
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>{isLogin ? 'Logging in...' : 'Creating Account...'}</span>
+                  </>
+                ) : (
+                  <span>{isLogin ? 'Log In' : 'Create Account'}</span>
+                )}
               </button>
 
               <div className="text-center pt-1">
                 <button
                   type="button"
+                  disabled={loading}
                   onClick={() => {
                     setIsLogin(!isLogin)
                     setError('')
@@ -222,7 +271,7 @@ export default function LoginPage() {
                     setEmail('')
                     setPassword('')
                   }}
-                  className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+                  className="text-sm text-violet-600 hover:text-violet-700 font-medium disabled:opacity-50"
                 >
                   {isLogin
                     ? "Don't have an account? Sign Up"

@@ -6,6 +6,9 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { LayoutDashboard, Users, CreditCard, BookOpen, LogOut, GraduationCap, X, Menu, User, Bot, HelpCircle, Wallet, Contact } from 'lucide-react'
+import { useSession } from '@/lib/session-context'
+import { toast } from 'sonner'
+import { setSafeCache } from '@/lib/cache-utils'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -21,20 +24,239 @@ const navItems = [
   { href: '/profile', label: 'Profile', icon: User },
 ]
 
-import { useSession } from '@/lib/session-context'
-import { toast } from 'sonner'
+// Background pre-warming state guard
+let isPrewarming = false
+
+export async function prewarmDashboardData(academicYear: string) {
+  if (typeof window === 'undefined' || !academicYear || isPrewarming) return
+
+  const staffKey = `staff-cache-${academicYear}`
+  const paymentsKey = `payments-cache-${academicYear}`
+  const expensesKey = `expenses-cache-${academicYear}`
+  const classesKey = `classes-cache-${academicYear}`
+
+  try {
+    const hasStaff = !!sessionStorage.getItem(staffKey)
+    const hasPayments = !!sessionStorage.getItem(paymentsKey)
+    const hasExpenses = !!sessionStorage.getItem(expensesKey)
+    const hasClasses = !!sessionStorage.getItem(classesKey)
+
+    // If all target dashboard caches are already warm, exit immediately
+    if (hasStaff && hasPayments && hasExpenses && hasClasses) {
+      return
+    }
+
+    isPrewarming = true
+
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    let user = session?.user || null
+    if (!user) {
+      const userRes = await supabase.auth.getUser()
+      user = userRes.data?.user || null
+    }
+    if (!user) {
+      isPrewarming = false
+      return
+    }
+
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+    // 1. Shared student summary if classes, payments, or expenses need it
+    const needStudentSummary = !hasClasses || !hasPayments || !hasExpenses
+    const studentSummaryPromise = needStudentSummary
+      ? supabase
+          .from('student_fee_summary')
+          .select('*')
+          .eq('academic_year', academicYear)
+          .eq('status', 'active')
+          .eq('user_id', user.id)
+      : Promise.resolve({ data: [] })
+
+    // 2. Staff queries
+    const staffTeachersPromise = !hasStaff
+      ? supabase
+          .from('teachers')
+          .select('*')
+          .or('role.neq.attendance_staff,role.is.null')
+          .eq('user_id', user.id)
+          .order('name')
+      : Promise.resolve({ data: [] })
+
+    const staffAttendancePromise = !hasStaff
+      ? supabase
+          .from('attendance')
+          .select('*')
+          .eq('date', today)
+          .eq('admin_id', user.id)
+      : Promise.resolve({ data: [] })
+
+    // 3. Teacher payments (used by staff and expenses)
+    const needTeacherPayments = !hasStaff || !hasExpenses
+    const teacherPaymentsPromise = needTeacherPayments
+      ? supabase
+          .from('teacher_payments')
+          .select('*')
+          .or(`academic_year.eq.${academicYear},academic_year.is.null`)
+          .order('paid_at', { ascending: false })
+      : Promise.resolve({ data: [] })
+
+    // 4. Payments queries
+    const paymentsPromise = !hasPayments
+      ? supabase
+          .from('payments')
+          .select('*, students!inner(name, class, total_fee, academic_year, user_id)')
+          .eq('students.academic_year', academicYear)
+          .eq('students.user_id', user.id)
+          .order('paid_at', { ascending: false })
+      : Promise.resolve({ data: [] })
+
+    // 5. Expenses-specific queries
+    const expensesTeachersPromise = !hasExpenses
+      ? supabase.from('teachers').select('*').order('name')
+      : Promise.resolve({ data: [] })
+
+    const expensesVehiclesPromise = !hasExpenses
+      ? supabase.from('vehicles').select('*').order('name')
+      : Promise.resolve({ data: [] })
+
+    const expensesVehicleExpPromise = !hasExpenses
+      ? supabase
+          .from('vehicle_expenses')
+          .select('*')
+          .or(`academic_year.eq.${academicYear},academic_year.is.null`)
+          .order('date', { ascending: false })
+      : Promise.resolve({ data: [] })
+
+    const expensesBuildingExpPromise = !hasExpenses
+      ? supabase
+          .from('building_expenses')
+          .select('*')
+          .or(`academic_year.eq.${academicYear},academic_year.is.null`)
+          .order('date', { ascending: false })
+      : Promise.resolve({ data: [] })
+
+    // Execute needed lightweight queries concurrently in background
+    const [
+      studentSummaryRes,
+      staffTeachersRes,
+      staffAttendanceRes,
+      teacherPaymentsRes,
+      paymentsRes,
+      expensesTeachersRes,
+      expensesVehiclesRes,
+      expensesVehicleExpRes,
+      expensesBuildingExpRes,
+    ] = await Promise.all([
+      studentSummaryPromise,
+      staffTeachersPromise,
+      staffAttendancePromise,
+      teacherPaymentsPromise,
+      paymentsPromise,
+      expensesTeachersPromise,
+      expensesVehiclesPromise,
+      expensesVehicleExpPromise,
+      expensesBuildingExpPromise,
+    ])
+
+    const studentSummaryData = studentSummaryRes.data || []
+
+    // Populate classes cache
+    if (!hasClasses && !sessionStorage.getItem(classesKey)) {
+      setSafeCache(classesKey, studentSummaryData)
+    }
+
+    // Populate students default filter cache for instant 0ms load
+    const studentsDefaultKey = `students-cache-${academicYear}-s:-c:-p:-st:active`
+    if (!sessionStorage.getItem(studentsDefaultKey)) {
+      setSafeCache(studentsDefaultKey, studentSummaryData)
+    }
+
+    // Populate payments cache
+    if (!hasPayments && !sessionStorage.getItem(paymentsKey)) {
+      setSafeCache(paymentsKey, {
+        allPayments: paymentsRes.data || [],
+        students: studentSummaryData,
+      })
+    }
+
+    // Populate staff cache
+    if (!hasStaff && !sessionStorage.getItem(staffKey)) {
+      setSafeCache(staffKey, {
+        teachers: staffTeachersRes.data || [],
+        teacherPayments: teacherPaymentsRes.data || [],
+        todayAttendance: staffAttendanceRes.data || [],
+      })
+    }
+
+    // Populate expenses cache
+    if (!hasExpenses && !sessionStorage.getItem(expensesKey)) {
+      setSafeCache(expensesKey, {
+        teachers: expensesTeachersRes.data || [],
+        teacherPayments: teacherPaymentsRes.data || [],
+        vehicles: expensesVehiclesRes.data || [],
+        vehicleExpenses: expensesVehicleExpRes.data || [],
+        buildingExpenses: expensesBuildingExpRes.data || [],
+        students: studentSummaryData,
+      })
+    }
+  } catch (err) {
+    console.warn('Background cache pre-warming failed silently:', err)
+  } finally {
+    isPrewarming = false
+  }
+}
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
   const { academicYear, setAcademicYear, availableYears } = useSession()
   const [mounted, setMounted] = useState(false)
+  const [optimisticPath, setOptimisticPath] = useState<string | null>(null)
+
+  // Clear or sync optimisticPath when pathname changes
+  useEffect(() => {
+    setOptimisticPath(null)
+  }, [pathname])
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    const coreRoutes = [
+      '/students',
+      '/staff',
+      '/attendance',
+      '/student-records',
+      '/payments',
+      '/expenses',
+      '/classes',
+      '/ai',
+      '/dashboard',
+    ]
+    coreRoutes.forEach((route) => {
+      router.prefetch(route)
+    })
+  }, [router])
+
+  // Background Cache Pre-warming after 600ms of mount (during browser idle time)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        window.requestIdleCallback(() => {
+          prewarmDashboardData(academicYear)
+        })
+      } else {
+        prewarmDashboardData(academicYear)
+      }
+    }, 600)
+
+    return () => clearTimeout(timer)
+  }, [academicYear])
 
   async function handleLogout() {
+    if (typeof document !== 'undefined') {
+      document.cookie = 'user-role=; path=/; max-age=0;'
+    }
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
@@ -84,16 +306,22 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navItems.map(item => {
           const Icon = item.icon
-          const active = pathname === item.href
+          const active = optimisticPath ? optimisticPath === item.href : pathname === item.href
           return (
             <Link
               key={item.href}
               href={item.href}
-              onClick={onClose}
+              prefetch={true}
+              onMouseEnter={() => router.prefetch(item.href)}
+              onTouchStart={() => router.prefetch(item.href)}
+              onClick={() => {
+                setOptimisticPath(item.href)
+                if (onClose) onClose()
+              }}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
                 active
-                  ? 'bg-violet-600 text-white'
+                  ? 'bg-violet-600 text-white shadow-sm'
                   : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800'
               )}
             >

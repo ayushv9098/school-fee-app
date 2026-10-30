@@ -1,8 +1,5 @@
-
 import dayjs from 'dayjs'
 import StudentRecordsClient from './student-records-client'
-
-export const dynamic = 'force-dynamic'
 
 export default async function StudentRecordsPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
   const params = await searchParams

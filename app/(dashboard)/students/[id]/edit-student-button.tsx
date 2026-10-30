@@ -27,17 +27,32 @@ interface Props {
     diary_page_number: string
     vehicle_id?: string
   }
+  onSuccess?: () => void
 }
 
-export default function EditStudentButton({ student }: Props) {
+export default function EditStudentButton({ student, onSuccess }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [vehicles, setVehicles] = useState<any[]>([])
 
-  // Fetch vehicles when modal opens
+  // Fetch vehicles and sync latest student form data when modal opens
   const handleOpen = async () => {
+    setForm({
+      name: student.name || '',
+      class: student.class || '',
+      mobile: student.mobile || '',
+      email: student.email || '',
+      guardian_name: student.guardian_name || '',
+      address: student.address || '',
+      total_fee: String(student.total_fee || ''),
+      previous_dues: String(student.previous_dues || '0'),
+      status: student.status || 'active',
+      academic_year: student.academic_year || '',
+      diary_page_number: student.diary_page_number || '',
+      vehicle_id: student.vehicle_id || '',
+    })
     setOpen(true)
     const supabase = createClient()
     const { data } = await supabase.from('vehicles').select('id, name, type').order('name')
@@ -72,6 +87,9 @@ export default function EditStudentButton({ student }: Props) {
     setLoading(true)
     const supabase = createClient()
 
+    const newTotalFee = Number(form.total_fee) || 0
+    const newPreviousDues = Number(form.previous_dues) || 0
+
     const { error: updateError } = await supabase
       .from('students')
       .update({
@@ -81,8 +99,8 @@ export default function EditStudentButton({ student }: Props) {
         email: form.email.trim(),
         guardian_name: form.guardian_name.trim(),
         address: form.address.trim(),
-        total_fee: Number(form.total_fee) || 0,
-        previous_dues: Number(form.previous_dues) || 0,
+        total_fee: newTotalFee,
+        previous_dues: newPreviousDues,
         status: form.status,
         academic_year: form.academic_year.trim(),
         diary_page_number: form.diary_page_number.trim(),
@@ -100,10 +118,62 @@ export default function EditStudentButton({ student }: Props) {
       return
     }
 
+    // Immediately update sessionStorage cache so student list & details stay synchronized
+    try {
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const key = sessionStorage.key(i)
+        if (key && key.startsWith('dashboard-cache-')) {
+          sessionStorage.removeItem(key)
+        }
+      }
+
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i)
+        if (key && (key === 'students-cache' || key.startsWith('students-cache-'))) {
+          const cached = sessionStorage.getItem(key)
+          if (cached) {
+            const parsed = JSON.parse(cached)
+            if (Array.isArray(parsed)) {
+              const updated = parsed.map((s: any) => {
+                if (s.id === student.id) {
+                  const newRemaining = (newTotalFee + newPreviousDues) - (s.total_paid || 0)
+                  const newStatus = newRemaining <= 0 ? 'paid' : (s.total_paid || 0) > 0 ? 'partial' : 'unpaid'
+                  return {
+                    ...s,
+                    name: form.name.trim(),
+                    class: form.class,
+                    mobile: form.mobile.trim(),
+                    email: form.email.trim(),
+                    guardian_name: form.guardian_name.trim(),
+                    address: form.address.trim(),
+                    total_fee: newTotalFee,
+                    previous_dues: newPreviousDues,
+                    status: form.status,
+                    academic_year: form.academic_year.trim(),
+                    diary_page_number: form.diary_page_number.trim(),
+                    vehicle_id: form.vehicle_id || null,
+                    remaining_fee: newRemaining,
+                    payment_status: newStatus,
+                  }
+                }
+                return s
+              })
+              sessionStorage.setItem(key, JSON.stringify(updated))
+            }
+          }
+        }
+      }
+    } catch (e) {}
+
     toast.success('Student data update ho gaya!')
     setOpen(false)
     setLoading(false)
-    router.refresh()
+
+    if (onSuccess) {
+      onSuccess()
+    } else {
+      router.refresh()
+    }
   }
 
   return (

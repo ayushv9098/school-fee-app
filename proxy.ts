@@ -12,6 +12,30 @@ export default async function proxy(request: NextRequest) {
     throw new Error('Missing Supabase environment variables.')
   }
 
+  const pathname = request.nextUrl.pathname
+  const isPublicPage = pathname === '/' || pathname === '/login' || pathname === '/teacher-signup' || pathname === '/teacher-login' || pathname === '/sitemap.xml' || pathname === '/robots.txt'
+
+  // Fast-path for authenticated client-side navigation (RSC requests)
+  // When a user is already browsing the app, avoid redundant remote Supabase network roundtrips on every click!
+  const isRsc = request.headers.get('rsc') === '1' || request.nextUrl.searchParams.has('_rsc')
+  const cachedRole = request.cookies.get('user-role')?.value
+  console.log(`[PROXY] pathname: ${pathname}, isRsc: ${isRsc}, cachedRole: ${cachedRole}`)
+
+  if (isRsc && cachedRole) {
+    // Validate role permissions locally in 0ms without remote fetch
+    if (cachedRole === 'teacher' && !pathname.startsWith('/teacher')) {
+      return NextResponse.redirect(new URL('/teacher/attendance', request.url))
+    }
+    if (cachedRole === 'attendance_staff' && !pathname.startsWith('/student-attendance')) {
+      return NextResponse.redirect(new URL('/student-attendance', request.url))
+    }
+    if (cachedRole === 'admin' && (pathname.startsWith('/teacher') || pathname.startsWith('/student-attendance'))) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+    // Allowed - return response instantly (0ms network delay)
+    return supabaseResponse
+  }
+
   const supabase = createServerClient(
     supabaseUrl,
     supabaseAnonKey,
@@ -34,32 +58,38 @@ export default async function proxy(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  const pathname = request.nextUrl.pathname
-  const isPublicPage = pathname === '/' || pathname === '/login' || pathname === '/teacher-signup' || pathname === '/teacher-login' || pathname === '/sitemap.xml' || pathname === '/robots.txt'
 
   if (!user && !isPublicPage) {
     if (!pathname.startsWith('/api')) {
+      supabaseResponse.cookies.delete('user-role')
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
   if (user) {
-    // Use native fetch to bypass RLS with Service Key without breaking Edge runtime in Turbopack
-    let userRole = 'admin';
-    try {
-      const res = await fetch(`${supabaseUrl}/rest/v1/teachers?select=role&auth_user_id=eq.${user.id}`, {
-        headers: {
-          'apikey': supabaseServiceKey!,
-          'Authorization': `Bearer ${supabaseServiceKey!}`
-        }
-      });
-      const data = await res.json();
-      if (data && data.length > 0) {
-        userRole = data[0].role;
+    let userRole = cachedRole
+    if (!userRole) {
+      try {
+        const res = await fetch(`${supabaseUrl}/rest/v1/teachers?select=role&auth_user_id=eq.${user.id}`, {
+          headers: {
+            'apikey': supabaseServiceKey!,
+            'Authorization': `Bearer ${supabaseServiceKey!}`
+          }
+        });
+        const data = await res.json();
+        userRole = (data && data.length > 0) ? data[0].role : 'admin';
+      } catch (err) {
+        userRole = 'admin';
       }
-    } catch (err) {
-      console.error('Error fetching teacher role in middleware:', err);
     }
+
+    // Persist role in cookie so subsequent route navigations take 0ms
+    supabaseResponse.cookies.set('user-role', userRole || 'admin', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      sameSite: 'lax',
+      httpOnly: true
+    })
 
     if (isPublicPage) {
       if (userRole === 'teacher') return NextResponse.redirect(new URL('/teacher/attendance', request.url))

@@ -23,54 +23,38 @@ export default function StudentDetailPage({
 }) {
   const { id } = use(params)
   
-  const [student, setStudent] = useState<any>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        for (let i = 0; i < sessionStorage.length; i++) {
-          const key = sessionStorage.key(i)
-          if (key && (key === 'students-cache' || key.startsWith('students-cache-'))) {
-            const raw = sessionStorage.getItem(key)
-            if (raw) {
-              const list = JSON.parse(raw)
-              if (Array.isArray(list)) {
-                const found = list.find((s: any) => s.id === id)
-                if (found) return found
-              }
-            }
-          }
-        }
-      } catch (e) {}
-    }
-    return null
-  })
+  // Hydration-safe state initialization (matches between SSR and client initial render)
+  const [student, setStudent] = useState<any>(null)
   const [payments, setPayments] = useState<any[] | null>(null)
   const [schoolSettings, setSchoolSettings] = useState<any>(null)
-  const [loading, setLoading] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        for (let i = 0; i < sessionStorage.length; i++) {
-          const key = sessionStorage.key(i)
-          if (key && (key === 'students-cache' || key.startsWith('students-cache-'))) {
-            const raw = sessionStorage.getItem(key)
-            if (raw) {
-              const list = JSON.parse(raw)
-              if (Array.isArray(list)) {
-                const found = list.find((s: any) => s.id === id)
-                if (found) return false
-              }
-            }
-          }
-        }
-      } catch (e) {}
-    }
-    return true
-  })
+  const [loading, setLoading] = useState<boolean>(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     let mounted = true
     if (typeof window !== 'undefined') {
       import('nprogress').then(np => np.default.done()).catch(() => {})
+
+      // Check client-side sessionStorage cache immediately after mount
+      try {
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i)
+          if (key && (key === 'students-cache' || key.startsWith('students-cache-'))) {
+            const raw = sessionStorage.getItem(key)
+            if (raw) {
+              const list = JSON.parse(raw)
+              if (Array.isArray(list)) {
+                const found = list.find((s: any) => s.id === id)
+                if (found) {
+                  setStudent(found)
+                  setLoading(false)
+                  break
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {}
     }
 
     const fetchFresh = async () => {
@@ -101,7 +85,25 @@ export default function StudentDetailPage({
       ])
 
       if (!mounted) return
-      if (freshStudent) setStudent(freshStudent)
+      if (freshStudent) {
+        setStudent(freshStudent)
+        // Keep sessionStorage cache in sync so students list stays up to date
+        try {
+          for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i)
+            if (key && (key === 'students-cache' || key.startsWith('students-cache-'))) {
+              const raw = sessionStorage.getItem(key)
+              if (raw) {
+                const list = JSON.parse(raw)
+                if (Array.isArray(list)) {
+                  const updated = list.map((s: any) => s.id === id ? { ...s, ...freshStudent } : s)
+                  sessionStorage.setItem(key, JSON.stringify(updated))
+                }
+              }
+            }
+          }
+        } catch (e) {}
+      }
       if (freshPayments) setPayments(freshPayments)
       if (freshSettings) setSchoolSettings(freshSettings)
       setLoading(false)
@@ -158,7 +160,10 @@ export default function StudentDetailPage({
               onSuccess={() => setRefreshKey(prev => prev + 1)}
             />
           </div>
-          <EditStudentButton student={student} />
+          <EditStudentButton 
+            student={student} 
+            onSuccess={() => setRefreshKey(prev => prev + 1)}
+          />
           <DeleteStudentButton studentId={student.id} studentName={student.name} />
         </div>
       </div>

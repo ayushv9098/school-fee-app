@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatCurrency } from '@/lib/calculations'
 import { cn } from '@/lib/utils'
 import { getDayType, getMonthDatesMeta, HolidayItem } from '@/lib/holidays'
+import { getSafeInitialCache, setSafeCache, markAppHydrated } from '@/lib/cache-utils'
 
 interface Student {
   id: string
@@ -95,11 +96,34 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'reports' | 'logins' | 'student-record'>('reports')
-  
-  const [students, setStudents] = useState<Student[]>([])
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([])
-  const [attendanceStaff, setAttendanceStaff] = useState<Staff[]>([])
-  const [loadingData, setLoadingData] = useState(true)
+
+  const getInitialCacheData = () => {
+    const sessionYear = typeof window !== 'undefined' ? (localStorage.getItem('selectedAcademicYear') || '2025-26') : '2025-26'
+    return getSafeInitialCache<any>(`student-records-cache-${selectedDate}-${sessionYear}`)
+  }
+
+  const [students, setStudents] = useState<Student[]>(() => {
+    const cached = getInitialCacheData()
+    return cached?.students || []
+  })
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(() => {
+    const cached = getInitialCacheData()
+    return cached?.attendanceRecords || []
+  })
+  const [attendanceStaff, setAttendanceStaff] = useState<Staff[]>(() => {
+    const cached = getInitialCacheData()
+    return cached?.attendanceStaff || []
+  })
+  const [holidays, setHolidays] = useState<HolidayItem[]>(() => {
+    const cached = getInitialCacheData()
+    return cached?.holidays || []
+  })
+  const [loadingData, setLoadingData] = useState(() => {
+    const cached = getInitialCacheData()
+    return !cached
+  })
+  const [refreshKey, setRefreshKey] = useState(0)
+
   const [expandedClasses, setExpandedClasses] = useState<Record<string, boolean>>({})
   const [expandedVehicleVillages, setExpandedVehicleVillages] = useState<Record<string, boolean>>({})
   const [recordClassFilter, setRecordClassFilter] = useState<string>('all')
@@ -108,51 +132,83 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
   const [reportViewMode, setReportViewMode] = useState<'dashboard' | 'class-details' | 'vehicle-details'>('dashboard')
 
   useEffect(() => {
-    async function fetchData() {
-      setLoadingData(true)
-      const sessionYear = localStorage.getItem('selectedAcademicYear') || '2025-26'
-      
-      const { data: rawStudents } = await supabase
-        .from('students')
-        .select('id, name, class, address, vehicle_id, status, previous_dues')
-        .eq('status', 'active')
-        .eq('academic_year', sessionYear)
+    markAppHydrated()
+    const sessionYear = typeof window !== 'undefined' ? (localStorage.getItem('selectedAcademicYear') || '2025-26') : '2025-26'
+    const storageKey = `student-records-cache-${selectedDate}-${sessionYear}`
 
-      const { data: vehiclesData } = await supabase
-        .from('vehicles')
-        .select('id, name, type')
-
-      const mappedStudents = (rawStudents || []).map(std => ({
-        ...std,
-        vehicles: vehiclesData?.find(v => v.id === std.vehicle_id) || null
-      }))
-      setStudents(mappedStudents as Student[])
-
-      const { data: attRecords } = await supabase
-        .from('student_attendance')
-        .select('*')
-        .eq('date', selectedDate)
-      setAttendanceRecords(attRecords || [])
-
-      const { data: staff } = await supabase
-        .from('teachers')
-        .select('*')
-        .eq('role', 'attendance_staff')
-        .eq('academic_year', sessionYear)
-        .order('name')
-      setAttendanceStaff(staff || [])
-
-      const { data: hols } = await supabase
-        .from('holidays')
-        .select('*')
-      if (hols) setHolidays(hols)
-
-      setLoadingData(false)
+    let hasCached = students.length > 0
+    if (!hasCached) {
+      try {
+        const cachedStr = sessionStorage.getItem(storageKey)
+        if (cachedStr) {
+          const cached = JSON.parse(cachedStr)
+          if (cached.students) setStudents(cached.students)
+          if (cached.attendanceRecords) setAttendanceRecords(cached.attendanceRecords)
+          if (cached.attendanceStaff) setAttendanceStaff(cached.attendanceStaff)
+          if (cached.holidays) setHolidays(cached.holidays)
+          hasCached = true
+          setLoadingData(false)
+        }
+      } catch (e) {}
     }
-    fetchData()
-  }, [selectedDate, supabase])
 
-  const [holidays, setHolidays] = useState<HolidayItem[]>([])
+    if (!hasCached) {
+      setLoadingData(true)
+    }
+
+    async function fetchData() {
+      const [studentsRes, vehiclesRes, attRes, staffRes, holsRes] = await Promise.all([
+        supabase
+          .from('students')
+          .select('id, name, class, address, vehicle_id, status, previous_dues')
+          .eq('status', 'active')
+          .eq('academic_year', sessionYear),
+        supabase
+          .from('vehicles')
+          .select('id, name, type'),
+        supabase
+          .from('student_attendance')
+          .select('*')
+          .eq('date', selectedDate),
+        supabase
+          .from('teachers')
+          .select('*')
+          .eq('role', 'attendance_staff')
+          .eq('academic_year', sessionYear)
+          .order('name'),
+        supabase
+          .from('holidays')
+          .select('*')
+      ])
+
+      const rawStudents = studentsRes.data || []
+      const vehiclesData = vehiclesRes.data || []
+      const attRecords = attRes.data || []
+      const staff = staffRes.data || []
+      const hols = holsRes.data || []
+
+      const mappedStudents = rawStudents.map(std => ({
+        ...std,
+        vehicles: vehiclesData.find(v => v.id === std.vehicle_id) || null
+      }))
+
+      const freshCache = {
+        students: mappedStudents,
+        attendanceRecords: attRecords,
+        attendanceStaff: staff,
+        holidays: hols
+      }
+
+      setStudents(mappedStudents as Student[])
+      setAttendanceRecords(attRecords)
+      setAttendanceStaff(staff)
+      if (hols.length > 0) setHolidays(hols)
+      setLoadingData(false)
+      setSafeCache(storageKey, freshCache)
+    }
+
+    fetchData()
+  }, [selectedDate, supabase, refreshKey])
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '', mobile: '' })
@@ -340,6 +396,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
       toast.success('Attendance Staff account created!')
       setModalOpen(false)
       setForm({ name: '', email: '', password: '', mobile: '' })
+      setRefreshKey(prev => prev + 1)
       router.refresh()
     } catch (err: any) {
       toast.error(err.message)
@@ -369,6 +426,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
       toast.success('Login deleted successfully')
       setDeleteModalOpen(false)
       setStaffToDelete(null)
+      setRefreshKey(prev => prev + 1)
       router.refresh()
     } catch (err: any) {
       toast.error('Failed to delete login: ' + err.message)
@@ -497,7 +555,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                       <Users size={16} />
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{students.length}</p>
+                  <p suppressHydrationWarning={true} className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{students.length}</p>
                 </button>
 
                 <button
@@ -513,7 +571,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                       <CheckCircle2 size={16} />
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{totalPresentClass}</p>
+                  <p suppressHydrationWarning={true} className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{totalPresentClass}</p>
                 </button>
 
                 <button
@@ -529,7 +587,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                       <XCircle size={16} />
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-rose-600 dark:text-rose-500">{totalAbsentClass}</p>
+                  <p suppressHydrationWarning={true} className="text-2xl font-bold text-rose-600 dark:text-rose-500">{totalAbsentClass}</p>
                 </button>
               </div>
 
@@ -643,7 +701,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                       <Bus size={16} />
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{vehicleStudents.length}</p>
+                  <p suppressHydrationWarning={true} className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{vehicleStudents.length}</p>
                 </button>
 
                 <button
@@ -659,7 +717,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                       <CheckCircle2 size={16} />
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{totalBoarded}</p>
+                  <p suppressHydrationWarning={true} className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{totalBoarded}</p>
                 </button>
 
                 <button
@@ -675,7 +733,7 @@ export default function StudentRecordsClient({ selectedDate }: Props) {
                       <XCircle size={16} />
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-rose-600 dark:text-rose-500">{totalNotBoarded}</p>
+                  <p suppressHydrationWarning={true} className="text-2xl font-bold text-rose-600 dark:text-rose-500">{totalNotBoarded}</p>
                 </button>
               </div>
 

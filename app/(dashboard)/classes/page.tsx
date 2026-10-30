@@ -6,26 +6,94 @@ import { formatCurrency, getProgressPercent } from '@/lib/calculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { CLASSES } from '@/lib/constants'
+import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useSession } from '@/lib/session-context'
+import { getSafeInitialCache, setSafeCache, markAppHydrated } from '@/lib/cache-utils'
+
+function getSessionStudents(academicYear: string): any[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const classCache = sessionStorage.getItem(`classes-cache-${academicYear}`)
+    if (classCache) {
+      const parsed = JSON.parse(classCache)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    }
+    const dashCache = sessionStorage.getItem(`dashboard-cache-${academicYear}`)
+    if (dashCache) {
+      const parsed = JSON.parse(dashCache)
+      if (parsed && Array.isArray(parsed.students) && parsed.students.length > 0) {
+        return parsed.students
+      }
+    }
+  } catch {}
+  return []
+}
 
 export default function ClassesPage() {
   const { academicYear } = useSession()
-  const [students, setStudents] = useState<any[]>([])
+  const [students, setStudents] = useState<any[]>(() => {
+    return (
+      getSafeInitialCache<any[]>(`classes-cache-${academicYear}`) ||
+      getSafeInitialCache<any>(`dashboard-cache-${academicYear}`)?.students ||
+      []
+    )
+  })
+  const [loading, setLoading] = useState<boolean>(() => {
+    const initial = (
+      getSafeInitialCache<any[]>(`classes-cache-${academicYear}`) ||
+      getSafeInitialCache<any>(`dashboard-cache-${academicYear}`)?.students ||
+      []
+    )
+    return initial.length === 0
+  })
 
   useEffect(() => {
-    async function fetchClassesData() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      const { data } = await supabase
-        .from('student_fee_summary')
-        .select('*')
-        .eq('academic_year', academicYear)
-        .eq('status', 'active')
-        .eq('user_id', user?.id)
-      setStudents(data || [])
+    let isCurrent = true
+    markAppHydrated()
+    const cacheKey = `classes-cache-${academicYear}`
+
+    if (students.length === 0) {
+      const cached = getSessionStudents(academicYear)
+      if (cached.length > 0) {
+        setStudents(cached)
+        setLoading(false)
+      }
     }
+
+    async function fetchClassesData() {
+      try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        let user = session?.user || null
+        if (!user) {
+          const userRes = await supabase.auth.getUser()
+          user = userRes.data?.user || null
+        }
+
+        const { data } = await supabase
+          .from('student_fee_summary')
+          .select('*')
+          .eq('academic_year', academicYear)
+          .eq('status', 'active')
+          .eq('user_id', user?.id)
+
+        if (!isCurrent) return
+
+        const freshStudents = data || []
+        setStudents(freshStudents)
+        setLoading(false)
+        setSafeCache(cacheKey, freshStudents)
+      } catch (err) {
+        if (isCurrent) setLoading(false)
+      }
+    }
+
     fetchClassesData()
+
+    return () => {
+      isCurrent = false
+    }
   }, [academicYear])
 
   const classStats = CLASSES.map(cls => {
@@ -56,10 +124,14 @@ export default function ClassesPage() {
         <p className="text-sm text-zinc-500 dark:text-zinc-400">{classStats.length} active classes</p>
       </div>
 
-      {classStats.length === 0 ? (
+      {loading && students.length === 0 ? (
+        <div className="flex items-center justify-center min-h-[40vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+        </div>
+      ) : classStats.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center text-zinc-400 text-sm">
-          No students right now
+            No students right now
           </CardContent>
         </Card>
       ) : (
