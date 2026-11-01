@@ -163,7 +163,7 @@ export default function AIChat(props: Props) {
 
         {/* Quick Questions */}
         {showQuickQuestions && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar whitespace-nowrap">
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
             {[
               'Software ke kya kya features hain?',
               'Add payment kaise karein?',
@@ -177,7 +177,7 @@ export default function AIChat(props: Props) {
                   setInput(q)
                   setShowQuickQuestions(false)
                 }}
-                className="text-xs px-3 py-1 rounded-full border border-violet-200 dark:border-violet-900/40 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition shrink-0"
+                className="text-xs px-2.5 py-1 rounded-full border border-violet-200 dark:border-violet-800/40 bg-violet-50/60 dark:bg-violet-950/20 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition text-left leading-normal"
               >
                 {q}
               </button>

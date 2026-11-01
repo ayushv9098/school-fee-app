@@ -439,7 +439,6 @@ export default function ReceiptPDF(props: Props) {
   }
 
   async function handleWhatsApp() {
-    // 1. Clean Mobile Number (Robust handling for Indian numbers)
     let cleanedMobile = props.parentMobile?.replace(/\D/g, '') || ''
     if (cleanedMobile.length === 10) {
       cleanedMobile = `91${cleanedMobile}`
@@ -456,15 +455,12 @@ export default function ReceiptPDF(props: Props) {
 
     setImgLoading(true)
     try {
-      const supabase = createClient()
       const timestamp = Date.now()
       const baseFileName = `receipt-${props.studentName.replace(/\s+/g, '-').toLowerCase()}-${timestamp}`
 
-      // 2. Generate Image (This is what people want to see directly)
       const el = receiptRef.current
       if (!el) return
       el.style.display = 'block'
-      // Give a tiny bit of time for styles to apply if needed
       await new Promise(r => setTimeout(r, 50))
       
       const canvas = await html2canvas(el, { 
@@ -475,66 +471,52 @@ export default function ReceiptPDF(props: Props) {
       })
       el.style.display = 'none'
       
-      const imgBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9))
-      
-      let imageUrl = ''
-      if (imgBlob) {
-        // Upload JPEG for the fallback link
-        const { error: imgErr } = await supabase.storage.from('receipts').upload(`${baseFileName}.jpg`, imgBlob, { contentType: 'image/jpeg', upsert: false })
-        if (!imgErr) {
-          const { data } = supabase.storage.from('receipts').getPublicUrl(`${baseFileName}.jpg`)
-          imageUrl = data.publicUrl
-        }
-      }
+      const imgBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95))
 
-      // 3. Prepare Message
-      const message = lang === 'en'
+      const caption = lang === 'en'
         ? `Dear Parent, fee receipt for *${props.studentName}* (${props.className}).\n\nAmount Paid: *₹${props.amountPaid.toLocaleString('en-IN')}*\nRemaining: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\n— ${props.schoolName}`
         : `प्रिय अभिभावक, *${props.studentName}* (${props.className}) की फीस रसीद।\n\nजमा राशि: *₹${props.amountPaid.toLocaleString('en-IN')}*\nशेष राशि: *₹${Math.max(props.remainingFees, 0).toLocaleString('en-IN')}*\n\n— ${props.schoolName}`
 
-      const fullMessage = imageUrl ? `${message}\n\nView Full Receipt: ${imageUrl}` : message
-
-      // 4. ATTEMPT NATIVE SHARE (PRIORITY FOR MOBILE - SENDS ACTUAL IMAGE)
-      // This satisfies the "image must be attached" requirement.
-      if (navigator.share && imgBlob) {
+      // 1. PRIORITY ON MOBILE: SENDS THE ACTUAL RECEIPT IMAGE FILE DIRECTLY TO WHATSAPP
+      if (typeof navigator !== 'undefined' && navigator.share && imgBlob) {
         try {
+          if (!imgBlob) return;
           const file = new File([imgBlob], `${baseFileName}.jpg`, { type: 'image/jpeg' })
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            // Auto copy parent mobile so user can paste it in WhatsApp search if needed
+            if (cleanedMobile && navigator.clipboard) {
+              try { await navigator.clipboard.writeText(cleanedMobile) } catch (_) {}
+            }
             await navigator.share({
               files: [file],
               title: `Receipt: ${props.studentName}`,
-              text: fullMessage
+              text: caption
             })
             setImgLoading(false)
-            return // Successfully shared via native menu (user picks contact)
+            return // Successfully shared actual photo to WhatsApp!
           }
-        } catch (shareErr) {
-          console.log('Native share skipped or failed, using WhatsApp link fallback')
+        } catch (shareErr: any) {
+          if (shareErr && shareErr.name === 'AbortError') {
+            setImgLoading(false)
+            return // User cancelled share
+          }
+          console.log('Native share failed, using fallback:', shareErr)
         }
       }
 
-      // 5. SEAMLESS FALLBACK: DIRECT WHATSAPP IF MOBILE NUMBER EXISTS
-      // This opens the specific chat but only supports text (due to browser limitations)
+      // 2. FALLBACK / DESKTOP: DIRECT WHATSAPP CHAT
       if (cleanedMobile) {
-        const whatsappURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fullMessage)}`
+        const whatsappURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(caption)}`
         window.open(whatsappURL, '_blank')
         setImgLoading(false)
         return
       }
 
-      // 6. LAST RESORT: General wa.me (opens WhatsApp contact picker)
-      const fallbackURL = `https://wa.me/?text=${encodeURIComponent(fullMessage)}`
+      const fallbackURL = `https://wa.me/?text=${encodeURIComponent(caption)}`
       window.open(fallbackURL, '_blank')
 
-      // Background PDF Upload (Silent)
-      pdf(<ReceiptDocument {...props} lang={lang} receiptId={receiptId} />).toBlob().then(async (pdfBlob) => {
-        if (pdfBlob) {
-          await supabase.storage.from('receipts').upload(`${baseFileName}.pdf`, pdfBlob, { contentType: 'application/pdf', upsert: false })
-        }
-      }).catch(err => console.error('Silent PDF upload failed:', err))
-
     } catch (err) {
-      console.error('WhatsApp share error:', err)
+      console.error('WhatsApp error:', err)
       const fallbackMessage = `Fee receipt for ${props.studentName} - Amount: ₹${props.amountPaid}`
       const finalFallback = cleanedMobile 
         ? `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fallbackMessage)}`

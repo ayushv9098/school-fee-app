@@ -233,7 +233,7 @@ export default function AIPage() {
       <CollapsibleSection 
         title="Class-wise Collection"
         icon={<BarChart3 size={20} />}
-        defaultOpen={true}
+        defaultOpen={false}
       >
         <div className="space-y-4">
           {classStats.length === 0 && (
@@ -258,7 +258,7 @@ export default function AIPage() {
       <CollapsibleSection 
         title="Top Defaulters"
         icon={<AlertTriangle size={20} />}
-        defaultOpen={true}
+        defaultOpen={false}
       >
         {defaulters.length === 0 && (
           <p className="text-sm text-zinc-400 text-center py-4">No pending fees!</p>
