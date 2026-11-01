@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import {
-  LayoutDashboard, Users, CreditCard, BookOpen, LogOut, GraduationCap, X, Menu
+  LayoutDashboard, Users, CreditCard, BookOpen, LogOut, X, Menu
 } from 'lucide-react'
 
 const navItems = [
@@ -31,8 +32,8 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       {/* Header */}
       <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-800/50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
-            <GraduationCap className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm p-0.5 flex items-center justify-center overflow-hidden shrink-0">
+            <Image src="/logo-crest.png" alt="Ayushman Logo" width={28} height={28} className="w-full h-full object-contain" priority />
           </div>
           <div>
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">Ayushman</p>

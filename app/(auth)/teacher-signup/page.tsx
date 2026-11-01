@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GraduationCap, Loader2, Download, Plus, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
+import { Loader2, Download, Plus, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 function TeacherOnboardingBridge() {
@@ -35,8 +36,8 @@ function TeacherOnboardingBridge() {
     <div className="space-y-6">
       <Card className="border-zinc-200 dark:border-zinc-800 shadow-xl rounded-[32px] overflow-hidden bg-white dark:bg-zinc-900">
         <CardHeader className="pb-2 pt-8 px-8 text-center">
-          <div className="w-16 h-16 bg-violet-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <GraduationCap className="text-violet-600 w-8 h-8" />
+          <div className="w-14 h-14 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-md shadow-violet-500/10 flex items-center justify-center mx-auto mb-4 p-1.5 transition-transform hover:scale-105">
+            <Image src="/logo-crest.png" alt="Ayushman Educational Academy Logo" width={44} height={44} className="w-full h-full object-contain" priority />
           </div>
           <CardTitle className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Finish Account Setup</CardTitle>
           <CardDescription className="text-zinc-500 dark:text-zinc-400 font-medium">

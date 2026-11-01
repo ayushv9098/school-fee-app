@@ -8,6 +8,7 @@ import {
   Heart
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 
 // Custom Instagram Icon
@@ -116,8 +117,8 @@ export default function HowToUsePage() {
 <div className="text-center pt-4 md:pt-6 pb-2 md:pb-4 space-y-4">
   {/* Animated Icon */}
   <div className="flex justify-center">
-    <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-violet-100 to-purple-100 rounded-3xl shadow-sm animate-bounce">
-      <GraduationCap className="w-8 h-8 md:w-10 md:h-10 text-violet-600" />
+    <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-3xl shadow-md p-2">
+      <Image src="/logo-crest.png" alt="Ayushman Educational Academy" width={56} height={56} className="w-full h-full object-contain" priority />
     </div>
   </div>
 

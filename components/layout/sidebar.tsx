@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, CreditCard, BookOpen, LogOut, GraduationCap, X, Menu, User, Bot, HelpCircle, Wallet, Contact } from 'lucide-react'
+import { LayoutDashboard, Users, CreditCard, BookOpen, LogOut, X, Menu, User, Bot, HelpCircle, Wallet, Contact } from 'lucide-react'
 import { useSession } from '@/lib/session-context'
 import { toast } from 'sonner'
 import { setSafeCache } from '@/lib/cache-utils'
@@ -275,8 +276,8 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-800/50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
-            <GraduationCap className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm p-0.5 flex items-center justify-center overflow-hidden shrink-0">
+            <Image src="/logo-crest.png" alt="Ayushman Logo" width={28} height={28} className="w-full h-full object-contain" priority />
           </div>
           <div>
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">Ayushman</p>

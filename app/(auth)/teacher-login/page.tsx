@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GraduationCap, Loader2, Download, Plus, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
+import { Loader2, Download, Plus, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 export default function TeacherLoginPage() {
@@ -93,8 +94,8 @@ export default function TeacherLoginPage() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-violet-600 rounded-2xl mb-4 shadow-lg shadow-violet-200">
-            <GraduationCap className="text-white w-7 h-7" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-md shadow-violet-500/10 mb-4 p-1.5 transition-transform hover:scale-105">
+            <Image src="/logo-crest.png" alt="Ayushman Educational Academy Logo" width={44} height={44} className="w-full h-full object-contain" priority />
           </div>
           <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Ayushman Educational Academy</h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium tracking-tight">Teacher Portal Login</p>
