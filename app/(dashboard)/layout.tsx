@@ -2,7 +2,6 @@
 
 import { DesktopSidebar, MobileSidebar } from '@/components/layout/sidebar'
 import Link from 'next/link'
-import Image from 'next/image'
 import { User, ArrowLeft } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import NotificationsDropdown from '@/components/layout/notifications'
@@ -40,12 +39,7 @@ function Header() {
             <ArrowLeft className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
           </Link>
         )}
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-xs p-0.5 flex items-center justify-center shrink-0">
-            <Image src="/logo-crest.png" alt="Ayushman Logo" width={20} height={20} className="w-full h-full object-contain" priority />
-          </div>
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Ayushman Academy</p>
-        </div>
+        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Ayushman Academy</p>
       </div>
       <div className="flex items-center gap-2 lg:gap-4">
         <NotificationsDropdown />
