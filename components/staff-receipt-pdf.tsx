@@ -425,14 +425,14 @@ export default function StaffReceiptPDF(props: Props) {
     setLoading(false)
   }
 
-  function handleWhatsApp() {
+  async function handleWhatsApp() {
     let cleanedMobile = props.teacherMobile?.replace(/\D/g, '') || ''
     if (cleanedMobile.length === 10) {
       cleanedMobile = `91${cleanedMobile}`
     } else if (cleanedMobile.length === 11 && cleanedMobile.startsWith('0')) {
       cleanedMobile = `91${cleanedMobile.substring(1)}`
     } else if (cleanedMobile.length > 12 && cleanedMobile.startsWith('00')) {
-      cleanedMobile = `91${cleanedMobile.substring(2)}`
+      cleanedMobile = cleanedMobile.substring(2)
     }
 
     if (!props.teacherMobile) {
@@ -440,48 +440,77 @@ export default function StaffReceiptPDF(props: Props) {
       setTimeout(() => setWhatsappError(null), 3000)
     }
 
-    const caption = lang === 'en'
-      ? `Dear ${props.teacherName}, salary receipt for ${props.monthName} ${props.year}.\n\nAmount Paid: *₹${props.amountPaidNow.toLocaleString('en-IN')}*\nRemaining: *₹${Math.max(props.balance, 0).toLocaleString('en-IN')}*\n\n— ${props.schoolName}`
-      : `प्रिय ${props.teacherName}, ${props.monthName} ${props.year} की वेतन रसीद।\n\nजमा राशि: *₹${props.amountPaidNow.toLocaleString('en-IN')}*\nशेष राशि: *₹${Math.max(props.balance, 0).toLocaleString('en-IN')}*\n\n— ${props.schoolName}`
+    setImgLoading(true)
+    try {
+      const supabase = createClient()
+      const timestamp = Date.now()
+      const baseFileName = `salary-receipt-${props.teacherName.replace(/\s+/g, '-').toLowerCase()}-${timestamp}`
 
-    // Direct Mobile App Deep-link vs Desktop Web URL
-    const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-    if (isMobile) {
-      if (cleanedMobile) {
-        // 1. Direct Native WhatsApp App Protocol (launches WhatsApp app straight into the parent's chatbox)
-        window.location.href = `whatsapp://send?phone=${cleanedMobile}&text=${encodeURIComponent(caption)}`
-        setTimeout(() => {
-          if (document.hasFocus()) {
-            window.location.href = `https://api.whatsapp.com/send?phone=${cleanedMobile}&text=${encodeURIComponent(caption)}`
+      const el = receiptRef.current
+      if (!el) return
+      el.style.display = 'block'
+      await new Promise(r => setTimeout(r, 50))
+      
+      const canvas = await html2canvas(el, { 
+        scale: 2, 
+        backgroundColor: '#ffffff', 
+        logging: false, 
+        useCORS: true 
+      })
+      el.style.display = 'none'
+      
+      const imgBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95))
+
+      const caption = lang === 'en'
+        ? `Dear ${props.teacherName}, salary receipt for ${props.monthName} ${props.year}.\n\nAmount Paid: *₹${props.amountPaidNow.toLocaleString('en-IN')}*\nRemaining: *₹${Math.max(props.balance, 0).toLocaleString('en-IN')}*\n\n— ${props.schoolName}`
+        : `प्रिय ${props.teacherName}, ${props.monthName} ${props.year} की वेतन रसीद।\n\nजमा राशि: *₹${props.amountPaidNow.toLocaleString('en-IN')}*\nशेष राशि: *₹${Math.max(props.balance, 0).toLocaleString('en-IN')}*\n\n— ${props.schoolName}`
+
+      // 1. PRIORITY ON MOBILE: SENDS THE ACTUAL RECEIPT IMAGE FILE DIRECTLY
+      if (typeof navigator !== 'undefined' && navigator.share && imgBlob) {
+        try {
+          if (!imgBlob) return;
+          const file = new File([imgBlob], `${baseFileName}.jpg`, { type: 'image/jpeg' })
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            if (cleanedMobile && navigator.clipboard) {
+              try { await navigator.clipboard.writeText(cleanedMobile) } catch (_) {}
+            }
+            await navigator.share({
+              files: [file],
+              title: `Salary Receipt: ${props.teacherName}`,
+              text: caption
+            })
+            setImgLoading(false)
+            return
           }
-        }, 1200)
-      } else {
-        window.location.href = `whatsapp://send?text=${encodeURIComponent(caption)}`
-      }
-    } else {
-      // Desktop: Open WhatsApp Web directly
-      const desktopURL = cleanedMobile
-        ? `https://web.whatsapp.com/send?phone=${cleanedMobile}&text=${encodeURIComponent(caption)}`
-        : `https://web.whatsapp.com/send?text=${encodeURIComponent(caption)}`
-      window.open(desktopURL, '_blank')
-    }
-
-    // Background: Copy receipt image to clipboard for easy 1-click paste (Ctrl+V)
-    (async () => {
-      try {
-        const el = receiptRef.current
-        if (!el) return
-        el.style.display = 'block'
-        const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true })
-        el.style.display = 'none'
-        const imgBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.95))
-        if (imgBlob && typeof navigator !== 'undefined' && navigator.clipboard && typeof ClipboardItem !== 'undefined') {
-          await navigator.clipboard.write([new ClipboardItem({ [imgBlob.type]: imgBlob })])
+        } catch (shareErr: any) {
+          if (shareErr && shareErr.name === 'AbortError') {
+            setImgLoading(false)
+            return
+          }
+          console.log('Native share failed, using fallback:', shareErr)
         }
-      } catch (err) {
-        console.log('Background receipt copy skipped:', err)
       }
-    })()
+
+      // 2. FALLBACK / DESKTOP: DIRECT WHATSAPP CHAT
+      if (cleanedMobile) {
+        const whatsappURL = `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(caption)}`
+        window.open(whatsappURL, '_blank')
+        setImgLoading(false)
+        return
+      }
+
+      const fallbackURL = `https://wa.me/?text=${encodeURIComponent(caption)}`
+      window.open(fallbackURL, '_blank')
+
+    } catch (err) {
+      console.error('WhatsApp error:', err)
+      const fallbackMessage = `Salary receipt for ${props.teacherName} - Amount: ₹${props.amountPaidNow}`
+      const finalFallback = cleanedMobile 
+        ? `https://wa.me/${cleanedMobile}?text=${encodeURIComponent(fallbackMessage)}`
+        : `https://wa.me/?text=${encodeURIComponent(fallbackMessage)}`
+      window.open(finalFallback, '_blank')
+    }
+    setImgLoading(false)
   }
 
   function handleDownloadImage() {
